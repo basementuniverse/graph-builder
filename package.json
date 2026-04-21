@@ -1,0 +1,37 @@
+{
+  "name": "@basementuniverse/graph-builder",
+  "version": "0.0.1",
+  "description": "A graph builder component.",
+  "main": "build/index.js",
+  "module": "build/index.esm.js",
+  "browser": "build/index.browser.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "require": "./build/index.js",
+      "import": "./build/index.esm.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && npm run build:esm && npm run build:browser",
+    "build:esm": "esbuild src/index.ts --format=esm --platform=node --packages=external --outfile=build/index.esm.js --sourcemap",
+    "build:browser": "esbuild src/index.ts --bundle --format=iife --platform=browser --main-fields=browser,module,main --global-name=GraphBuilder --outfile=build/index.browser.js --sourcemap"
+  },
+  "author": "gordon",
+  "license": "MIT",
+  "dependencies": {
+    "@basementuniverse/camera": "^1.5.1",
+    "@basementuniverse/debug": "^1.4.2",
+    "@basementuniverse/frame-timer": "^1.0.1",
+    "@basementuniverse/input-manager": "^1.5.0",
+    "@basementuniverse/interaction": "^1.0.0",
+    "@basementuniverse/utils": "^1.8.1",
+    "@basementuniverse/vec": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.12",
+    "esbuild": "^0.25.4",
+    "typescript": "^4.9.4"
+  }
+}
