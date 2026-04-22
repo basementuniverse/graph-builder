@@ -1084,13 +1084,23 @@ InputManager.DEFAULT_OPTIONS = {
   var index_exports = {};
   __export(index_exports, {
     EventBus: () => EventBus,
-    GRAPH_SERIALIZATION_VERSION: () => GRAPH_SERIALIZATION_VERSION,
     GraphBuilder: () => GraphBuilder,
+    LayeredLayoutDirection: () => LayeredLayoutDirection,
     PortSide: () => PortSide,
     PortType: () => PortType,
     ToolMode: () => ToolMode,
+    TraversalDirection: () => TraversalDirection,
     default: () => GraphBuilder
   });
+
+  // src/enums/LayeredLayoutDirection.ts
+  var LayeredLayoutDirection = /* @__PURE__ */ ((LayeredLayoutDirection2) => {
+    LayeredLayoutDirection2["TopDown"] = "top-down";
+    LayeredLayoutDirection2["BottomUp"] = "bottom-up";
+    LayeredLayoutDirection2["LeftRight"] = "left-right";
+    LayeredLayoutDirection2["RightLeft"] = "right-left";
+    return LayeredLayoutDirection2;
+  })(LayeredLayoutDirection || {});
 
   // src/enums/PortSide.ts
   var PortSide = /* @__PURE__ */ ((PortSide2) => {
@@ -1117,6 +1127,14 @@ InputManager.DEFAULT_OPTIONS = {
     ToolMode2["CreateEdge"] = "create-edge";
     return ToolMode2;
   })(ToolMode || {});
+
+  // src/enums/TraversalDirection.ts
+  var TraversalDirection = /* @__PURE__ */ ((TraversalDirection2) => {
+    TraversalDirection2["In"] = "in";
+    TraversalDirection2["Out"] = "out";
+    TraversalDirection2["Both"] = "both";
+    return TraversalDirection2;
+  })(TraversalDirection || {});
 
   // src/events/EventBus.ts
   var EventBus = class {
@@ -1200,6 +1218,15 @@ InputManager.DEFAULT_OPTIONS = {
   var EDGE_HOVER_THRESHOLD = 24;
   var DELETE_BUTTON_SIZE = 20;
   var RESIZE_HANDLE_SIZE = 20;
+  var GRAPH_SERIALIZATION_VERSION = 1;
+  var DEFAULT_CAPABILITIES = {
+    createNodes: true,
+    createEdges: true,
+    deleteNodes: true,
+    deleteEdges: true,
+    resizeNodes: true,
+    moveNodes: true
+  };
   var DEFAULT_THEME = {
     // Background
     backgroundColor: "#333",
@@ -1249,6 +1276,20 @@ InputManager.DEFAULT_OPTIONS = {
     edgePreviewLineWidth: 3,
     edgePreviewOutlineColor: "#fff3",
     edgePreviewOutlineLineWidth: 10
+  };
+  var DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = {
+    iterations: 120,
+    timeBudgetMs: void 0,
+    repulsionStrength: 15e3,
+    attractionStrength: 0.02,
+    minNodeSpacing: 120,
+    damping: 0.85,
+    maxStep: 16
+  };
+  var DEFAULT_LAYERED_LAYOUT_OPTIONS = {
+    direction: "top-down" /* TopDown */,
+    layerSpacing: 220,
+    nodeSpacing: 180
   };
 
   // src/EdgeTool.ts
@@ -1325,17 +1366,8 @@ InputManager.DEFAULT_OPTIONS = {
 
   // src/layout/ForceDirectedLayout.ts
   var import_vec3 = __toESM(require_vec());
-  var DEFAULT_OPTIONS = {
-    iterations: 120,
-    timeBudgetMs: void 0,
-    repulsionStrength: 15e3,
-    attractionStrength: 0.02,
-    minNodeSpacing: 120,
-    damping: 0.85,
-    maxStep: 16
-  };
   async function layoutForceDirected(graph, options = {}) {
-    const settings = { ...DEFAULT_OPTIONS, ...options };
+    const settings = { ...DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS, ...options };
     const startTime = Date.now();
     const positions = /* @__PURE__ */ new Map();
     const velocities = /* @__PURE__ */ new Map();
@@ -1422,10 +1454,115 @@ InputManager.DEFAULT_OPTIONS = {
     };
   }
 
-  // src/layout/LayeredLayout.ts
-  var import_vec4 = __toESM(require_vec());
+  // src/utils/canvas.ts
+  function cross(context, position, size) {
+    const halfSize = size / 2;
+    context.beginPath();
+    context.moveTo(position.x - halfSize, position.y - halfSize);
+    context.lineTo(position.x + halfSize, position.y + halfSize);
+    context.moveTo(position.x + halfSize, position.y - halfSize);
+    context.lineTo(position.x - halfSize, position.y + halfSize);
+    context.stroke();
+  }
+  function plus(context, position, size) {
+    const halfSize = size / 2;
+    context.beginPath();
+    context.moveTo(position.x - halfSize, position.y);
+    context.lineTo(position.x + halfSize, position.y);
+    context.moveTo(position.x, position.y - halfSize);
+    context.lineTo(position.x, position.y + halfSize);
+    context.stroke();
+  }
+  function line(context, a, b) {
+    context.beginPath();
+    context.moveTo(a.x, a.y);
+    context.lineTo(b.x, b.y);
+    context.stroke();
+  }
+  function roundedRect(context, position, size, borderRadius) {
+    const x = position.x;
+    const y = position.y;
+    const width = size.x;
+    const height = size.y;
+    context.beginPath();
+    context.moveTo(x + borderRadius, y);
+    context.lineTo(x + width - borderRadius, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + borderRadius);
+    context.lineTo(x + width, y + height - borderRadius);
+    context.quadraticCurveTo(
+      x + width,
+      y + height,
+      x + width - borderRadius,
+      y + height
+    );
+    context.lineTo(x + borderRadius, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - borderRadius);
+    context.lineTo(x, y + borderRadius);
+    context.quadraticCurveTo(x, y, x + borderRadius, y);
+    context.closePath();
+  }
 
-  // src/utils/Traversal.ts
+  // src/utils/curve.ts
+  var import_utils = __toESM(require_utils());
+  var import_vec4 = __toESM(require_vec());
+  function curveFromTo(context, a, b, initialDirection, finalDirection, gridSize) {
+    context.beginPath();
+    const { cp1, cp2, join } = getCurveGeometry(
+      a,
+      b,
+      initialDirection,
+      finalDirection,
+      gridSize
+    );
+    context.moveTo(a.x, a.y);
+    context.quadraticCurveTo(cp1.x, cp1.y, join.x, join.y);
+    context.quadraticCurveTo(cp2.x, cp2.y, b.x, b.y);
+    context.stroke();
+  }
+  function getCurveGeometry(a, b, initialDirection, finalDirection, gridSize) {
+    const distance = import_vec4.vec2.len(import_vec4.vec2.sub(a, b));
+    const minDistance = gridSize * 4;
+    let curveStrength = gridSize;
+    if (distance < minDistance) {
+      curveStrength = (0, import_utils.lerp)(0, gridSize, (0, import_utils.clamp)(distance / minDistance, 0, 1));
+    }
+    const cp1 = import_vec4.vec2.add(a, import_vec4.vec2.mul(initialDirection, curveStrength));
+    const cp2 = import_vec4.vec2.add(b, import_vec4.vec2.mul(finalDirection, curveStrength));
+    const join = import_vec4.vec2.div(import_vec4.vec2.add(cp1, cp2), 2);
+    return { cp1, cp2, join };
+  }
+  function pointToQuadraticBezierDistance(p, a, cp, b, t) {
+    const x = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cp.x + t * t * b.x;
+    const y = (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * cp.y + t * t * b.y;
+    return import_vec4.vec2.len(import_vec4.vec2.sub(p, { x, y }));
+  }
+
+  // src/utils/layout.ts
+  var import_vec5 = __toESM(require_vec());
+  function toPosition(direction, layerIndex, nodeIndex, layerSpacing, nodeSpacing) {
+    switch (direction) {
+      case "bottom-up" /* BottomUp */:
+        return (0, import_vec5.vec2)(nodeIndex * nodeSpacing, -layerIndex * layerSpacing);
+      case "left-right" /* LeftRight */:
+        return (0, import_vec5.vec2)(layerIndex * layerSpacing, nodeIndex * nodeSpacing);
+      case "right-left" /* RightLeft */:
+        return (0, import_vec5.vec2)(-layerIndex * layerSpacing, nodeIndex * nodeSpacing);
+      case "top-down" /* TopDown */:
+      default:
+        return (0, import_vec5.vec2)(nodeIndex * nodeSpacing, layerIndex * layerSpacing);
+    }
+  }
+
+  // src/utils/point.ts
+  var import_vec6 = __toESM(require_vec());
+  function pointInRectangle(point, rectangle) {
+    return point.x >= rectangle.position.x && point.x <= rectangle.position.x + rectangle.size.x && point.y >= rectangle.position.y && point.y <= rectangle.position.y + rectangle.size.y;
+  }
+  function pointInCircle(point, circle) {
+    return import_vec6.vec2.len(import_vec6.vec2.sub(point, circle.position)) <= circle.radius;
+  }
+
+  // src/utils/traversal.ts
   function resolveEdgeNodeIds(edge) {
     return {
       from: edge.a.nodeId,
@@ -1452,12 +1589,12 @@ InputManager.DEFAULT_OPTIONS = {
     }
     return { outgoing, incoming };
   }
-  function getNeighbors(graph, nodeId, direction = "both") {
+  function getNeighbors(graph, nodeId, direction = "both" /* Both */) {
     const { outgoing, incoming } = buildAdjacency(graph);
-    if (direction === "out") {
+    if (direction === "out" /* Out */) {
       return [...outgoing.get(nodeId) ?? /* @__PURE__ */ new Set()];
     }
-    if (direction === "in") {
+    if (direction === "in" /* In */) {
       return [...incoming.get(nodeId) ?? /* @__PURE__ */ new Set()];
     }
     return [
@@ -1467,7 +1604,7 @@ InputManager.DEFAULT_OPTIONS = {
       ])
     ];
   }
-  function traverseBFS(graph, startNodeId, visitor, direction = "both") {
+  function traverseBFS(graph, startNodeId, visitor, direction = "both" /* Both */) {
     const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
     if (!nodesById.has(startNodeId)) {
       return [];
@@ -1503,7 +1640,7 @@ InputManager.DEFAULT_OPTIONS = {
     }
     return results;
   }
-  function traverseDFS(graph, startNodeId, visitor, direction = "both") {
+  function traverseDFS(graph, startNodeId, visitor, direction = "both" /* Both */) {
     const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
     if (!nodesById.has(startNodeId)) {
       return [];
@@ -1565,27 +1702,24 @@ InputManager.DEFAULT_OPTIONS = {
     return topologicalSort(graph) === null;
   }
 
-  // src/layout/LayeredLayout.ts
-  var DEFAULT_OPTIONS2 = {
-    direction: "topDown",
-    layerSpacing: 220,
-    nodeSpacing: 180
-  };
-  function toPosition(direction, layerIndex, nodeIndex, layerSpacing, nodeSpacing) {
-    switch (direction) {
-      case "bottomUp":
-        return (0, import_vec4.vec2)(nodeIndex * nodeSpacing, -layerIndex * layerSpacing);
-      case "leftRight":
-        return (0, import_vec4.vec2)(layerIndex * layerSpacing, nodeIndex * nodeSpacing);
-      case "rightLeft":
-        return (0, import_vec4.vec2)(-layerIndex * layerSpacing, nodeIndex * nodeSpacing);
-      case "topDown":
-      default:
-        return (0, import_vec4.vec2)(nodeIndex * nodeSpacing, layerIndex * layerSpacing);
-    }
+  // src/utils/vec.ts
+  var import_vec7 = __toESM(require_vec());
+  function clampVec(value, min, max) {
+    return (0, import_vec7.vec2)(
+      Math.min(Math.max(value.x, min.x), max.x),
+      Math.min(Math.max(value.y, min.y), max.y)
+    );
   }
+  function roundVec(value, step) {
+    return (0, import_vec7.vec2)(
+      Math.round(value.x / step) * step,
+      Math.round(value.y / step) * step
+    );
+  }
+
+  // src/layout/LayeredLayout.ts
   async function layoutLayered(graph, options = {}) {
-    const settings = { ...DEFAULT_OPTIONS2, ...options };
+    const settings = { ...DEFAULT_LAYERED_LAYOUT_OPTIONS, ...options };
     const topo = topologicalSort(graph);
     if (!topo) {
       return null;
@@ -1643,125 +1777,7 @@ InputManager.DEFAULT_OPTIONS = {
     };
   }
 
-  // src/types/SerializationFormats.ts
-  var GRAPH_SERIALIZATION_VERSION = 1;
-
-  // src/utils/canvas.ts
-  function cross(context, position, size) {
-    const halfSize = size / 2;
-    context.beginPath();
-    context.moveTo(position.x - halfSize, position.y - halfSize);
-    context.lineTo(position.x + halfSize, position.y + halfSize);
-    context.moveTo(position.x + halfSize, position.y - halfSize);
-    context.lineTo(position.x - halfSize, position.y + halfSize);
-    context.stroke();
-  }
-  function plus(context, position, size) {
-    const halfSize = size / 2;
-    context.beginPath();
-    context.moveTo(position.x - halfSize, position.y);
-    context.lineTo(position.x + halfSize, position.y);
-    context.moveTo(position.x, position.y - halfSize);
-    context.lineTo(position.x, position.y + halfSize);
-    context.stroke();
-  }
-  function line(context, a, b) {
-    context.beginPath();
-    context.moveTo(a.x, a.y);
-    context.lineTo(b.x, b.y);
-    context.stroke();
-  }
-  function roundedRect(context, position, size, borderRadius) {
-    const x = position.x;
-    const y = position.y;
-    const width = size.x;
-    const height = size.y;
-    context.beginPath();
-    context.moveTo(x + borderRadius, y);
-    context.lineTo(x + width - borderRadius, y);
-    context.quadraticCurveTo(x + width, y, x + width, y + borderRadius);
-    context.lineTo(x + width, y + height - borderRadius);
-    context.quadraticCurveTo(
-      x + width,
-      y + height,
-      x + width - borderRadius,
-      y + height
-    );
-    context.lineTo(x + borderRadius, y + height);
-    context.quadraticCurveTo(x, y + height, x, y + height - borderRadius);
-    context.lineTo(x, y + borderRadius);
-    context.quadraticCurveTo(x, y, x + borderRadius, y);
-    context.closePath();
-  }
-
-  // src/utils/curve.ts
-  var import_utils = __toESM(require_utils());
-  var import_vec5 = __toESM(require_vec());
-  function curveFromTo(context, a, b, initialDirection, finalDirection, gridSize) {
-    context.beginPath();
-    const { cp1, cp2, join } = getCurveGeometry(
-      a,
-      b,
-      initialDirection,
-      finalDirection,
-      gridSize
-    );
-    context.moveTo(a.x, a.y);
-    context.quadraticCurveTo(cp1.x, cp1.y, join.x, join.y);
-    context.quadraticCurveTo(cp2.x, cp2.y, b.x, b.y);
-    context.stroke();
-  }
-  function getCurveGeometry(a, b, initialDirection, finalDirection, gridSize) {
-    const distance = import_vec5.vec2.len(import_vec5.vec2.sub(a, b));
-    const minDistance = gridSize * 4;
-    let curveStrength = gridSize;
-    if (distance < minDistance) {
-      curveStrength = (0, import_utils.lerp)(0, gridSize, (0, import_utils.clamp)(distance / minDistance, 0, 1));
-    }
-    const cp1 = import_vec5.vec2.add(a, import_vec5.vec2.mul(initialDirection, curveStrength));
-    const cp2 = import_vec5.vec2.add(b, import_vec5.vec2.mul(finalDirection, curveStrength));
-    const join = import_vec5.vec2.div(import_vec5.vec2.add(cp1, cp2), 2);
-    return { cp1, cp2, join };
-  }
-  function pointToQuadraticBezierDistance(p, a, cp, b, t) {
-    const x = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cp.x + t * t * b.x;
-    const y = (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * cp.y + t * t * b.y;
-    return import_vec5.vec2.len(import_vec5.vec2.sub(p, { x, y }));
-  }
-
-  // src/utils/point.ts
-  var import_vec6 = __toESM(require_vec());
-  function pointInRectangle(point, rectangle) {
-    return point.x >= rectangle.position.x && point.x <= rectangle.position.x + rectangle.size.x && point.y >= rectangle.position.y && point.y <= rectangle.position.y + rectangle.size.y;
-  }
-  function pointInCircle(point, circle) {
-    return import_vec6.vec2.len(import_vec6.vec2.sub(point, circle.position)) <= circle.radius;
-  }
-
-  // src/utils/vec.ts
-  var import_vec7 = __toESM(require_vec());
-  function clampVec(value, min, max) {
-    return (0, import_vec7.vec2)(
-      Math.min(Math.max(value.x, min.x), max.x),
-      Math.min(Math.max(value.y, min.y), max.y)
-    );
-  }
-  function roundVec(value, step) {
-    return (0, import_vec7.vec2)(
-      Math.round(value.x / step) * step,
-      Math.round(value.y / step) * step
-    );
-  }
-
   // src/GraphBuilder.ts
-  var DEFAULT_CAPABILITIES = {
-    createNodes: true,
-    createEdges: true,
-    deleteNodes: true,
-    deleteEdges: true,
-    resizeNodes: true,
-    moveNodes: true
-  };
   var GraphBuilder = class _GraphBuilder {
     constructor(canvas, options = {}) {
       this.frameHandle = 0;
@@ -2195,13 +2211,13 @@ InputManager.DEFAULT_OPTIONS = {
       });
       return true;
     }
-    getNeighbors(nodeId, direction = "both") {
+    getNeighbors(nodeId, direction = "both" /* Both */) {
       return getNeighbors(this.graph, nodeId, direction);
     }
-    traverseBFS(startNodeId, visitor, direction = "both") {
+    traverseBFS(startNodeId, visitor, direction = "both" /* Both */) {
       return traverseBFS(this.graph, startNodeId, visitor, direction);
     }
-    traverseDFS(startNodeId, visitor, direction = "both") {
+    traverseDFS(startNodeId, visitor, direction = "both" /* Both */) {
       return traverseDFS(this.graph, startNodeId, visitor, direction);
     }
     topologicalSort() {

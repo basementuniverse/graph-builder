@@ -12,16 +12,7 @@ const EdgeTool_1 = __importDefault(require("./EdgeTool"));
 const enums_1 = require("./enums");
 const EventBus_1 = __importDefault(require("./events/EventBus"));
 const layout_1 = require("./layout");
-const SerializationFormats_1 = require("./types/SerializationFormats");
 const utils_1 = require("./utils");
-const DEFAULT_CAPABILITIES = {
-    createNodes: true,
-    createEdges: true,
-    deleteNodes: true,
-    deleteEdges: true,
-    resizeNodes: true,
-    moveNodes: true,
-};
 class GraphBuilder {
     constructor(canvas, options = {}) {
         var _a, _b, _c, _d, _e, _f;
@@ -67,7 +58,7 @@ class GraphBuilder {
             camera: (_e = options.camera) !== null && _e !== void 0 ? _e : {},
             theme: { ...constants_1.DEFAULT_THEME, ...options.theme },
             callbacks: (_f = options.callbacks) !== null && _f !== void 0 ? _f : {},
-            capabilities: { ...DEFAULT_CAPABILITIES, ...options.capabilities },
+            capabilities: { ...constants_1.DEFAULT_CAPABILITIES, ...options.capabilities },
         };
         this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
         this.camera = new camera_1.default((0, vec_1.vec2)(), {
@@ -181,7 +172,7 @@ class GraphBuilder {
     }
     serializeFull() {
         return {
-            version: SerializationFormats_1.GRAPH_SERIALIZATION_VERSION,
+            version: constants_1.GRAPH_SERIALIZATION_VERSION,
             type: 'graph-document',
             graph: this.serialize(),
             layout: {
@@ -193,7 +184,7 @@ class GraphBuilder {
     }
     serializeRaw() {
         return {
-            version: SerializationFormats_1.GRAPH_SERIALIZATION_VERSION,
+            version: constants_1.GRAPH_SERIALIZATION_VERSION,
             type: 'graph-domain',
             nodes: this.graph.nodes.map(node => ({
                 id: node.id,
@@ -437,13 +428,13 @@ class GraphBuilder {
         });
         return true;
     }
-    getNeighbors(nodeId, direction = 'both') {
+    getNeighbors(nodeId, direction = enums_1.TraversalDirection.Both) {
         return (0, utils_1.getNeighbors)(this.graph, nodeId, direction);
     }
-    traverseBFS(startNodeId, visitor, direction = 'both') {
+    traverseBFS(startNodeId, visitor, direction = enums_1.TraversalDirection.Both) {
         return (0, utils_1.traverseBFS)(this.graph, startNodeId, visitor, direction);
     }
-    traverseDFS(startNodeId, visitor, direction = 'both') {
+    traverseDFS(startNodeId, visitor, direction = enums_1.TraversalDirection.Both) {
         return (0, utils_1.traverseDFS)(this.graph, startNodeId, visitor, direction);
     }
     topologicalSort() {

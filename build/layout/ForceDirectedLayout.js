@@ -2,17 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.layoutForceDirected = void 0;
 const vec_1 = require("@basementuniverse/vec");
-const DEFAULT_OPTIONS = {
-    iterations: 120,
-    timeBudgetMs: undefined,
-    repulsionStrength: 15000,
-    attractionStrength: 0.02,
-    minNodeSpacing: 120,
-    damping: 0.85,
-    maxStep: 16,
-};
+const constants_1 = require("../constants");
 async function layoutForceDirected(graph, options = {}) {
-    const settings = { ...DEFAULT_OPTIONS, ...options };
+    const settings = { ...constants_1.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS, ...options };
     const startTime = Date.now();
     const positions = new Map();
     const velocities = new Map();

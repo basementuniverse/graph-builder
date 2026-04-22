@@ -1,10 +1,7 @@
 import { vec2 } from '@basementuniverse/vec';
-import { ToolMode } from './enums';
-import type { CancellableGraphBuilderEvent, GraphBuilderEventMap } from './events/EventTypes';
+import { ToolMode, TraversalDirection } from './enums';
 import { layoutForceDirected, layoutLayered } from './layout';
-import type { Graph, GraphBuilderCapabilities, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, PortRef } from './types';
-import type { TraversalDirection, VisitorControl } from './utils';
-type GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>> = (payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]) => E extends CancellableGraphBuilderEvent ? boolean | void : void;
+import type { Graph, GraphBuilderCapabilities, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, PortRef, VisitorControl } from './types';
 export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPortData = unknown> {
     static screen: vec2;
     private static inputInitialised;
@@ -67,9 +64,9 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
         snapPositions?: boolean;
         snapSizes?: boolean;
     }): void;
-    arrangeForceDirected(options?: Parameters<typeof layoutForceDirected>[1]): Promise<import("./layout").ForceDirectedLayoutResult>;
-    arrangeLayered(options?: Parameters<typeof layoutLayered>[1]): Promise<import("./layout").LayeredLayoutResult | null>;
-    arrangeGraph(strategy: 'forceDirected' | 'layered', options?: Parameters<typeof layoutForceDirected>[1] | Parameters<typeof layoutLayered>[1]): Promise<import("./layout").ForceDirectedLayoutResult | import("./layout").LayeredLayoutResult | null>;
+    arrangeForceDirected(options?: Parameters<typeof layoutForceDirected>[1]): Promise<import("./types").ForceDirectedLayoutResult>;
+    arrangeLayered(options?: Parameters<typeof layoutLayered>[1]): Promise<import("./types").LayeredLayoutResult | null>;
+    arrangeGraph(strategy: 'forceDirected' | 'layered', options?: Parameters<typeof layoutForceDirected>[1] | Parameters<typeof layoutLayered>[1]): Promise<import("./types").ForceDirectedLayoutResult | import("./types").LayeredLayoutResult | null>;
     draw(): void;
     update(dt: number): void;
     private loop;
@@ -108,5 +105,4 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private portKey;
     private createId;
 }
-export {};
 //# sourceMappingURL=GraphBuilder.d.ts.map

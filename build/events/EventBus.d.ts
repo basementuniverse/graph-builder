@@ -1,4 +1,4 @@
-import type { GraphBuilderEventMap } from './EventTypes';
+import type { GraphBuilderEventMap } from '../types';
 type EventHandler<TPayload> = (payload: TPayload) => unknown;
 export default class EventBus<TEventMap extends Record<string, unknown> = GraphBuilderEventMap> {
     private listeners;

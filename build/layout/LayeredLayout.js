@@ -1,30 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.layoutLayered = void 0;
-const vec_1 = require("@basementuniverse/vec");
-const Traversal_1 = require("../utils/Traversal");
-const DEFAULT_OPTIONS = {
-    direction: 'topDown',
-    layerSpacing: 220,
-    nodeSpacing: 180,
-};
-function toPosition(direction, layerIndex, nodeIndex, layerSpacing, nodeSpacing) {
-    switch (direction) {
-        case 'bottomUp':
-            return (0, vec_1.vec2)(nodeIndex * nodeSpacing, -layerIndex * layerSpacing);
-        case 'leftRight':
-            return (0, vec_1.vec2)(layerIndex * layerSpacing, nodeIndex * nodeSpacing);
-        case 'rightLeft':
-            return (0, vec_1.vec2)(-layerIndex * layerSpacing, nodeIndex * nodeSpacing);
-        case 'topDown':
-        default:
-            return (0, vec_1.vec2)(nodeIndex * nodeSpacing, layerIndex * layerSpacing);
-    }
-}
+const constants_1 = require("../constants");
+const utils_1 = require("../utils");
 async function layoutLayered(graph, options = {}) {
     var _a, _b, _c, _d;
-    const settings = { ...DEFAULT_OPTIONS, ...options };
-    const topo = (0, Traversal_1.topologicalSort)(graph);
+    const settings = { ...constants_1.DEFAULT_LAYERED_LAYOUT_OPTIONS, ...options };
+    const topo = (0, utils_1.topologicalSort)(graph);
     if (!topo) {
         return null;
     }
@@ -61,7 +43,7 @@ async function layoutLayered(graph, options = {}) {
         const layer = layers[layerIndex];
         for (let nodeIndex = 0; nodeIndex < layer.length; nodeIndex++) {
             const nodeId = layer[nodeIndex];
-            nodePositions.set(nodeId, toPosition(settings.direction, layerIndex, nodeIndex, settings.layerSpacing, settings.nodeSpacing));
+            nodePositions.set(nodeId, (0, utils_1.toPosition)(settings.direction, layerIndex, nodeIndex, settings.layerSpacing, settings.nodeSpacing));
         }
         await Promise.resolve();
     }

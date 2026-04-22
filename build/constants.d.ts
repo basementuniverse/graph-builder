@@ -1,5 +1,5 @@
 import { vec2 } from '@basementuniverse/vec';
-import { GraphBuilderTheme } from './types';
+import { ForceDirectedLayoutOptions, GraphBuilderCapabilities, GraphBuilderTheme, LayeredLayoutOptions } from './types';
 export declare const DEBUG = false;
 export declare const FPS_MIN = 30;
 export declare const GRID_SIZE = 32;
@@ -16,5 +16,9 @@ export declare const EDGE_CURVE_SAMPLE_DISTANCE = 30;
 export declare const EDGE_HOVER_THRESHOLD = 24;
 export declare const DELETE_BUTTON_SIZE = 20;
 export declare const RESIZE_HANDLE_SIZE = 20;
+export declare const GRAPH_SERIALIZATION_VERSION = 1;
+export declare const DEFAULT_CAPABILITIES: Required<GraphBuilderCapabilities>;
 export declare const DEFAULT_THEME: GraphBuilderTheme;
+export declare const DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS: ForceDirectedLayoutOptions;
+export declare const DEFAULT_LAYERED_LAYOUT_OPTIONS: LayeredLayoutOptions;
 //# sourceMappingURL=constants.d.ts.map
