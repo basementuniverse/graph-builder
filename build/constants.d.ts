@@ -1,0 +1,20 @@
+import { vec2 } from '@basementuniverse/vec';
+import { GraphBuilderTheme } from './types';
+export declare const DEBUG = false;
+export declare const FPS_MIN = 30;
+export declare const GRID_SIZE = 32;
+export declare const NODE_MIN_SIZE = 50;
+export declare const NODE_MAX_SIZE = 400;
+export declare const NODE_EASE_AMOUNT = 0.4;
+export declare const CAMERA_KEYBOARD_PAN_SPEED = 600;
+export declare const CAMERA_ZOOM_STEP = 0.1;
+export declare const DEFAULT_NODE_SIZE: vec2;
+export declare const PORT_HOVER_DISTANCE = 16;
+export declare const PORT_CONNECT_DISTANCE = 24;
+export declare const EDGE_CURVE_ENDPOINT_OFFSET = 8;
+export declare const EDGE_CURVE_SAMPLE_DISTANCE = 30;
+export declare const EDGE_HOVER_THRESHOLD = 24;
+export declare const DELETE_BUTTON_SIZE = 20;
+export declare const RESIZE_HANDLE_SIZE = 20;
+export declare const DEFAULT_THEME: GraphBuilderTheme;
+//# sourceMappingURL=constants.d.ts.map

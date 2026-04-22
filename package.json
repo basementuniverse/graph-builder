@@ -27,7 +27,8 @@
     "@basementuniverse/input-manager": "^1.5.0",
     "@basementuniverse/interaction": "^1.0.0",
     "@basementuniverse/utils": "^1.8.1",
-    "@basementuniverse/vec": "^2.5.0"
+    "@basementuniverse/vec": "^2.5.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.12",

@@ -1,0 +1,1 @@
+{"version":3,"file":"vec.d.ts","sourceRoot":"","sources":["../../src/utils/vec.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,IAAI,EAAE,MAAM,uBAAuB,CAAC;AAE7C,wBAAgB,QAAQ,CAAC,KAAK,EAAE,IAAI,EAAE,GAAG,EAAE,IAAI,EAAE,GAAG,EAAE,IAAI,GAAG,IAAI,CAKhE;AAED,wBAAgB,QAAQ,CAAC,KAAK,EAAE,IAAI,EAAE,IAAI,EAAE,MAAM,GAAG,IAAI,CAKxD"}

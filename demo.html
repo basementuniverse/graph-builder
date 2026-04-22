@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphBuilder Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 100vw;
+        height: 100vh;
+        background: #1a1a1a;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        overflow: hidden;
+      }
+
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        background: #0a0a0a;
+      }
+
+      .toolbar {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        display: flex;
+        gap: 8px;
+        background: rgba(30, 30, 30, 0.95);
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+      }
+
+      button {
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      button.active {
+        background: rgba(100, 180, 255, 0.8);
+        border-color: rgba(100, 180, 255, 1);
+        color: #fff;
+      }
+
+      .info {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        background: rgba(30, 30, 30, 0.95);
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 12px;
+        max-width: 400px;
+        line-height: 1.5;
+      }
+
+      .divider {
+        width: 1px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <div class="toolbar">
+      <button id="tool-select" class="active">Select</button>
+      <button id="tool-pan">Pan</button>
+      <div class="divider"></div>
+      <button id="tool-create-node">Create Node</button>
+      <div class="divider"></div>
+      <label for="snap-to-grid">
+        <input type="checkbox" id="snap-to-grid" />
+        Snap to Grid
+      </label>
+    </div>
+
+    <div class="info">
+      <div>
+        <strong>GraphBuilder Demo</strong>
+      </div>
+      <div style="margin-top: 8px">
+        <strong>Controls:</strong>
+        <div>• Space + Drag: Pan camera</div>
+        <div>• Scroll: Zoom</div>
+        <div>• Click port: Create edge</div>
+        <div>• Ctrl+Click: Delete node</div>
+      </div>
+    </div>
+
+    <script src="./build/index.browser.js"></script>
+    <script>
+      // Get the canvas element
+      const canvas = document.getElementById('canvas');
+
+      // Create a simple node template for demo
+      const nodeTemplate = {
+        size: { x: 180, y: 100 },
+        label: 'Node',
+        ports: [
+          { id: 'in-left-1', label: 'Input 1', type: 'input', side: 'left' },
+          { id: 'in-left-2', label: 'Input 2', type: 'input', side: 'left' },
+          { id: 'out-right-1', label: 'Output 1', type: 'output', side: 'right' },
+          { id: 'out-right-2', label: 'Output 2', type: 'output', side: 'right' },
+        ],
+        resizable: true,
+        deletable: true,
+      };
+
+      // Initialize GraphBuilder using the default export
+      // window.GraphBuilder is the namespace, window.GraphBuilder.default is the constructor
+      const builder = new window.GraphBuilder.default(canvas, {
+        gridSize: 32,
+        snapToGrid: false,
+        showGrid: true,
+        autoStart: true,
+      });
+
+      // Set the default node template for creation
+      builder.setCreateNodeTemplate(nodeTemplate);
+
+      // Get all tool buttons
+      const toolButtons = {
+        'tool-select': 'select',
+        'tool-pan': 'pan',
+        'tool-create-node': 'create-node',
+      };
+
+      // Update UI to reflect current tool
+      function updateToolUI() {
+        const currentTool = builder.getTool();
+        Object.entries(toolButtons).forEach(([buttonId, toolMode]) => {
+          const button = document.getElementById(buttonId);
+          if (toolMode === currentTool) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+      }
+
+      // Attach click handlers to buttons
+      Object.entries(toolButtons).forEach(([buttonId, toolMode]) => {
+        document.getElementById(buttonId).addEventListener('click', () => {
+          builder.setTool(toolMode);
+          updateToolUI();
+        });
+      });
+
+      // Attach change handler to snap to grid checkbox
+      const snapToGridCheckbox = document.getElementById('snap-to-grid');
+      snapToGridCheckbox.addEventListener('change', () => {
+        builder.setSnapToGrid(snapToGridCheckbox.checked);
+      });
+
+      // Add some example nodes to the graph
+      builder.createNode({ x: 100, y: 100 }, nodeTemplate);
+      builder.createNode({ x: 400, y: 200 }, nodeTemplate);
+
+      // Initial UI update
+      updateToolUI();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEFAULT_THEME = exports.RESIZE_HANDLE_SIZE = exports.DELETE_BUTTON_SIZE = exports.EDGE_HOVER_THRESHOLD = exports.EDGE_CURVE_SAMPLE_DISTANCE = exports.EDGE_CURVE_ENDPOINT_OFFSET = exports.PORT_CONNECT_DISTANCE = exports.PORT_HOVER_DISTANCE = exports.DEFAULT_NODE_SIZE = exports.CAMERA_ZOOM_STEP = exports.CAMERA_KEYBOARD_PAN_SPEED = exports.NODE_EASE_AMOUNT = exports.NODE_MAX_SIZE = exports.NODE_MIN_SIZE = exports.GRID_SIZE = exports.FPS_MIN = exports.DEBUG = void 0;
+const vec_1 = require("@basementuniverse/vec");
+exports.DEBUG = false;
+exports.FPS_MIN = 30;
+exports.GRID_SIZE = 32;
+exports.NODE_MIN_SIZE = 50;
+exports.NODE_MAX_SIZE = 400;
+exports.NODE_EASE_AMOUNT = 0.4;
+exports.CAMERA_KEYBOARD_PAN_SPEED = 600;
+exports.CAMERA_ZOOM_STEP = 0.1;
+exports.DEFAULT_NODE_SIZE = (0, vec_1.vec2)(200, 120);
+exports.PORT_HOVER_DISTANCE = 16;
+exports.PORT_CONNECT_DISTANCE = 24;
+exports.EDGE_CURVE_ENDPOINT_OFFSET = 8;
+exports.EDGE_CURVE_SAMPLE_DISTANCE = 30;
+exports.EDGE_HOVER_THRESHOLD = 24;
+exports.DELETE_BUTTON_SIZE = 20;
+exports.RESIZE_HANDLE_SIZE = 20;
+exports.DEFAULT_THEME = {
+    backgroundColor: '#333',
+    gridDotColor: '#fff1',
+    gridDotLineWidth: 2,
+    nodeFillColor: '#fff2',
+    nodeSelectedFillColor: '#fff5',
+    nodeBorderColor: '#fff5',
+    nodeHoveredBorderColor: '#fff8',
+    nodeBorderWidth: 2,
+    nodeBorderRadius: 10,
+    nodeLabelColor: '#fffb',
+    nodeLabelFont: 'bold 12px sans-serif',
+    deleteButtonColor: '#fff5',
+    deleteButtonHoveredColor: '#fff8',
+    deleteButtonLineWidth: 2,
+    resizeHandleColor: '#fff2',
+    resizeHandleHoveredColor: '#fff5',
+    resizeHandleLineWidth: 2,
+    portRadius: 8,
+    portCutoutRadius: 12,
+    portFillColor: '#fff2',
+    portHoveredFillColor: '#fff4',
+    portInvalidFillColor: '#ff334433',
+    portBorderColor: '#fff5',
+    portHoveredBorderColor: '#fff8',
+    portInvalidBorderColor: '#ff6677',
+    portBorderWidth: 2,
+    portHoverRingColor: '#fff2',
+    portInvalidRingColor: '#ff445588',
+    portHoverRingLineWidth: 6,
+    portHoverRingRadius: 12,
+    edgeColor: '#fff2',
+    edgeHoveredColor: '#fff4',
+    edgeLineWidth: 3,
+    edgeHoverOutlineColor: '#fff2',
+    edgeHoverOutlineLineWidth: 10,
+    edgePreviewColor: '#fff6',
+    edgePreviewLineWidth: 3,
+    edgePreviewOutlineColor: '#fff3',
+    edgePreviewOutlineLineWidth: 10,
+};
+//# sourceMappingURL=constants.js.map
