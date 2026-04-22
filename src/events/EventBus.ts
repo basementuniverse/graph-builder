@@ -1,9 +1,6 @@
-import type {
-  CancellableGraphBuilderEvent,
-  GraphBuilderEventMap,
-} from './EventTypes';
+import type { GraphBuilderEventMap } from '../types';
 
-type EventHandler<TPayload> = (payload: TPayload) => void;
+type EventHandler<TPayload> = (payload: TPayload) => unknown;
 
 type ListenerMap<TEventMap extends Record<string, unknown>> = {
   [K in keyof TEventMap]?: Set<EventHandler<TEventMap[K]>>;
@@ -61,16 +58,19 @@ export default class EventBus<
 
   public emitCancellable<E extends keyof TEventMap>(
     event: E,
-    payload: TEventMap[E],
-    cancellable: E extends CancellableGraphBuilderEvent ? true : false
+    payload: TEventMap[E]
   ) {
-    if (cancellable) {
-      // Keep API shape future-proof for explicit preventDefault support.
-      this.emit(event, payload);
+    const listeners = this.listeners[event];
+    if (!listeners || listeners.size === 0) {
       return { cancelled: false };
     }
 
-    this.emit(event, payload);
+    for (const listener of [...listeners]) {
+      if (listener(payload) === false) {
+        return { cancelled: true };
+      }
+    }
+
     return { cancelled: false };
   }
 

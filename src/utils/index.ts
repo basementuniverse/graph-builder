@@ -1,5 +1,6 @@
 export * from './canvas';
 export * from './curve';
+export * from './layout';
 export * from './point';
-export * from './Traversal';
+export * from './traversal';
 export * from './vec';

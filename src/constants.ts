@@ -1,5 +1,11 @@
 import { vec2 } from '@basementuniverse/vec';
-import { GraphBuilderTheme } from './types';
+import { LayeredLayoutDirection } from './enums';
+import {
+  ForceDirectedLayoutOptions,
+  GraphBuilderCapabilities,
+  GraphBuilderTheme,
+  LayeredLayoutOptions,
+} from './types';
 
 export const DEBUG = false;
 export const FPS_MIN = 30;
@@ -23,6 +29,17 @@ export const EDGE_HOVER_THRESHOLD = 24;
 
 export const DELETE_BUTTON_SIZE = 20;
 export const RESIZE_HANDLE_SIZE = 20;
+
+export const GRAPH_SERIALIZATION_VERSION = 1;
+
+export const DEFAULT_CAPABILITIES: Required<GraphBuilderCapabilities> = {
+  createNodes: true,
+  createEdges: true,
+  deleteNodes: true,
+  deleteEdges: true,
+  resizeNodes: true,
+  moveNodes: true,
+};
 
 export const DEFAULT_THEME: GraphBuilderTheme = {
   // Background
@@ -81,4 +98,21 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   edgePreviewLineWidth: 3,
   edgePreviewOutlineColor: '#fff3',
   edgePreviewOutlineLineWidth: 10,
+};
+
+export const DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS: ForceDirectedLayoutOptions =
+  {
+    iterations: 120,
+    timeBudgetMs: undefined,
+    repulsionStrength: 15_000,
+    attractionStrength: 0.02,
+    minNodeSpacing: 120,
+    damping: 0.85,
+    maxStep: 16,
+  };
+
+export const DEFAULT_LAYERED_LAYOUT_OPTIONS: LayeredLayoutOptions = {
+  direction: LayeredLayoutDirection.TopDown,
+  layerSpacing: 220,
+  nodeSpacing: 180,
 };

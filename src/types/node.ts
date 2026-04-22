@@ -1,5 +1,5 @@
 import type { vec2 } from '@basementuniverse/vec';
-import type { Port } from './Port';
+import type { Port } from './port';
 
 export type Node<TNodeData = unknown, TPortData = unknown> = {
   id: string;

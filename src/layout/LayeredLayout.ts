@@ -1,50 +1,11 @@
 import { vec2 } from '@basementuniverse/vec';
-import type { Graph } from '../types/Graph';
-import { topologicalSort } from '../utils/Traversal';
-
-export type LayeredLayoutDirection =
-  | 'topDown'
-  | 'bottomUp'
-  | 'leftRight'
-  | 'rightLeft';
-
-export type LayeredLayoutOptions = {
-  direction: LayeredLayoutDirection;
-  layerSpacing: number;
-  nodeSpacing: number;
-};
-
-export type LayeredLayoutResult = {
-  nodePositions: Map<string, vec2>;
-  layers: string[][];
-  crossings: number;
-};
-
-const DEFAULT_OPTIONS: LayeredLayoutOptions = {
-  direction: 'topDown',
-  layerSpacing: 220,
-  nodeSpacing: 180,
-};
-
-function toPosition(
-  direction: LayeredLayoutDirection,
-  layerIndex: number,
-  nodeIndex: number,
-  layerSpacing: number,
-  nodeSpacing: number
-): vec2 {
-  switch (direction) {
-    case 'bottomUp':
-      return vec2(nodeIndex * nodeSpacing, -layerIndex * layerSpacing);
-    case 'leftRight':
-      return vec2(layerIndex * layerSpacing, nodeIndex * nodeSpacing);
-    case 'rightLeft':
-      return vec2(-layerIndex * layerSpacing, nodeIndex * nodeSpacing);
-    case 'topDown':
-    default:
-      return vec2(nodeIndex * nodeSpacing, layerIndex * layerSpacing);
-  }
-}
+import { DEFAULT_LAYERED_LAYOUT_OPTIONS } from '../constants';
+import type {
+  Graph,
+  LayeredLayoutOptions,
+  LayeredLayoutResult,
+} from '../types';
+import { topologicalSort, toPosition } from '../utils';
 
 export async function layoutLayered<
   TNodeData = unknown,
@@ -54,7 +15,7 @@ export async function layoutLayered<
   graph: Graph<TNodeData, TEdgeData, TPortData>,
   options: Partial<LayeredLayoutOptions> = {}
 ): Promise<LayeredLayoutResult | null> {
-  const settings = { ...DEFAULT_OPTIONS, ...options };
+  const settings = { ...DEFAULT_LAYERED_LAYOUT_OPTIONS, ...options };
   const topo = topologicalSort(graph);
   if (!topo) {
     return null;

@@ -1,28 +1,5 @@
-import type { Edge } from '../types/Edge';
-import type { Graph } from '../types/Graph';
-import type { Node } from '../types/Node';
-
-export type TraversalDirection = 'in' | 'out' | 'both';
-
-export type VisitorControl = {
-  skip?: boolean;
-  stop?: boolean;
-};
-
-export type NodeVisitor<
-  TNodeData = unknown,
-  TEdgeData = unknown,
-  TPortData = unknown,
-  TResult = void,
-> = (
-  node: Node<TNodeData, TPortData>,
-  depth: number
-) => TResult | VisitorControl;
-
-type Adjacency = {
-  outgoing: Map<string, Set<string>>;
-  incoming: Map<string, Set<string>>;
-};
+import { TraversalDirection } from '../enums';
+import type { Adjacency, Edge, Graph, NodeVisitor } from '../types';
 
 function resolveEdgeNodeIds<TEdgeData = unknown>(edge: Edge<TEdgeData>) {
   return {
@@ -66,14 +43,14 @@ export function getNeighbors<
 >(
   graph: Graph<TNodeData, TEdgeData, TPortData>,
   nodeId: string,
-  direction: TraversalDirection = 'both'
+  direction: TraversalDirection = TraversalDirection.Both
 ): string[] {
   const { outgoing, incoming } = buildAdjacency(graph);
 
-  if (direction === 'out') {
+  if (direction === TraversalDirection.Out) {
     return [...(outgoing.get(nodeId) ?? new Set<string>())];
   }
-  if (direction === 'in') {
+  if (direction === TraversalDirection.In) {
     return [...(incoming.get(nodeId) ?? new Set<string>())];
   }
 
@@ -94,7 +71,7 @@ export function traverseBFS<
   graph: Graph<TNodeData, TEdgeData, TPortData>,
   startNodeId: string,
   visitor: NodeVisitor<TNodeData, TEdgeData, TPortData, TResult>,
-  direction: TraversalDirection = 'both'
+  direction: TraversalDirection = TraversalDirection.Both
 ): TResult[] {
   const nodesById = new Map(graph.nodes.map(node => [node.id, node]));
   if (!nodesById.has(startNodeId)) {
@@ -151,7 +128,7 @@ export function traverseDFS<
   graph: Graph<TNodeData, TEdgeData, TPortData>,
   startNodeId: string,
   visitor: NodeVisitor<TNodeData, TEdgeData, TPortData, TResult>,
-  direction: TraversalDirection = 'both'
+  direction: TraversalDirection = TraversalDirection.Both
 ): TResult[] {
   const nodesById = new Map(graph.nodes.map(node => [node.id, node]));
   if (!nodesById.has(startNodeId)) {

@@ -1,10 +1,11 @@
-import Camera, { type CameraOptions } from '@basementuniverse/camera';
+import Camera from '@basementuniverse/camera';
 import FrameTimer from '@basementuniverse/frame-timer';
 import InputManager from '@basementuniverse/input-manager';
 import { vec2 } from '@basementuniverse/vec';
 import {
   CAMERA_KEYBOARD_PAN_SPEED,
   CAMERA_ZOOM_STEP,
+  DEFAULT_CAPABILITIES,
   DEFAULT_NODE_SIZE,
   DEFAULT_THEME,
   DELETE_BUTTON_SIZE,
@@ -12,6 +13,7 @@ import {
   EDGE_CURVE_SAMPLE_DISTANCE,
   EDGE_HOVER_THRESHOLD,
   FPS_MIN,
+  GRAPH_SERIALIZATION_VERSION,
   GRID_SIZE,
   NODE_EASE_AMOUNT,
   NODE_MAX_SIZE,
@@ -21,9 +23,8 @@ import {
   RESIZE_HANDLE_SIZE,
 } from './constants';
 import EdgeTool from './EdgeTool';
-import { PortSide, PortType, ToolMode } from './enums';
+import { PortSide, PortType, ToolMode, TraversalDirection } from './enums';
 import EventBus from './events/EventBus';
-import type { GraphBuilderEventMap } from './events/EventTypes';
 import { layoutForceDirected, layoutLayered } from './layout';
 import type {
   Edge,
@@ -31,21 +32,22 @@ import type {
   EdgeState,
   EdgeToolEndpoint,
   Graph,
-  GraphBuilderCallbacks,
   GraphBuilderCapabilities,
+  GraphBuilderEventHandler,
+  GraphBuilderEventMap,
   GraphBuilderOptions,
-  GraphBuilderTheme,
   GraphDocument,
   GraphDomain,
+  LoadFromDomainOptions,
   Node,
   NodeState,
   NodeTemplate,
   Port,
   PortRef,
   PortState,
+  RequiredGraphBuilderOptions,
+  VisitorControl,
 } from './types';
-import { GRAPH_SERIALIZATION_VERSION } from './types/SerializationFormats';
-import type { TraversalDirection, VisitorControl } from './utils';
 import {
   clampVec,
   cross,
@@ -64,31 +66,6 @@ import {
   traverseBFS,
   traverseDFS,
 } from './utils';
-
-const DEFAULT_CAPABILITIES: Required<GraphBuilderCapabilities> = {
-  createNodes: true,
-  createEdges: true,
-  deleteNodes: true,
-  deleteEdges: true,
-  resizeNodes: true,
-  moveNodes: true,
-};
-
-type RequiredGraphBuilderOptions<TNodeData, TEdgeData, TPortData> = {
-  gridSize: number;
-  snapToGrid: boolean;
-  showGrid: boolean;
-  autoStart: boolean;
-  canConnectPorts?: GraphBuilderOptions<
-    TNodeData,
-    TEdgeData,
-    TPortData
-  >['canConnectPorts'];
-  camera: Partial<CameraOptions>;
-  theme: GraphBuilderTheme;
-  callbacks: GraphBuilderCallbacks;
-  capabilities: Required<GraphBuilderCapabilities>;
-};
 
 export default class GraphBuilder<
   TNodeData = unknown,
@@ -197,9 +174,7 @@ export default class GraphBuilder<
     E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>,
   >(
     event: E,
-    handler: (
-      payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]
-    ) => void
+    handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>
   ) {
     return this.eventBus.on(event, handler);
   }
@@ -208,9 +183,7 @@ export default class GraphBuilder<
     E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>,
   >(
     event: E,
-    handler: (
-      payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]
-    ) => void
+    handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>
   ) {
     this.eventBus.off(event, handler);
   }
@@ -219,9 +192,7 @@ export default class GraphBuilder<
     E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>,
   >(
     event: E,
-    handler: (
-      payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]
-    ) => void
+    handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>
   ) {
     return this.eventBus.once(event, handler);
   }
@@ -394,21 +365,27 @@ export default class GraphBuilder<
     }
   }
 
-  public loadFromDomain(domain: GraphDomain<TNodeData, TEdgeData>) {
+  public loadFromDomain(
+    domain: GraphDomain<TNodeData, TEdgeData>,
+    options: LoadFromDomainOptions<TNodeData, TPortData> = {}
+  ) {
     if (domain.type !== 'graph-domain') {
       throw new Error('Invalid graph domain type');
     }
 
-    const nodes: Node<TNodeData, TPortData>[] = domain.nodes.map(node => ({
-      id: node.id,
-      data: node.data,
-      label: undefined,
-      position: vec2(),
-      size: vec2(DEFAULT_NODE_SIZE),
-      ports: [],
-      resizable: true,
-      deletable: true,
-    }));
+    const nodes: Node<TNodeData, TPortData>[] = domain.nodes.map(domainNode => {
+      const resolved = options.resolveNode?.(domainNode);
+      return {
+        id: domainNode.id,
+        data: domainNode.data,
+        label: resolved?.label,
+        position: vec2(),
+        size: vec2(resolved?.size ?? DEFAULT_NODE_SIZE),
+        ports: resolved?.ports?.map(port => ({ ...port })) ?? [],
+        resizable: resolved?.resizable ?? true,
+        deletable: resolved?.deletable ?? true,
+      };
+    });
 
     const edges: Edge<TEdgeData>[] = domain.edges.map(edge => ({
       a: { ...edge.a },
@@ -432,14 +409,26 @@ export default class GraphBuilder<
       throw new Error('No node template has been configured');
     }
 
-    this.eventBus.emit('nodeCreating', {
+    const nodeCreatingPayload: GraphBuilderEventMap<
+      TNodeData,
+      TEdgeData,
+      TPortData
+    >['nodeCreating'] = {
       position: vec2(position),
       template: {
         ...source,
         size: vec2(source.size),
         ports: source.ports.map(port => ({ ...port })),
       },
-    });
+    };
+
+    const nodeCreating = this.eventBus.emitCancellable(
+      'nodeCreating',
+      nodeCreatingPayload
+    );
+    if (nodeCreating.cancelled) {
+      throw new Error('Node creation was cancelled by an event handler');
+    }
 
     const node: Node<TNodeData, TPortData> = {
       id: this.createId('node'),
@@ -496,7 +485,11 @@ export default class GraphBuilder<
       return false;
     }
 
-    this.eventBus.emit('nodeRemoving', {
+    const nodeRemovingPayload: GraphBuilderEventMap<
+      TNodeData,
+      TEdgeData,
+      TPortData
+    >['nodeRemoving'] = {
       nodeId,
       node: {
         ...node,
@@ -504,7 +497,15 @@ export default class GraphBuilder<
         size: vec2(node.size),
         ports: node.ports.map(port => ({ ...port })),
       },
-    });
+    };
+
+    const nodeRemoving = this.eventBus.emitCancellable(
+      'nodeRemoving',
+      nodeRemovingPayload
+    );
+    if (nodeRemoving.cancelled) {
+      return false;
+    }
 
     this.graph.edges = this.graph.edges.filter(
       edge => edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId
@@ -552,13 +553,25 @@ export default class GraphBuilder<
       return false;
     }
 
-    this.eventBus.emit('edgeCreating', {
+    const edgeCreatingPayload: GraphBuilderEventMap<
+      TNodeData,
+      TEdgeData,
+      TPortData
+    >['edgeCreating'] = {
       edge: {
         ...normalized,
         a: { ...normalized.a },
         b: { ...normalized.b },
       },
-    });
+    };
+
+    const edgeCreating = this.eventBus.emitCancellable(
+      'edgeCreating',
+      edgeCreatingPayload
+    );
+    if (edgeCreating.cancelled) {
+      return false;
+    }
 
     if (this.edgeExists(normalized.a, normalized.b)) {
       return false;
@@ -588,13 +601,25 @@ export default class GraphBuilder<
       return false;
     }
 
-    this.eventBus.emit('edgeRemoving', {
+    const edgeRemovingPayload: GraphBuilderEventMap<
+      TNodeData,
+      TEdgeData,
+      TPortData
+    >['edgeRemoving'] = {
       edge: {
         ...existing,
         a: { ...existing.a },
         b: { ...existing.b },
       },
-    });
+    };
+
+    const edgeRemoving = this.eventBus.emitCancellable(
+      'edgeRemoving',
+      edgeRemovingPayload
+    );
+    if (edgeRemoving.cancelled) {
+      return false;
+    }
 
     this.graph.edges = this.graph.edges.filter(
       edge =>
@@ -616,7 +641,10 @@ export default class GraphBuilder<
     return true;
   }
 
-  public getNeighbors(nodeId: string, direction: TraversalDirection = 'both') {
+  public getNeighbors(
+    nodeId: string,
+    direction: TraversalDirection = TraversalDirection.Both
+  ) {
     return getNeighbors(this.graph, nodeId, direction);
   }
 
@@ -626,7 +654,7 @@ export default class GraphBuilder<
       node: Node<TNodeData, TPortData>,
       depth: number
     ) => TResult | VisitorControl,
-    direction: TraversalDirection = 'both'
+    direction: TraversalDirection = TraversalDirection.Both
   ) {
     return traverseBFS(this.graph, startNodeId, visitor, direction);
   }
@@ -637,7 +665,7 @@ export default class GraphBuilder<
       node: Node<TNodeData, TPortData>,
       depth: number
     ) => TResult | VisitorControl,
-    direction: TraversalDirection = 'both'
+    direction: TraversalDirection = TraversalDirection.Both
   ) {
     return traverseDFS(this.graph, startNodeId, visitor, direction);
   }

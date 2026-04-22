@@ -1154,12 +1154,16 @@ InputManager.DEFAULT_OPTIONS = {
         listener(payload);
       }
     }
-    emitCancellable(event, payload, cancellable) {
-      if (cancellable) {
-        this.emit(event, payload);
+    emitCancellable(event, payload) {
+      const listeners = this.listeners[event];
+      if (!listeners || listeners.size === 0) {
         return { cancelled: false };
       }
-      this.emit(event, payload);
+      for (const listener of [...listeners]) {
+        if (listener(payload) === false) {
+          return { cancelled: true };
+        }
+      }
       return { cancelled: false };
     }
     clear() {
@@ -1982,20 +1986,23 @@ InputManager.DEFAULT_OPTIONS = {
         this.selectNode(document.layout.selectedNodeId);
       }
     }
-    loadFromDomain(domain) {
+    loadFromDomain(domain, options = {}) {
       if (domain.type !== "graph-domain") {
         throw new Error("Invalid graph domain type");
       }
-      const nodes = domain.nodes.map((node) => ({
-        id: node.id,
-        data: node.data,
-        label: void 0,
-        position: (0, import_vec8.vec2)(),
-        size: (0, import_vec8.vec2)(DEFAULT_NODE_SIZE),
-        ports: [],
-        resizable: true,
-        deletable: true
-      }));
+      const nodes = domain.nodes.map((domainNode) => {
+        const resolved = options.resolveNode?.(domainNode);
+        return {
+          id: domainNode.id,
+          data: domainNode.data,
+          label: resolved?.label,
+          position: (0, import_vec8.vec2)(),
+          size: (0, import_vec8.vec2)(resolved?.size ?? DEFAULT_NODE_SIZE),
+          ports: resolved?.ports?.map((port) => ({ ...port })) ?? [],
+          resizable: resolved?.resizable ?? true,
+          deletable: resolved?.deletable ?? true
+        };
+      });
       const edges = domain.edges.map((edge) => ({
         a: { ...edge.a },
         b: { ...edge.b },
@@ -2011,14 +2018,21 @@ InputManager.DEFAULT_OPTIONS = {
       if (!source) {
         throw new Error("No node template has been configured");
       }
-      this.eventBus.emit("nodeCreating", {
+      const nodeCreatingPayload = {
         position: (0, import_vec8.vec2)(position),
         template: {
           ...source,
           size: (0, import_vec8.vec2)(source.size),
           ports: source.ports.map((port) => ({ ...port }))
         }
-      });
+      };
+      const nodeCreating = this.eventBus.emitCancellable(
+        "nodeCreating",
+        nodeCreatingPayload
+      );
+      if (nodeCreating.cancelled) {
+        throw new Error("Node creation was cancelled by an event handler");
+      }
       const node = {
         id: this.createId("node"),
         position: (0, import_vec8.vec2)(position),
@@ -2063,7 +2077,7 @@ InputManager.DEFAULT_OPTIONS = {
       if (!node) {
         return false;
       }
-      this.eventBus.emit("nodeRemoving", {
+      const nodeRemovingPayload = {
         nodeId,
         node: {
           ...node,
@@ -2071,7 +2085,14 @@ InputManager.DEFAULT_OPTIONS = {
           size: (0, import_vec8.vec2)(node.size),
           ports: node.ports.map((port) => ({ ...port }))
         }
-      });
+      };
+      const nodeRemoving = this.eventBus.emitCancellable(
+        "nodeRemoving",
+        nodeRemovingPayload
+      );
+      if (nodeRemoving.cancelled) {
+        return false;
+      }
       this.graph.edges = this.graph.edges.filter(
         (edge) => edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId
       );
@@ -2111,13 +2132,20 @@ InputManager.DEFAULT_OPTIONS = {
       if (!normalized) {
         return false;
       }
-      this.eventBus.emit("edgeCreating", {
+      const edgeCreatingPayload = {
         edge: {
           ...normalized,
           a: { ...normalized.a },
           b: { ...normalized.b }
         }
-      });
+      };
+      const edgeCreating = this.eventBus.emitCancellable(
+        "edgeCreating",
+        edgeCreatingPayload
+      );
+      if (edgeCreating.cancelled) {
+        return false;
+      }
       if (this.edgeExists(normalized.a, normalized.b)) {
         return false;
       }
@@ -2140,13 +2168,20 @@ InputManager.DEFAULT_OPTIONS = {
       if (!existing) {
         return false;
       }
-      this.eventBus.emit("edgeRemoving", {
+      const edgeRemovingPayload = {
         edge: {
           ...existing,
           a: { ...existing.a },
           b: { ...existing.b }
         }
-      });
+      };
+      const edgeRemoving = this.eventBus.emitCancellable(
+        "edgeRemoving",
+        edgeRemovingPayload
+      );
+      if (edgeRemoving.cancelled) {
+        return false;
+      }
       this.graph.edges = this.graph.edges.filter(
         (edge) => !(this.portRefEq(edge.a, existing.a) && this.portRefEq(edge.b, existing.b))
       );

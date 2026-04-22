@@ -1,4 +1,4 @@
-import type { PortRef } from './Port';
+import type { PortRef } from './port';
 
 export type Edge<TEdgeData = unknown> = {
   a: PortRef;

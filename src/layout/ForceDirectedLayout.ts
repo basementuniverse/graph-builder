@@ -1,31 +1,10 @@
 import { vec2 } from '@basementuniverse/vec';
-import type { Graph } from '../types/Graph';
-
-export type ForceDirectedLayoutOptions = {
-  iterations: number;
-  timeBudgetMs?: number;
-  repulsionStrength: number;
-  attractionStrength: number;
-  minNodeSpacing: number;
-  damping: number;
-  maxStep: number;
-};
-
-export type ForceDirectedLayoutResult = {
-  nodePositions: Map<string, vec2>;
-  converged: boolean;
-  iterationsCompleted: number;
-};
-
-const DEFAULT_OPTIONS: ForceDirectedLayoutOptions = {
-  iterations: 120,
-  timeBudgetMs: undefined,
-  repulsionStrength: 15_000,
-  attractionStrength: 0.02,
-  minNodeSpacing: 120,
-  damping: 0.85,
-  maxStep: 16,
-};
+import { DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS } from '../constants';
+import type {
+  ForceDirectedLayoutOptions,
+  ForceDirectedLayoutResult,
+  Graph,
+} from '../types';
 
 export async function layoutForceDirected<
   TNodeData = unknown,
@@ -35,7 +14,7 @@ export async function layoutForceDirected<
   graph: Graph<TNodeData, TEdgeData, TPortData>,
   options: Partial<ForceDirectedLayoutOptions> = {}
 ): Promise<ForceDirectedLayoutResult> {
-  const settings = { ...DEFAULT_OPTIONS, ...options };
+  const settings = { ...DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS, ...options };
   const startTime = Date.now();
 
   const positions = new Map<string, vec2>();

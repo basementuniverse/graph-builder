@@ -241,20 +241,24 @@ class GraphBuilder {
             this.selectNode(document.layout.selectedNodeId);
         }
     }
-    loadFromDomain(domain) {
+    loadFromDomain(domain, options = {}) {
         if (domain.type !== 'graph-domain') {
             throw new Error('Invalid graph domain type');
         }
-        const nodes = domain.nodes.map(node => ({
-            id: node.id,
-            data: node.data,
-            label: undefined,
-            position: (0, vec_1.vec2)(),
-            size: (0, vec_1.vec2)(constants_1.DEFAULT_NODE_SIZE),
-            ports: [],
-            resizable: true,
-            deletable: true,
-        }));
+        const nodes = domain.nodes.map(domainNode => {
+            var _a, _b, _c, _d, _e, _f;
+            const resolved = (_a = options.resolveNode) === null || _a === void 0 ? void 0 : _a.call(options, domainNode);
+            return {
+                id: domainNode.id,
+                data: domainNode.data,
+                label: resolved === null || resolved === void 0 ? void 0 : resolved.label,
+                position: (0, vec_1.vec2)(),
+                size: (0, vec_1.vec2)((_b = resolved === null || resolved === void 0 ? void 0 : resolved.size) !== null && _b !== void 0 ? _b : constants_1.DEFAULT_NODE_SIZE),
+                ports: (_d = (_c = resolved === null || resolved === void 0 ? void 0 : resolved.ports) === null || _c === void 0 ? void 0 : _c.map(port => ({ ...port }))) !== null && _d !== void 0 ? _d : [],
+                resizable: (_e = resolved === null || resolved === void 0 ? void 0 : resolved.resizable) !== null && _e !== void 0 ? _e : true,
+                deletable: (_f = resolved === null || resolved === void 0 ? void 0 : resolved.deletable) !== null && _f !== void 0 ? _f : true,
+            };
+        });
         const edges = domain.edges.map(edge => ({
             a: { ...edge.a },
             b: { ...edge.b },
@@ -271,14 +275,18 @@ class GraphBuilder {
         if (!source) {
             throw new Error('No node template has been configured');
         }
-        this.eventBus.emit('nodeCreating', {
+        const nodeCreatingPayload = {
             position: (0, vec_1.vec2)(position),
             template: {
                 ...source,
                 size: (0, vec_1.vec2)(source.size),
                 ports: source.ports.map(port => ({ ...port })),
             },
-        });
+        };
+        const nodeCreating = this.eventBus.emitCancellable('nodeCreating', nodeCreatingPayload);
+        if (nodeCreating.cancelled) {
+            throw new Error('Node creation was cancelled by an event handler');
+        }
         const node = {
             id: this.createId('node'),
             position: (0, vec_1.vec2)(position),
@@ -323,7 +331,7 @@ class GraphBuilder {
         if (!node) {
             return false;
         }
-        this.eventBus.emit('nodeRemoving', {
+        const nodeRemovingPayload = {
             nodeId,
             node: {
                 ...node,
@@ -331,7 +339,11 @@ class GraphBuilder {
                 size: (0, vec_1.vec2)(node.size),
                 ports: node.ports.map(port => ({ ...port })),
             },
-        });
+        };
+        const nodeRemoving = this.eventBus.emitCancellable('nodeRemoving', nodeRemovingPayload);
+        if (nodeRemoving.cancelled) {
+            return false;
+        }
         this.graph.edges = this.graph.edges.filter(edge => edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId);
         this.graph.nodes = this.graph.nodes.filter(n => n.id !== nodeId);
         this.nodeState.delete(nodeId);
@@ -369,13 +381,17 @@ class GraphBuilder {
         if (!normalized) {
             return false;
         }
-        this.eventBus.emit('edgeCreating', {
+        const edgeCreatingPayload = {
             edge: {
                 ...normalized,
                 a: { ...normalized.a },
                 b: { ...normalized.b },
             },
-        });
+        };
+        const edgeCreating = this.eventBus.emitCancellable('edgeCreating', edgeCreatingPayload);
+        if (edgeCreating.cancelled) {
+            return false;
+        }
         if (this.edgeExists(normalized.a, normalized.b)) {
             return false;
         }
@@ -398,13 +414,17 @@ class GraphBuilder {
         if (!existing) {
             return false;
         }
-        this.eventBus.emit('edgeRemoving', {
+        const edgeRemovingPayload = {
             edge: {
                 ...existing,
                 a: { ...existing.a },
                 b: { ...existing.b },
             },
-        });
+        };
+        const edgeRemoving = this.eventBus.emitCancellable('edgeRemoving', edgeRemovingPayload);
+        if (edgeRemoving.cancelled) {
+            return false;
+        }
         this.graph.edges = this.graph.edges.filter(edge => !(this.portRefEq(edge.a, existing.a) &&
             this.portRefEq(edge.b, existing.b)));
         this.edgeState.delete(this.edgeKey(existing));

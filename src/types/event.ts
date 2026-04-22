@@ -1,9 +1,6 @@
 import type { vec2 } from '@basementuniverse/vec';
 import type { ToolMode } from '../enums';
-import type { Edge } from '../types/Edge';
-import type { Graph } from '../types/Graph';
-import type { Node, NodeTemplate } from '../types/Node';
-import type { PortRef } from '../types/Port';
+import type { Edge, Graph, Node, NodeTemplate, PortRef } from '../types';
 
 export type GraphBuilderEventMap<
   TNodeData = unknown,
@@ -71,6 +68,15 @@ export type GraphBuilderEventMap<
     to: ToolMode;
   };
 };
+
+export type GraphBuilderEventHandler<
+  TNodeData,
+  TEdgeData,
+  TPortData,
+  E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>,
+> = (
+  payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]
+) => E extends CancellableGraphBuilderEvent ? boolean | void : void;
 
 export type CancellableGraphBuilderEvent =
   | 'nodeCreating'

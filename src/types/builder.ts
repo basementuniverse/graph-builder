@@ -1,7 +1,119 @@
+import type { CameraOptions } from '@basementuniverse/camera';
 import type { vec2 } from '@basementuniverse/vec';
-import type { Edge } from './Edge';
-import type { Node } from './Node';
-import type { Port } from './Port';
+import type { Edge } from './edge';
+import type { Node } from './node';
+import type { Port } from './port';
+
+export type GraphBuilderCapabilities = {
+  createNodes?: boolean;
+  createEdges?: boolean;
+  deleteNodes?: boolean;
+  deleteEdges?: boolean;
+  resizeNodes?: boolean;
+  moveNodes?: boolean;
+};
+
+export type EdgeConnectionValidationResult = {
+  allowed: boolean;
+  reason?: string;
+};
+
+export type GraphBuilderOptions<
+  TNodeData = unknown,
+  TEdgeData = unknown,
+  TPortData = unknown,
+> = {
+  gridSize?: number;
+  snapToGrid?: boolean;
+  showGrid?: boolean;
+  camera?: Partial<CameraOptions>;
+  autoStart?: boolean;
+  theme?: Partial<GraphBuilderTheme>;
+  callbacks?: GraphBuilderCallbacks;
+  capabilities?: GraphBuilderCapabilities;
+  canConnectPorts?: (params: {
+    fromNode: Node<TNodeData, TPortData>;
+    fromPort: Port<TPortData>;
+    toNode: Node<TNodeData, TPortData>;
+    toPort: Port<TPortData>;
+    edge?: Edge<TEdgeData>;
+  }) => EdgeConnectionValidationResult;
+};
+
+export type RequiredGraphBuilderOptions<TNodeData, TEdgeData, TPortData> = {
+  gridSize: number;
+  snapToGrid: boolean;
+  showGrid: boolean;
+  autoStart: boolean;
+  canConnectPorts?: GraphBuilderOptions<
+    TNodeData,
+    TEdgeData,
+    TPortData
+  >['canConnectPorts'];
+  camera: Partial<CameraOptions>;
+  theme: GraphBuilderTheme;
+  callbacks: GraphBuilderCallbacks;
+  capabilities: Required<GraphBuilderCapabilities>;
+};
+
+export type GraphBuilderTheme = {
+  // Background
+  backgroundColor: string;
+
+  // Grid
+  gridDotColor: string;
+  gridDotLineWidth: number;
+
+  // Node frame
+  nodeFillColor: string;
+  nodeSelectedFillColor: string;
+  nodeBorderColor: string;
+  nodeHoveredBorderColor: string;
+  nodeBorderWidth: number;
+  nodeBorderRadius: number;
+
+  // Node label
+  nodeLabelColor: string;
+  nodeLabelFont: string;
+
+  // Delete button
+  deleteButtonColor: string;
+  deleteButtonHoveredColor: string;
+  deleteButtonLineWidth: number;
+
+  // Resize handle
+  resizeHandleColor: string;
+  resizeHandleHoveredColor: string;
+  resizeHandleLineWidth: number;
+
+  // Port
+  portRadius: number;
+  portCutoutRadius: number;
+  portFillColor: string;
+  portHoveredFillColor: string;
+  portInvalidFillColor: string;
+  portBorderColor: string;
+  portHoveredBorderColor: string;
+  portInvalidBorderColor: string;
+  portBorderWidth: number;
+  portHoverRingColor: string;
+  portInvalidRingColor: string;
+  portHoverRingLineWidth: number;
+  portHoverRingRadius: number;
+
+  // Edge
+  edgeColor: string;
+  edgeHoveredColor: string;
+  edgeLineWidth: number;
+  edgeHoverOutlineColor: string;
+  edgeHoverOutlineLineWidth: number;
+
+  // Edge preview (drawn while creating an edge)
+  edgePreviewColor: string;
+  edgePreviewLineWidth: number;
+  edgePreviewOutlineColor: string;
+  edgePreviewOutlineLineWidth: number;
+};
 
 /**
  * Draw context passed to the `drawGridDot` callback.

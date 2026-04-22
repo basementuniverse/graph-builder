@@ -1,9 +1,10 @@
 import { vec2 } from '@basementuniverse/vec';
 import { ToolMode } from './enums';
-import type { GraphBuilderEventMap } from './events/EventTypes';
+import type { CancellableGraphBuilderEvent, GraphBuilderEventMap } from './events/EventTypes';
 import { layoutForceDirected, layoutLayered } from './layout';
-import type { Graph, GraphBuilderCapabilities, GraphBuilderOptions, GraphDocument, GraphDomain, Node, NodeTemplate, PortRef } from './types';
+import type { Graph, GraphBuilderCapabilities, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, PortRef } from './types';
 import type { TraversalDirection, VisitorControl } from './utils';
+type GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>> = (payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]) => E extends CancellableGraphBuilderEvent ? boolean | void : void;
 export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPortData = unknown> {
     static screen: vec2;
     private static inputInitialised;
@@ -31,9 +32,9 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private creatingEdge;
     private panOffset;
     constructor(canvas: HTMLElement | null, options?: GraphBuilderOptions<TNodeData, TEdgeData, TPortData>);
-    on<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: (payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]) => void): () => void;
-    off<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: (payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]) => void): void;
-    once<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: (payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]) => void): () => void;
+    on<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>): () => void;
+    off<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>): void;
+    once<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>): () => void;
     start(): void;
     stop(): void;
     dispose(): void;
@@ -51,7 +52,7 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     serializeRaw(): GraphDomain<TNodeData, TEdgeData>;
     load(graph: Graph<TNodeData, TEdgeData, TPortData>): void;
     loadFromDocument(document: GraphDocument<TNodeData, TEdgeData, TPortData>): void;
-    loadFromDomain(domain: GraphDomain<TNodeData, TEdgeData>): void;
+    loadFromDomain(domain: GraphDomain<TNodeData, TEdgeData>, options?: LoadFromDomainOptions<TNodeData, TPortData>): void;
     createNode(position: vec2, template?: NodeTemplate<TNodeData, TPortData>): Node<TNodeData, TPortData>;
     addNode(node: Node<TNodeData, TPortData>): boolean;
     removeNode(nodeId: string): boolean;
@@ -107,4 +108,5 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private portKey;
     private createId;
 }
+export {};
 //# sourceMappingURL=GraphBuilder.d.ts.map

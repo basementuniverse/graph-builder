@@ -1,5 +1,5 @@
-import type { Edge } from './Edge';
-import type { Node } from './Node';
+import type { Edge } from './edge';
+import type { Node } from './node';
 
 export type Graph<
   TNodeData = unknown,

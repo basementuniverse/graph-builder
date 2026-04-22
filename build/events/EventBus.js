@@ -35,12 +35,16 @@ class EventBus {
             listener(payload);
         }
     }
-    emitCancellable(event, payload, cancellable) {
-        if (cancellable) {
-            this.emit(event, payload);
+    emitCancellable(event, payload) {
+        const listeners = this.listeners[event];
+        if (!listeners || listeners.size === 0) {
             return { cancelled: false };
         }
-        this.emit(event, payload);
+        for (const listener of [...listeners]) {
+            if (listener(payload) === false) {
+                return { cancelled: true };
+            }
+        }
         return { cancelled: false };
     }
     clear() {
