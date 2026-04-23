@@ -100,7 +100,12 @@
       <button id="tool-select" class="active">Select</button>
       <button id="tool-pan">Pan</button>
       <div class="divider"></div>
-      <button id="tool-create-node">Create Node</button>
+      <button id="btn-node-template-1">Node (Output)</button>
+      <button id="btn-node-template-2">Node (I/O)</button>
+      <button id="btn-node-template-3">Node (Multi)</button>
+      <div class="divider"></div>
+      <button id="btn-snap-all">Snap All</button>
+      <button id="btn-arrange">Arrange</button>
       <div class="divider"></div>
       <label for="snap-to-grid">
         <input type="checkbox" id="snap-to-grid" />
@@ -126,18 +131,42 @@
       // Get the canvas element
       const canvas = document.getElementById('canvas');
 
-      // Create a simple node template for demo
-      const nodeTemplate = {
-        size: { x: 180, y: 100 },
-        label: 'Node',
-        ports: [
-          { id: 'in-left-1', label: 'Input 1', type: 'input', side: 'left' },
-          { id: 'in-left-2', label: 'Input 2', type: 'input', side: 'left' },
-          { id: 'out-right-1', label: 'Output 1', type: 'output', side: 'right' },
-          { id: 'out-right-2', label: 'Output 2', type: 'output', side: 'right' },
-        ],
-        resizable: true,
-        deletable: true,
+      // Define three different node templates
+      const nodeTemplates = {
+        output: {
+          size: { x: 160, y: 80 },
+          label: 'Source',
+          ports: [
+            { id: 'out-right', label: 'Output', type: 'output', side: 'right' },
+          ],
+          resizable: true,
+          deletable: true,
+        },
+        ioNode: {
+          size: { x: 180, y: 100 },
+          label: 'Process',
+          ports: [
+            { id: 'in-left-1', label: 'Input 1', type: 'input', side: 'left' },
+            { id: 'in-left-2', label: 'Input 2', type: 'input', side: 'left' },
+            { id: 'out-right-1', label: 'Output 1', type: 'output', side: 'right' },
+            { id: 'out-right-2', label: 'Output 2', type: 'output', side: 'right' },
+          ],
+          resizable: true,
+          deletable: true,
+        },
+        multi: {
+          size: { x: 200, y: 140 },
+          label: 'Complex',
+          ports: [
+            { id: 'in-top', label: 'Trigger', type: 'input', side: 'top' },
+            { id: 'in-left-1', label: 'Data A', type: 'input', side: 'left' },
+            { id: 'in-left-2', label: 'Data B', type: 'input', side: 'left' },
+            { id: 'out-right', label: 'Result', type: 'output', side: 'right' },
+            { id: 'out-bottom', label: 'Status', type: 'output', side: 'bottom' },
+          ],
+          resizable: true,
+          deletable: true,
+        },
       };
 
       // Initialize GraphBuilder using the default export
@@ -150,13 +179,12 @@
       });
 
       // Set the default node template for creation
-      builder.setCreateNodeTemplate(nodeTemplate);
+      builder.setCreateNodeTemplate(nodeTemplates.ioNode);
 
       // Get all tool buttons
       const toolButtons = {
         'tool-select': 'select',
         'tool-pan': 'pan',
-        'tool-create-node': 'create-node',
       };
 
       // Update UI to reflect current tool
@@ -172,12 +200,49 @@
         });
       }
 
-      // Attach click handlers to buttons
+      // Attach click handlers to tool buttons
       Object.entries(toolButtons).forEach(([buttonId, toolMode]) => {
         document.getElementById(buttonId).addEventListener('click', () => {
           builder.setTool(toolMode);
           updateToolUI();
         });
+      });
+
+      // Attach click handlers to node template buttons
+      document.getElementById('btn-node-template-1').addEventListener('click', () => {
+        builder.setCreateNodeTemplate(nodeTemplates.output);
+        builder.setTool('create-node');
+        updateToolUI();
+      });
+
+      document.getElementById('btn-node-template-2').addEventListener('click', () => {
+        builder.setCreateNodeTemplate(nodeTemplates.ioNode);
+        builder.setTool('create-node');
+        updateToolUI();
+      });
+
+      document.getElementById('btn-node-template-3').addEventListener('click', () => {
+        builder.setCreateNodeTemplate(nodeTemplates.multi);
+        builder.setTool('create-node');
+        updateToolUI();
+      });
+
+      // Snap all nodes to grid
+      document.getElementById('btn-snap-all').addEventListener('click', () => {
+        builder.snapAllToGrid({ snapPositions: true, snapSizes: true });
+        console.log('All nodes snapped to grid');
+      });
+
+      // Auto-arrange graph
+      document.getElementById('btn-arrange').addEventListener('click', async () => {
+        console.log('Arranging graph...');
+        const result = await builder.arrangeForceDirected({
+          iterations: 120,
+          repulsionStrength: 15000,
+          attractionStrength: 0.02,
+          minNodeSpacing: 240,
+        });
+        console.log('Graph arranged:', result);
       });
 
       // Attach change handler to snap to grid checkbox
@@ -186,9 +251,43 @@
         builder.setSnapToGrid(snapToGridCheckbox.checked);
       });
 
+      // ===== EVENT LOGGING =====
+      // Subscribe to key events to demonstrate the event system
+
+      builder.on('nodeCreated', ({ node }) => {
+        console.log(`✓ Node created: "${node.label}" (ID: ${node.id})`);
+      });
+
+      builder.on('nodeRemoved', ({ nodeId, node }) => {
+        console.log(`✗ Node removed: "${node.label}" (ID: ${nodeId})`);
+      });
+
+      builder.on('nodeMoved', ({ nodeId, from, to }) => {
+        console.log(`↦ Node moved: (${from.x}, ${from.y}) → (${to.x}, ${to.y})`);
+      });
+
+      builder.on('edgeCreated', ({ edge }) => {
+        console.log(`↔ Edge created: ${edge.a.nodeId}:${edge.a.portId} ↔ ${edge.b.nodeId}:${edge.b.portId}`);
+      });
+
+      builder.on('edgeRemoved', ({ edge }) => {
+        console.log(`✗ Edge removed: ${edge.a.nodeId}:${edge.a.portId} ↔ ${edge.b.nodeId}:${edge.b.portId}`);
+      });
+
+      builder.on('toolChanged', ({ from, to }) => {
+        console.log(`🔧 Tool changed: ${from} → ${to}`);
+      });
+
       // Add some example nodes to the graph
-      builder.createNode({ x: 100, y: 100 }, nodeTemplate);
-      builder.createNode({ x: 400, y: 200 }, nodeTemplate);
+      builder.createNode({ x: 100, y: 100 }, nodeTemplates.output);
+      builder.createNode({ x: 400, y: 150 }, nodeTemplates.ioNode);
+      builder.createNode({ x: 700, y: 100 }, nodeTemplates.multi);
+
+      // Create some example edges
+      builder.createEdge(
+        { nodeId: builder.getGraph().nodes[0].id, portId: 'out-right' },
+        { nodeId: builder.getGraph().nodes[1].id, portId: 'in-left-1' }
+      );
 
       // Initial UI update
       updateToolUI();
