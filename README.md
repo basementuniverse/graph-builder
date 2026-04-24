@@ -27,6 +27,7 @@ npm install @basementuniverse/graph-builder
   - [serializeRaw / loadFromDomain](#serializeraw--loadfromdomain)
 - [Graph traversal](#graph-traversal)
 - [Layout algorithms](#layout-algorithms)
+- [Animation effects](#animation-effects)
 - [Event handling](#event-handling)
 - [Theming](#theming)
   - [Global theme](#global-theme)
@@ -82,6 +83,28 @@ const builder = new GraphBuilder(canvas, {
   // Partial theme overrides (see Theming section)
   theme: {
     backgroundColor: '#1e1e1e',
+  },
+
+  // Runtime-only animation effect defaults (see Animation effects)
+  effects: {
+    enabled: true,
+    timeScale: 1,
+    edgeDash: {
+      speed: 110,
+      dashPattern: [10, 6],
+    },
+    edgeDot: {
+      duration: 0.5,
+      animation: {
+        interpolationFunction: 'linear',
+      },
+    },
+    portPulse: {
+      duration: 0.5,
+      animation: {
+        interpolationFunction: 'ease-out-cubic',
+      },
+    },
   },
 
   // Custom rendering callbacks (see Custom rendering callbacks section)
@@ -476,6 +499,200 @@ builder.snapAllToGrid({ snapPositions: true, snapSizes: true });
 
 ---
 
+### Animation effects
+
+`GraphBuilder` includes a low-level runtime-only effects API for animating edges and ports. These effects are not tied to any execution model, so you can trigger them from your own update loop, async jobs, evaluation engine, or UI handlers.
+
+Effects are exposed through `builder.effects`:
+
+```ts
+builder.effects.edgeDash;
+builder.effects.edgeDot;
+builder.effects.portPulse;
+builder.effects.global;
+```
+
+#### Runtime-only behavior
+
+Effects are purely visual runtime state. They are **not** included in `serialize()`, `serializeFull()`, or `serializeRaw()`. They are cleared automatically when you call `load()`, `dispose()`, `removeNode()`, or `removeEdge()`.
+
+#### Global controls
+
+```ts
+builder.effects.global.setEnabled(true);
+builder.effects.global.setTimeScale(1);
+builder.effects.global.pause();
+builder.effects.global.resume();
+builder.effects.global.clearAll();
+```
+
+#### Edge dashed flow
+
+Use this for a continuous scrolling dash effect while some process is active.
+
+```ts
+const target = {
+  a: { nodeId: 'source', portId: 'out' },
+  b: { nodeId: 'worker', portId: 'in' },
+};
+
+builder.effects.edgeDash.start(target, {
+  speed: 140,
+  dashPattern: [12, 8],
+  color: '#7dd3fc',
+  opacity: 0.9,
+});
+
+builder.effects.edgeDash.stop(target);
+```
+
+Available methods:
+
+```ts
+builder.effects.edgeDash.get(target, channel?);
+builder.effects.edgeDash.set(target, patch, channel?);
+builder.effects.edgeDash.start(target, patch?, channel?);
+builder.effects.edgeDash.stop(target, channel?);
+builder.effects.edgeDash.clear(target?, channel?);
+```
+
+#### Edge moving dot
+
+Use this for one-shot packets or repeated value movement along an edge.
+
+```ts
+const target = {
+  a: { nodeId: 'source', portId: 'out' },
+  b: { nodeId: 'worker', portId: 'in' },
+};
+
+// One-shot packet
+builder.effects.edgeDot.trigger(target, {
+  duration: 0.45,
+  radius: 5,
+  color: '#fde047',
+  animation: {
+    interpolationFunction: 'ease-in-out-cubic',
+  },
+});
+
+// Looping stream while running
+builder.effects.edgeDot.start(target, {
+  spawnInterval: 0.12,
+  radius: 4,
+});
+
+builder.effects.edgeDot.stop(target);
+```
+
+Available methods:
+
+```ts
+builder.effects.edgeDot.get(target, channel?);
+builder.effects.edgeDot.set(target, patch, channel?);
+builder.effects.edgeDot.trigger(target, patch?, channel?);
+builder.effects.edgeDot.start(target, patch?, channel?);
+builder.effects.edgeDot.stop(target, channel?);
+builder.effects.edgeDot.clear(target?, channel?);
+```
+
+`trigger()` returns a handle that can be stopped manually:
+
+```ts
+const handle = builder.effects.edgeDot.trigger(target);
+handle?.stop();
+```
+
+#### Port pulse
+
+Use this for port activity, received values, acknowledgements, or user feedback.
+
+```ts
+builder.effects.portPulse.trigger(
+  { nodeId: 'worker', portId: 'in' },
+  {
+    duration: 0.35,
+    fromRadius: 10,
+    toRadius: 28,
+    color: '#66ccff',
+    animation: {
+      interpolationFunction: 'ease-out-cubic',
+    },
+  }
+);
+```
+
+Available methods:
+
+```ts
+builder.effects.portPulse.trigger(target, patch?, channel?);
+builder.effects.portPulse.clear(target?, channel?);
+```
+
+#### Channels
+
+All effect methods accept an optional `channel` string. Channels let you run separate effect streams on the same edge or port without them interfering with each other.
+
+```ts
+builder.effects.edgeDash.start(target, { color: '#7dd3fc' }, 'execution');
+builder.effects.edgeDash.start(target, { color: '#f97316' }, 'preview');
+builder.effects.edgeDash.stop(target, 'preview');
+```
+
+#### Effect options
+
+Constructor-level defaults live under `effects`:
+
+```ts
+const builder = new GraphBuilder(canvas, {
+  effects: {
+    enabled: true,
+    timeScale: 1,
+    maxEdgeDotInstances: 200,
+    maxPortPulseInstances: 400,
+    edgeDash: {
+      running: false,
+      speed: 110,
+      dashPattern: [10, 6],
+      lineWidth: 3,
+      color: '#7dd3fc',
+      opacity: 0.9,
+      blendMode: 'source-over',
+      phase: 0,
+    },
+    edgeDot: {
+      running: false,
+      loop: false,
+      duration: 0.5,
+      spawnInterval: 0.2,
+      radius: 4,
+      color: '#fde047',
+      opacity: 1,
+      blendMode: 'source-over',
+      animation: {
+        interpolationFunction: 'linear',
+      },
+    },
+    portPulse: {
+      duration: 0.5,
+      fromRadius: 10,
+      toRadius: 30,
+      lineWidth: 2,
+      color: '#66ccff',
+      maxOpacity: 0.8,
+      blendMode: 'source-over',
+      animation: {
+        interpolationFunction: 'ease-out-cubic',
+      },
+    },
+  },
+});
+```
+
+For edge dots and port pulses, the nested `animation` field passes through to `@basementuniverse/animation` for one-shot interpolation. Supported options are `delay`, `clamp`, `round`, `easeAmount`, `interpolationFunction`, and `interpolationFunctionParameters`.
+
+---
+
 ### Event handling
 
 Subscribe to events with `on()`. Most events provide read-only copies of the affected objects.
@@ -540,6 +757,10 @@ builder.on('edgeRemoving', ({ edge }) => {
 | `graphArranged` | `{ strategy }` | No |
 | `graphArrangementFailed` | `{ strategy, reason }` | No |
 | `toolChanged` | `{ from, to }` | No |
+| `effectStarted` | `{ kind, channel, target, id? }` | No |
+| `effectStopped` | `{ kind, channel, target, id? }` | No |
+| `effectCompleted` | `{ kind, channel, target, id? }` | No |
+| `effectCleared` | `{ kind, channel, target, id? }` | No |
 
 ---
 
@@ -593,6 +814,11 @@ const builder = new GraphBuilder(canvas, {
     portHoverRingColor: 'rgba(255,255,255,0.15)',
     portHoverRingLineWidth: 6,
     portHoverRingRadius: 12,
+    portPulseColor: '#66ccff',
+    portPulseLineWidth: 2,
+    portPulseFromRadius: 10,
+    portPulseToRadius: 30,
+    portPulseMaxOpacity: 0.8,
 
     // Edges
     edgeColor: 'rgba(255,255,255,0.2)',
@@ -600,6 +826,11 @@ const builder = new GraphBuilder(canvas, {
     edgeLineWidth: 3,
     edgeHoverOutlineColor: 'rgba(255,255,255,0.1)',
     edgeHoverOutlineLineWidth: 10,
+    edgeDashColor: '#7dd3fc',
+    edgeDashLineWidth: 3,
+    edgeDotColor: '#fde047',
+    edgeDotRadius: 4,
+    edgeDotOpacity: 1,
 
     // Edge preview (drawn while dragging to create a new edge)
     edgePreviewColor: 'rgba(255,255,255,0.5)',
@@ -731,6 +962,8 @@ const builder = new GraphBuilder(canvas, {
 ```
 
 Available callbacks: `drawGridDot`, `drawNodeFrame`, `drawNodeContent`, `drawDeleteButton`, `drawResizeHandle`, `drawPort`, `drawEdge`, `drawEdgePreview`.
+
+Animation effect callbacks are also available: `drawEdgeDashEffect`, `drawEdgeDotEffect`, `drawPortPulseEffect`.
 
 ---
 

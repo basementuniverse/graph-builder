@@ -1,5 +1,6 @@
-import type { EdgeTheme } from './theme';
+import type { EdgeDashRuntimeState, EdgeDotRuntimeState } from './effects';
 import type { PortRef } from './port';
+import type { EdgeTheme } from './theme';
 
 export type Edge<TEdgeData = unknown> = {
   a: PortRef;
@@ -10,4 +11,6 @@ export type Edge<TEdgeData = unknown> = {
 
 export type EdgeState = {
   hovered: boolean;
+  dashEffect?: EdgeDashRuntimeState;
+  dotEffect?: EdgeDotRuntimeState;
 };

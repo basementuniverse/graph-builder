@@ -1,6 +1,7 @@
 import type { vec2 } from '@basementuniverse/vec';
 import type { ToolMode } from '../enums';
 import type { Edge, Graph, Node, NodeTemplate, PortRef } from '../types';
+import type { GraphEffectEventPayload } from './effects';
 
 export type GraphBuilderEventMap<
   TNodeData = unknown,
@@ -67,6 +68,10 @@ export type GraphBuilderEventMap<
     from: ToolMode;
     to: ToolMode;
   };
+  effectStarted: GraphEffectEventPayload;
+  effectStopped: GraphEffectEventPayload;
+  effectCompleted: GraphEffectEventPayload;
+  effectCleared: GraphEffectEventPayload;
 };
 
 export type GraphBuilderEventHandler<

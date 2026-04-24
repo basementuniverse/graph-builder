@@ -1,6 +1,7 @@
 import type { vec2 } from '@basementuniverse/vec';
 import type { ToolMode } from '../enums';
 import type { Edge, Graph, Node, NodeTemplate, PortRef } from '../types';
+import type { GraphEffectEventPayload } from './effects';
 export type GraphBuilderEventMap<TNodeData = unknown, TEdgeData = unknown, TPortData = unknown> = {
     nodeCreating: {
         position: vec2;
@@ -62,6 +63,10 @@ export type GraphBuilderEventMap<TNodeData = unknown, TEdgeData = unknown, TPort
         from: ToolMode;
         to: ToolMode;
     };
+    effectStarted: GraphEffectEventPayload;
+    effectStopped: GraphEffectEventPayload;
+    effectCompleted: GraphEffectEventPayload;
+    effectCleared: GraphEffectEventPayload;
 };
 export type GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>> = (payload: GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>[E]) => E extends CancellableGraphBuilderEvent ? boolean | void : void;
 export type CancellableGraphBuilderEvent = 'nodeCreating' | 'nodeRemoving' | 'edgeCreating' | 'edgeRemoving';

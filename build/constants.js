@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_LAYERED_LAYOUT_OPTIONS = exports.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = exports.DEFAULT_THEME = exports.DEFAULT_CAPABILITIES = exports.GRAPH_SERIALIZATION_VERSION = exports.RESIZE_HANDLE_SIZE = exports.DELETE_BUTTON_SIZE = exports.EDGE_HOVER_THRESHOLD = exports.EDGE_CURVE_SAMPLE_DISTANCE = exports.EDGE_CURVE_ENDPOINT_OFFSET = exports.PORT_CONNECT_MARGIN = exports.PORT_HOVER_MARGIN = exports.DEFAULT_NODE_SIZE = exports.CAMERA_ZOOM_STEP = exports.CAMERA_KEYBOARD_PAN_SPEED = exports.NODE_EASE_AMOUNT = exports.NODE_MAX_SIZE = exports.NODE_MIN_SIZE = exports.GRID_SIZE = exports.FPS_MIN = exports.DEBUG = void 0;
+exports.DEFAULT_LAYERED_LAYOUT_OPTIONS = exports.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = exports.DEFAULT_EFFECTS = exports.DEFAULT_THEME = exports.DEFAULT_CAPABILITIES = exports.GRAPH_SERIALIZATION_VERSION = exports.RESIZE_HANDLE_SIZE = exports.DELETE_BUTTON_SIZE = exports.EDGE_HOVER_THRESHOLD = exports.EDGE_CURVE_SAMPLE_DISTANCE = exports.EDGE_CURVE_ENDPOINT_OFFSET = exports.PORT_CONNECT_MARGIN = exports.PORT_HOVER_MARGIN = exports.DEFAULT_NODE_SIZE = exports.CAMERA_ZOOM_STEP = exports.CAMERA_KEYBOARD_PAN_SPEED = exports.NODE_EASE_AMOUNT = exports.NODE_MAX_SIZE = exports.NODE_MIN_SIZE = exports.GRID_SIZE = exports.FPS_MIN = exports.DEBUG = void 0;
 const vec_1 = require("@basementuniverse/vec");
 const enums_1 = require("./enums");
 exports.DEBUG = false;
@@ -62,6 +62,11 @@ exports.DEFAULT_THEME = {
     portArrowSize: 6,
     portArrowColor: '#fff5',
     portArrowOffset: 0.44,
+    portPulseColor: '#66ccff',
+    portPulseLineWidth: 2,
+    portPulseFromRadius: 10,
+    portPulseToRadius: 30,
+    portPulseMaxOpacity: 0.8,
     edgeColor: '#fff2',
     edgeHoveredColor: '#fff4',
     edgeLineWidth: 3,
@@ -74,6 +79,53 @@ exports.DEFAULT_THEME = {
     edgePreviewLineWidth: 3,
     edgePreviewOutlineColor: '#fff3',
     edgePreviewOutlineLineWidth: 10,
+    edgeDashColor: '#7dd3fc',
+    edgeDashLineWidth: 3,
+    edgeDotColor: '#fde047',
+    edgeDotRadius: 4,
+    edgeDotOpacity: 1,
+};
+exports.DEFAULT_EFFECTS = {
+    enabled: true,
+    timeScale: 1,
+    maxEdgeDotInstances: 200,
+    maxPortPulseInstances: 400,
+    edgeDash: {
+        running: false,
+        speed: 110,
+        dashPattern: [10, 6],
+        lineWidth: 3,
+        color: '#7dd3fc',
+        opacity: 0.9,
+        blendMode: 'source-over',
+        phase: 0,
+    },
+    edgeDot: {
+        running: false,
+        loop: false,
+        speed: 220,
+        duration: 0.5,
+        spawnInterval: 0.2,
+        radius: 4,
+        color: '#fde047',
+        opacity: 1,
+        blendMode: 'source-over',
+        animation: {
+            interpolationFunction: 'linear',
+        },
+    },
+    portPulse: {
+        duration: 0.5,
+        fromRadius: 10,
+        toRadius: 30,
+        lineWidth: 2,
+        color: '#66ccff',
+        maxOpacity: 0.8,
+        blendMode: 'source-over',
+        animation: {
+            interpolationFunction: 'ease-out-cubic',
+        },
+    },
 };
 exports.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = {
     iterations: 120,

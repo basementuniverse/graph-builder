@@ -1,5 +1,6 @@
 import type { vec2 } from '@basementuniverse/vec';
 import { PortSide, PortType } from '../enums';
+import type { PortPulseRuntimeState } from './effects';
 import type { EdgeTheme, PortTheme } from './theme';
 export type Port<TPortData = unknown> = {
     id: string;
@@ -20,5 +21,6 @@ export type PortState = {
     hovered: boolean;
     connectable: boolean;
     invalidReason: string | null;
+    pulseEffect?: PortPulseRuntimeState;
 };
 //# sourceMappingURL=port.d.ts.map

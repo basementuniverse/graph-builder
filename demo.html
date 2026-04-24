@@ -107,6 +107,10 @@
       <button id="btn-snap-all">Snap All</button>
       <button id="btn-arrange">Arrange</button>
       <div class="divider"></div>
+      <button id="btn-random-flow">Toggle Random Flow</button>
+      <button id="btn-random-dot">Random Edge Dot</button>
+      <button id="btn-random-pulse">Random Port Pulse</button>
+      <div class="divider"></div>
       <label for="snap-to-grid">
         <input type="checkbox" id="snap-to-grid" />
         Snap to Grid
@@ -225,6 +229,8 @@
       // Set the default node template for creation
       builder.setCreateNodeTemplate(nodeTemplates.ioNode);
 
+      let activeFlowEdgeKey = null;
+
       // Get all tool buttons
       const toolButtons = {
         'tool-select': 'select',
@@ -289,6 +295,117 @@
         console.log('Graph arranged:', result);
       });
 
+      function getGraphSnapshot() {
+        return builder.getGraph();
+      }
+
+      function getRandomItem(items) {
+        if (!items.length) {
+          return null;
+        }
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      function edgeKey(edge) {
+        return `${edge.a.nodeId}:${edge.a.portId}->${edge.b.nodeId}:${edge.b.portId}`;
+      }
+
+      function getRandomEdge() {
+        return getRandomItem(getGraphSnapshot().edges);
+      }
+
+      function getRandomPort() {
+        const ports = getGraphSnapshot().nodes.flatMap(node =>
+          node.ports.map(port => ({ nodeId: node.id, portId: port.id, port }))
+        );
+        return getRandomItem(ports);
+      }
+
+      function setFlowButtonActive(active) {
+        document.getElementById('btn-random-flow').classList.toggle('active', active);
+      }
+
+      document.getElementById('btn-random-flow').addEventListener('click', () => {
+        const edge = getRandomEdge();
+        if (!edge) {
+          console.warn('No edges available for flow effect');
+          return;
+        }
+
+        const target = { a: edge.a, b: edge.b };
+        const key = edgeKey(edge);
+
+        if (activeFlowEdgeKey === key) {
+          builder.effects.edgeDash.stop(target);
+          activeFlowEdgeKey = null;
+          setFlowButtonActive(false);
+          console.log('Stopped edge flow:', key);
+          return;
+        }
+
+        if (activeFlowEdgeKey) {
+          const currentEdge = getGraphSnapshot().edges.find(edge => edgeKey(edge) === activeFlowEdgeKey);
+          if (currentEdge) {
+            builder.effects.edgeDash.stop({ a: currentEdge.a, b: currentEdge.b });
+          }
+        }
+
+        builder.effects.edgeDash.start(target, {
+          speed: 140,
+          dashPattern: [12, 8],
+          color: '#7dd3fc',
+          opacity: 0.95,
+        });
+        activeFlowEdgeKey = key;
+        setFlowButtonActive(true);
+        console.log('Started edge flow:', key);
+      });
+
+      document.getElementById('btn-random-dot').addEventListener('click', () => {
+        const edge = getRandomEdge();
+        if (!edge) {
+          console.warn('No edges available for dot effect');
+          return;
+        }
+
+        builder.effects.edgeDot.trigger(
+          { a: edge.a, b: edge.b },
+          {
+            duration: 0.5,
+            radius: 5,
+            color: '#fde047',
+            animation: {
+              interpolationFunction: 'ease-in-out-cubic',
+            },
+          }
+        );
+
+        console.log('Triggered edge dot:', edgeKey(edge));
+      });
+
+      document.getElementById('btn-random-pulse').addEventListener('click', () => {
+        const portRef = getRandomPort();
+        if (!portRef) {
+          console.warn('No ports available for pulse effect');
+          return;
+        }
+
+        builder.effects.portPulse.trigger(
+          { nodeId: portRef.nodeId, portId: portRef.portId },
+          {
+            duration: 0.4,
+            fromRadius: 10,
+            toRadius: 26,
+            color: portRef.port.type === 'input' ? '#66ccff' : '#f97316',
+            animation: {
+              interpolationFunction: 'ease-out-cubic',
+            },
+          }
+        );
+
+        console.log('Triggered port pulse:', `${portRef.nodeId}:${portRef.portId}`);
+      });
+
       // Attach change handler to snap to grid checkbox
       const snapToGridCheckbox = document.getElementById('snap-to-grid');
       snapToGridCheckbox.addEventListener('change', () => {
@@ -322,6 +439,18 @@
         console.log(`🔧 Tool changed: ${from} → ${to}`);
       });
 
+      builder.on('edgeRemoved', ({ edge }) => {
+        if (activeFlowEdgeKey === edgeKey(edge)) {
+          activeFlowEdgeKey = null;
+          setFlowButtonActive(false);
+        }
+      });
+
+      builder.on('graphLoaded', () => {
+        activeFlowEdgeKey = null;
+        setFlowButtonActive(false);
+      });
+
       // Add some example nodes to the graph
       builder.createNode({ x: 100, y: 100 }, nodeTemplates.output);
       builder.createNode({ x: 400, y: 150 }, nodeTemplates.ioNode);
@@ -331,6 +460,11 @@
       builder.createEdge(
         { nodeId: builder.getGraph().nodes[0].id, portId: 'out-right' },
         { nodeId: builder.getGraph().nodes[1].id, portId: 'in-left-1' }
+      );
+
+      builder.createEdge(
+        { nodeId: builder.getGraph().nodes[1].id, portId: 'out-right-1' },
+        { nodeId: builder.getGraph().nodes[2].id, portId: 'in-left-1' }
       );
 
       // Initial UI update

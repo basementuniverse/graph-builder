@@ -41,6 +41,13 @@ export type PortTheme = {
   portArrowSize: number;
   portArrowColor: string;
   portArrowOffset: number;
+
+  // Port pulse effect
+  portPulseColor: string;
+  portPulseLineWidth: number;
+  portPulseFromRadius: number;
+  portPulseToRadius: number;
+  portPulseMaxOpacity: number;
 };
 
 export type EdgeTheme = {
@@ -61,6 +68,15 @@ export type EdgeTheme = {
   edgePreviewLineWidth: number;
   edgePreviewOutlineColor: string;
   edgePreviewOutlineLineWidth: number;
+
+  // Edge dashed flow effect
+  edgeDashColor: string;
+  edgeDashLineWidth: number;
+
+  // Edge moving dot effect
+  edgeDotColor: string;
+  edgeDotRadius: number;
+  edgeDotOpacity: number;
 };
 
 export type GraphBuilderTheme = {

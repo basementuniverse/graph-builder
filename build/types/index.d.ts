@@ -1,6 +1,7 @@
 export * from './builder';
 export * from './edge';
 export * from './edge-tool';
+export * from './effects';
 export * from './event';
 export * from './graph';
 export * from './layout';

@@ -3,6 +3,7 @@ import { LayeredLayoutDirection } from './enums';
 import {
   ForceDirectedLayoutOptions,
   GraphBuilderCapabilities,
+  GraphBuilderEffectsOptions,
   GraphBuilderTheme,
   LayeredLayoutOptions,
 } from './types';
@@ -88,6 +89,11 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   portArrowSize: 6,
   portArrowColor: '#fff5',
   portArrowOffset: 0.44,
+  portPulseColor: '#66ccff',
+  portPulseLineWidth: 2,
+  portPulseFromRadius: 10,
+  portPulseToRadius: 30,
+  portPulseMaxOpacity: 0.8,
 
   // Edge
   edgeColor: '#fff2',
@@ -104,6 +110,54 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   edgePreviewLineWidth: 3,
   edgePreviewOutlineColor: '#fff3',
   edgePreviewOutlineLineWidth: 10,
+  edgeDashColor: '#7dd3fc',
+  edgeDashLineWidth: 3,
+  edgeDotColor: '#fde047',
+  edgeDotRadius: 4,
+  edgeDotOpacity: 1,
+};
+
+export const DEFAULT_EFFECTS: GraphBuilderEffectsOptions = {
+  enabled: true,
+  timeScale: 1,
+  maxEdgeDotInstances: 200,
+  maxPortPulseInstances: 400,
+  edgeDash: {
+    running: false,
+    speed: 110,
+    dashPattern: [10, 6],
+    lineWidth: 3,
+    color: '#7dd3fc',
+    opacity: 0.9,
+    blendMode: 'source-over',
+    phase: 0,
+  },
+  edgeDot: {
+    running: false,
+    loop: false,
+    speed: 220,
+    duration: 0.5,
+    spawnInterval: 0.2,
+    radius: 4,
+    color: '#fde047',
+    opacity: 1,
+    blendMode: 'source-over',
+    animation: {
+      interpolationFunction: 'linear',
+    },
+  },
+  portPulse: {
+    duration: 0.5,
+    fromRadius: 10,
+    toRadius: 30,
+    lineWidth: 2,
+    color: '#66ccff',
+    maxOpacity: 0.8,
+    blendMode: 'source-over',
+    animation: {
+      interpolationFunction: 'ease-out-cubic',
+    },
+  },
 };
 
 export const DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS: ForceDirectedLayoutOptions =

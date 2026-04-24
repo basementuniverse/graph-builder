@@ -17,6 +17,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./builder"), exports);
 __exportStar(require("./edge"), exports);
 __exportStar(require("./edge-tool"), exports);
+__exportStar(require("./effects"), exports);
 __exportStar(require("./event"), exports);
 __exportStar(require("./graph"), exports);
 __exportStar(require("./layout"), exports);

@@ -30,8 +30,1383 @@ var GraphBuilder = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/@basementuniverse/camera/build/index.js
+  // node_modules/@basementuniverse/animation/build/index.js
   var require_build = __commonJS({
+    "node_modules/@basementuniverse/animation/build/index.js"(exports, module) {
+      (function webpackUniversalModuleDefinition(root, factory) {
+        if (typeof exports === "object" && typeof module === "object")
+          module.exports = factory();
+        else if (typeof define === "function" && define.amd)
+          define([], factory);
+        else {
+          var a = factory();
+          for (var i in a) (typeof exports === "object" ? exports : root)[i] = a[i];
+        }
+      })(self, () => {
+        return (
+          /******/
+          (() => {
+            var __webpack_modules__ = {
+              /***/
+              "./index.ts": (
+                /*!******************!*\
+                  !*** ./index.ts ***!
+                  \******************/
+                /***/
+                ((__unused_webpack_module, exports, __webpack_require__) => {
+                  "use strict";
+                  eval(`{
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.catmullRomPath = exports.bezierPath = exports.EasingFunctions = exports.AnimationTimeline = exports.AnimationTimelineMode = exports.MultiAnimation = exports.Animation = exports.MarkerDirection = exports.RepeatMode = exports.AnimationMode = void 0;
+const utils_1 = __webpack_require__(/*! @basementuniverse/utils */ "./node_modules/@basementuniverse/utils/utils.js");
+const vec_1 = __webpack_require__(/*! @basementuniverse/vec */ "./node_modules/@basementuniverse/vec/vec.js");
+function isNumber(value) {
+    return typeof value === 'number';
+}
+function isVec2(value) {
+    return (typeof value === 'object' &&
+        value !== null &&
+        'x' in value &&
+        'y' in value &&
+        typeof value.x === 'number' &&
+        typeof value.y === 'number');
+}
+function isVec3(value) {
+    return (typeof value === 'object' &&
+        value !== null &&
+        'x' in value &&
+        'y' in value &&
+        'z' in value &&
+        typeof value.x === 'number' &&
+        typeof value.y === 'number' &&
+        typeof value.z === 'number');
+}
+function isColor(value) {
+    return (typeof value === 'object' &&
+        value !== null &&
+        'r' in value &&
+        'g' in value &&
+        'b' in value &&
+        typeof value.r === 'number' &&
+        typeof value.g === 'number' &&
+        typeof value.b === 'number' &&
+        (typeof value.a === 'undefined' || typeof value.a === 'number'));
+}
+// -----------------------------------------------------------------------------
+// Animation options
+// -----------------------------------------------------------------------------
+var AnimationMode;
+(function (AnimationMode) {
+    /**
+     * Animation starts automatically when created
+     */
+    AnimationMode["Auto"] = "auto";
+    /**
+     * Animation starts when triggered manually by calling the \`start\` method
+     */
+    AnimationMode["Trigger"] = "trigger";
+    /**
+     * Animation plays while triggered, and reverses when not triggered
+     */
+    AnimationMode["Hold"] = "hold";
+    /**
+     * Animation is controlled manually by setting the progress
+     */
+    AnimationMode["Manual"] = "manual";
+})(AnimationMode = exports.AnimationMode || (exports.AnimationMode = {}));
+var RepeatMode;
+(function (RepeatMode) {
+    /**
+     * Animation will play once and then stop
+     */
+    RepeatMode["Once"] = "once";
+    /**
+     * Animation will loop indefinitely
+     */
+    RepeatMode["Loop"] = "loop";
+    /**
+     * Animation will play forward and then reverse, repeating indefinitely
+     */
+    RepeatMode["PingPong"] = "pingpong";
+})(RepeatMode = exports.RepeatMode || (exports.RepeatMode = {}));
+var MarkerDirection;
+(function (MarkerDirection) {
+    /**
+     * Marker fires when animation plays forward through it
+     */
+    MarkerDirection["Forward"] = "forward";
+    /**
+     * Marker fires when animation plays backward through it
+     */
+    MarkerDirection["Backward"] = "backward";
+    /**
+     * Marker fires when animation plays through it in either direction
+     */
+    MarkerDirection["Both"] = "both";
+})(MarkerDirection = exports.MarkerDirection || (exports.MarkerDirection = {}));
+// -----------------------------------------------------------------------------
+// Animation class
+// -----------------------------------------------------------------------------
+class Animation {
+    constructor(options) {
+        this.time = 0;
+        this.hasCalledFinishedCallback = false;
+        this.previousProgress = 0;
+        this.firedMarkersThisLoop = new Set();
+        this.firedMarkersGlobal = new Set();
+        this.progress = 0;
+        this.running = false;
+        this.holding = false;
+        this.direction = 1; // 1 = forward, -1 = backward
+        this.repeatCount = 0; // Number of completed repeats
+        this.finished = false;
+        this.options = {
+            ...Animation.DEFAULT_OPTIONS,
+            ...options,
+        };
+        this.interpolationFunction = this.getInterpolationFunction();
+        this.actualValue = options.initialValue;
+        this.direction = 1;
+        this.repeatCount = 0;
+        this.finished = false;
+        if (this.options.mode === AnimationMode.Auto) {
+            this.start();
+        }
+    }
+    getInterpolationFunction() {
+        // A custom interpolation function has been provided, so use this directly
+        if (typeof this.options.interpolationFunction === 'function') {
+            return this.options.interpolationFunction;
+        }
+        // Otherwise, look up the easing function by name (defaulting to 'linear')
+        const easingFunction = (this.options.interpolationFunction
+            ? exports.EasingFunctions[this.options.interpolationFunction]
+            : exports.EasingFunctions.linear) || exports.EasingFunctions.linear;
+        // Return a new interpolation function that uses the easing function
+        return (a, b, i) => {
+            const easedProgress = easingFunction(i, ...(this.options.interpolationFunctionParameters || []));
+            if (isNumber(a) && isNumber(b)) {
+                return (a + (b - a) * easedProgress);
+            }
+            if (isVec2(a) && isVec2(b)) {
+                const vecA = a;
+                const vecB = b;
+                return {
+                    x: vecA.x + (vecB.x - vecA.x) * easedProgress,
+                    y: vecA.y + (vecB.y - vecA.y) * easedProgress,
+                };
+            }
+            if (isVec3(a) && isVec3(b)) {
+                const vecA = a;
+                const vecB = b;
+                return {
+                    x: vecA.x + (vecB.x - vecA.x) * easedProgress,
+                    y: vecA.y + (vecB.y - vecA.y) * easedProgress,
+                    z: vecA.z + (vecB.z - vecA.z) * easedProgress,
+                };
+            }
+            if (isColor(a) && isColor(b)) {
+                const colorA = a;
+                const colorB = b;
+                return {
+                    r: colorA.r + (colorB.r - colorA.r) * easedProgress,
+                    g: colorA.g + (colorB.g - colorA.g) * easedProgress,
+                    b: colorA.b + (colorB.b - colorA.b) * easedProgress,
+                    a: (colorA.a || 1) +
+                        ((colorB.a || 1) - (colorA.a || 1)) * easedProgress,
+                };
+            }
+            throw new Error('Unsupported animatable value type');
+        };
+    }
+    get current() {
+        return this.actualValue;
+    }
+    get markers() {
+        return this.options.markers;
+    }
+    get animationOptions() {
+        return this.options;
+    }
+    checkMarkers() {
+        var _a, _b, _c, _d;
+        if (!this.options.markers || this.options.markers.length === 0) {
+            return;
+        }
+        const duration = Math.max(1e-8, this.options.duration || 1);
+        // Convert marker positions to progress and check for crossings
+        for (let i = 0; i < this.options.markers.length; i++) {
+            const marker = this.options.markers[i];
+            // Calculate marker progress (prefer time over progress)
+            let markerProgress;
+            if (marker.time !== undefined) {
+                markerProgress = (0, utils_1.clamp)(marker.time / duration, 0, 1);
+            }
+            else if (marker.progress !== undefined) {
+                markerProgress = marker.progress;
+            }
+            else {
+                continue; // Skip markers without time or progress
+            }
+            // Check if marker should fire based on global flag
+            if (marker.global && this.firedMarkersGlobal.has(i)) {
+                continue;
+            }
+            // Check if marker should fire based on once flag
+            if (marker.once && this.firedMarkersThisLoop.has(i)) {
+                continue;
+            }
+            // Check direction
+            const direction = marker.direction || MarkerDirection.Both;
+            const crossedForward = this.previousProgress < markerProgress &&
+                this.progress >= markerProgress &&
+                Math.abs(this.progress - markerProgress) < 1e-6;
+            const crossedBackward = this.previousProgress > markerProgress &&
+                this.progress <= markerProgress &&
+                Math.abs(this.progress - markerProgress) < 1e-6;
+            let shouldFire = false;
+            if (direction === MarkerDirection.Both) {
+                shouldFire = crossedForward || crossedBackward;
+            }
+            else if (direction === MarkerDirection.Forward) {
+                shouldFire = crossedForward && this.direction === 1;
+            }
+            else if (direction === MarkerDirection.Backward) {
+                shouldFire = crossedBackward && this.direction === -1;
+            }
+            if (shouldFire) {
+                // Mark as fired
+                if (marker.once) {
+                    this.firedMarkersThisLoop.add(i);
+                }
+                if (marker.global) {
+                    this.firedMarkersGlobal.add(i);
+                }
+                // Fire callback
+                marker.callback(marker);
+                (_b = (_a = this.options).onMarkerReached) === null || _b === void 0 ? void 0 : _b.call(_a, marker);
+            }
+        }
+        // Also check for any markers we might have skipped over due to large dt
+        for (let i = 0; i < this.options.markers.length; i++) {
+            const marker = this.options.markers[i];
+            // Calculate marker progress
+            let markerProgress;
+            if (marker.time !== undefined) {
+                markerProgress = (0, utils_1.clamp)(marker.time / duration, 0, 1);
+            }
+            else if (marker.progress !== undefined) {
+                markerProgress = marker.progress;
+            }
+            else {
+                continue;
+            }
+            // Check if we skipped over this marker
+            const skippedForward = this.previousProgress < markerProgress &&
+                this.progress > markerProgress &&
+                Math.abs(this.progress - markerProgress) >= 1e-6;
+            const skippedBackward = this.previousProgress > markerProgress &&
+                this.progress < markerProgress &&
+                Math.abs(this.progress - markerProgress) >= 1e-6;
+            // Check if marker should fire based on flags
+            if (marker.global && this.firedMarkersGlobal.has(i)) {
+                continue;
+            }
+            if (marker.once && this.firedMarkersThisLoop.has(i)) {
+                continue;
+            }
+            const direction = marker.direction || MarkerDirection.Both;
+            let shouldFire = false;
+            if (direction === MarkerDirection.Both) {
+                shouldFire = skippedForward || skippedBackward;
+            }
+            else if (direction === MarkerDirection.Forward) {
+                shouldFire = skippedForward && this.direction === 1;
+            }
+            else if (direction === MarkerDirection.Backward) {
+                shouldFire = skippedBackward && this.direction === -1;
+            }
+            if (shouldFire) {
+                if (marker.once) {
+                    this.firedMarkersThisLoop.add(i);
+                }
+                if (marker.global) {
+                    this.firedMarkersGlobal.add(i);
+                }
+                marker.callback(marker);
+                (_d = (_c = this.options).onMarkerReached) === null || _d === void 0 ? void 0 : _d.call(_c, marker);
+            }
+        }
+    }
+    start() {
+        this.running = true;
+    }
+    stop() {
+        this.running = false;
+    }
+    reset() {
+        this.time = 0;
+        this.progress = 0;
+        this.previousProgress = 0;
+        this.actualValue = this.options.initialValue;
+        this.running = false;
+        this.repeatCount = 0;
+        this.direction = 1;
+        this.finished = false;
+        this.hasCalledFinishedCallback = false;
+        this.firedMarkersThisLoop.clear();
+        this.firedMarkersGlobal.clear();
+        if (this.options.mode === AnimationMode.Auto) {
+            this.start();
+        }
+    }
+    update(dt) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+        if (![AnimationMode.Hold, AnimationMode.Manual].includes(this.options.mode) &&
+            (!this.running || this.finished)) {
+            return;
+        }
+        // Handle delay
+        const delay = this.options.delay || 0;
+        if (this.time < delay) {
+            this.time += dt;
+            if (this.time < delay) {
+                return;
+            }
+            // If just passed the delay period, adjust dt to only use the leftover
+            dt = this.time - delay;
+            this.time = delay;
+        }
+        // Hold mode: if not running, reverse direction toward 0
+        if (this.options.mode === AnimationMode.Hold) {
+            this.running = true;
+            if (this.holding) {
+                this.direction = 1;
+            }
+            else {
+                this.direction = -1;
+                // If already at 0, do nothing
+                if (this.progress <= 0) {
+                    this.reset();
+                    return;
+                }
+                // Always "run" when returning to 0
+                // (so update continues until progress=0)
+            }
+        }
+        // Calculate effective duration
+        const duration = Math.max(1e-8, this.options.duration || 1);
+        let progressDelta = (dt / duration) * this.direction;
+        // Update progress
+        let newProgress = this.options.mode === AnimationMode.Manual
+            ? this.progress
+            : this.progress + progressDelta;
+        // Handle repeat modes
+        const repeat = this.options.mode === AnimationMode.Hold
+            ? RepeatMode.Once
+            : this.options.repeat || RepeatMode.Once;
+        const repeats = this.options.repeats || 0;
+        let completed = false;
+        if (repeat === RepeatMode.Once) {
+            if (this.direction === 1 && newProgress >= 1) {
+                newProgress = 1;
+                completed = true;
+            }
+            else if (this.direction === -1 && newProgress <= 0) {
+                newProgress = 0;
+                completed = true;
+            }
+        }
+        else if (repeat === RepeatMode.Loop) {
+            if (this.direction === 1 && newProgress >= 1) {
+                this.repeatCount++;
+                this.firedMarkersThisLoop.clear(); // Clear loop markers on repeat
+                (_b = (_a = this.options).onRepeat) === null || _b === void 0 ? void 0 : _b.call(_a, this.repeatCount);
+                if (repeats > 0 && this.repeatCount >= repeats) {
+                    newProgress = 1;
+                    completed = true;
+                }
+                else {
+                    newProgress = newProgress % 1;
+                }
+            }
+            else if (this.direction === -1 && newProgress <= 0) {
+                this.repeatCount++;
+                this.firedMarkersThisLoop.clear(); // Clear loop markers on repeat
+                (_d = (_c = this.options).onRepeat) === null || _d === void 0 ? void 0 : _d.call(_c, this.repeatCount);
+                if (repeats > 0 && this.repeatCount >= repeats) {
+                    newProgress = 0;
+                    completed = true;
+                }
+                else {
+                    newProgress = 1 + (newProgress % 1);
+                }
+            }
+        }
+        else if (repeat === RepeatMode.PingPong) {
+            if (this.direction === 1 && newProgress >= 1) {
+                this.direction = -1;
+                this.repeatCount++;
+                this.firedMarkersThisLoop.clear(); // Clear loop markers on repeat
+                (_f = (_e = this.options).onRepeat) === null || _f === void 0 ? void 0 : _f.call(_e, this.repeatCount);
+                if (repeats > 0 && this.repeatCount >= repeats) {
+                    newProgress = 1;
+                    completed = true;
+                }
+                else {
+                    newProgress = 2 - newProgress; // reflect over 1
+                }
+            }
+            else if (this.direction === -1 && newProgress <= 0) {
+                this.direction = 1;
+                this.repeatCount++;
+                this.firedMarkersThisLoop.clear(); // Clear loop markers on repeat
+                (_h = (_g = this.options).onRepeat) === null || _h === void 0 ? void 0 : _h.call(_g, this.repeatCount);
+                if (repeats > 0 && this.repeatCount >= repeats) {
+                    newProgress = 0;
+                    completed = true;
+                }
+                else {
+                    newProgress = -newProgress; // reflect over 0
+                }
+            }
+        }
+        // Clamp progress if needed
+        if (this.options.clamp !== false) {
+            newProgress = (0, utils_1.clamp)(newProgress, 0, 1);
+        }
+        // Track if we moved away from progress=1 to reset the finished callback flag
+        if (this.progress !== 1 && this.hasCalledFinishedCallback) {
+            this.hasCalledFinishedCallback = false;
+        }
+        this.progress = newProgress;
+        // Check markers
+        this.checkMarkers();
+        // Update previousProgress for next frame
+        this.previousProgress = this.progress;
+        // Compute value (handle stops/keyframes)
+        let value;
+        const stops = this.options.stops;
+        if (stops && stops.length > 0) {
+            // Find the two stops surrounding progress
+            let prev = { progress: 0, value: this.options.initialValue };
+            let next = { progress: 1, value: this.options.targetValue };
+            let reachedStopIndex = -1;
+            for (let i = 0; i < stops.length; i++) {
+                if (stops[i].progress <= this.progress) {
+                    prev = stops[i];
+                    if (Math.abs(stops[i].progress - this.progress) < 1e-6) {
+                        reachedStopIndex = i;
+                    }
+                }
+                if (stops[i].progress >= this.progress) {
+                    next = stops[i];
+                    if (Math.abs(stops[i].progress - this.progress) < 1e-6) {
+                        reachedStopIndex = i;
+                    }
+                    break;
+                }
+            }
+            // Check for stops at exact progress values (0 and 1)
+            if (Math.abs(this.progress - 0) < 1e-6) {
+                const zeroStop = stops.find(s => Math.abs(s.progress - 0) < 1e-6);
+                if (zeroStop)
+                    reachedStopIndex = stops.indexOf(zeroStop);
+            }
+            else if (Math.abs(this.progress - 1) < 1e-6) {
+                const oneStop = stops.find(s => Math.abs(s.progress - 1) < 1e-6);
+                if (oneStop)
+                    reachedStopIndex = stops.indexOf(oneStop);
+            }
+            // Call onStopReached callback if we hit a stop
+            if (reachedStopIndex >= 0) {
+                (_k = (_j = this.options).onStopReached) === null || _k === void 0 ? void 0 : _k.call(_j, reachedStopIndex);
+            }
+            // If progress is before first stop
+            if (this.progress <= prev.progress) {
+                value = prev.value;
+            }
+            else if (this.progress >= next.progress) {
+                value = next.value;
+            }
+            else {
+                // Interpolate between prev and next
+                value = this.interpolationFunction(prev.value, next.value, (this.progress - prev.progress) / (next.progress - prev.progress));
+            }
+        }
+        else {
+            // Simple interpolation between initial and target
+            value = this.interpolationFunction(this.options.initialValue, this.options.targetValue, this.progress);
+        }
+        // Apply easeAmount (exponential smoothing)
+        if (this.options.easeAmount && this.options.easeAmount > 0) {
+            const ease = (0, utils_1.clamp)(this.options.easeAmount, 0, 1);
+            // Blend previous value and new value
+            if (isNumber(value) && isNumber(this.actualValue)) {
+                value = ((1 - ease) * value + ease * this.actualValue);
+            }
+            else if (isVec2(value) && isVec2(this.actualValue)) {
+                value = {
+                    x: (1 - ease) * value.x + ease * this.actualValue.x,
+                    y: (1 - ease) * value.y + ease * this.actualValue.y,
+                };
+            }
+            else if (isVec3(value) && isVec3(this.actualValue)) {
+                value = {
+                    x: (1 - ease) * value.x + ease * this.actualValue.x,
+                    y: (1 - ease) * value.y + ease * this.actualValue.y,
+                    z: (1 - ease) * value.z + ease * this.actualValue.z,
+                };
+            }
+            else if (isColor(value) && isColor(this.actualValue)) {
+                value = {
+                    r: (1 - ease) * value.r + ease * this.actualValue.r,
+                    g: (1 - ease) * value.g + ease * this.actualValue.g,
+                    b: (1 - ease) * value.b + ease * this.actualValue.b,
+                    a: (1 - ease) * ((_l = value.a) !== null && _l !== void 0 ? _l : 1) +
+                        ease * ((_m = this.actualValue.a) !== null && _m !== void 0 ? _m : 1),
+                };
+            }
+        }
+        // Apply rounding if needed
+        if (this.options.round) {
+            if (typeof this.options.round === 'function') {
+                value = this.options.round(value);
+            }
+            else if (this.options.round === true) {
+                if (isNumber(value)) {
+                    value = Math.round(value);
+                }
+                else if (isVec2(value)) {
+                    value = vec_1.vec2.map(value, Math.round);
+                }
+                else if (isVec3(value)) {
+                    value = vec_1.vec3.map(value, Math.round);
+                }
+                else if (isColor(value)) {
+                    value = {
+                        r: Math.round(value.r),
+                        g: Math.round(value.g),
+                        b: Math.round(value.b),
+                        a: value.a !== undefined ? Math.round(value.a) : undefined,
+                    };
+                }
+            }
+        }
+        this.actualValue = value;
+        // If animation is completed, stop it
+        if (completed) {
+            this.running = false;
+            this.finished = true;
+            if (!this.hasCalledFinishedCallback) {
+                (_p = (_o = this.options).onFinished) === null || _p === void 0 ? void 0 : _p.call(_o);
+                this.hasCalledFinishedCallback = true;
+            }
+        }
+    }
+}
+exports.Animation = Animation;
+Animation.DEFAULT_OPTIONS = {
+    mode: AnimationMode.Auto,
+    repeat: RepeatMode.Once,
+    repeats: 0,
+    duration: 1,
+    delay: 0,
+    clamp: true,
+    round: false,
+    easeAmount: 0,
+    interpolationFunction: 'linear',
+    interpolationFunctionParameters: [],
+};
+// -----------------------------------------------------------------------------
+// MultiAnimation class
+// -----------------------------------------------------------------------------
+class MultiAnimation {
+    get holding() {
+        return Object.values(this.animations).some(animation => animation === null || animation === void 0 ? void 0 : animation.holding);
+    }
+    set holding(value) {
+        for (const key in this.animations) {
+            if (this.animations[key]) {
+                this.animations[key].holding = value;
+            }
+        }
+    }
+    set progress(value) {
+        for (const key in this.animations) {
+            if (this.animations[key]) {
+                this.animations[key].progress = value;
+            }
+        }
+        this.updateCurrent();
+    }
+    constructor(options) {
+        this.animations = {};
+        this._current = {};
+        const { _default, ...rest } = options;
+        const restTyped = rest;
+        for (const key in restTyped) {
+            if (Object.prototype.hasOwnProperty.call(restTyped, key)) {
+                this.animations[key] = new Animation({
+                    ...(_default || {}),
+                    ...restTyped[key],
+                });
+            }
+        }
+        this.updateCurrent();
+    }
+    updateCurrent() {
+        for (const key in this.animations) {
+            if (this.animations[key]) {
+                this._current[key] = this.animations[key].current;
+            }
+        }
+    }
+    get current() {
+        this.updateCurrent();
+        return this._current;
+    }
+    start() {
+        var _a;
+        for (const key in this.animations) {
+            (_a = this.animations[key]) === null || _a === void 0 ? void 0 : _a.start();
+        }
+    }
+    stop() {
+        var _a;
+        for (const key in this.animations) {
+            (_a = this.animations[key]) === null || _a === void 0 ? void 0 : _a.stop();
+        }
+    }
+    reset() {
+        var _a;
+        for (const key in this.animations) {
+            (_a = this.animations[key]) === null || _a === void 0 ? void 0 : _a.reset();
+        }
+        this.updateCurrent();
+    }
+    update(dt) {
+        var _a;
+        for (const key in this.animations) {
+            (_a = this.animations[key]) === null || _a === void 0 ? void 0 : _a.update(dt);
+        }
+        this.updateCurrent();
+    }
+}
+exports.MultiAnimation = MultiAnimation;
+// -----------------------------------------------------------------------------
+// AnimationTimeline types & options
+// -----------------------------------------------------------------------------
+var AnimationTimelineMode;
+(function (AnimationTimelineMode) {
+    /**
+     * Timeline starts automatically when created
+     */
+    AnimationTimelineMode["Auto"] = "auto";
+    /**
+     * Timeline starts when triggered manually by calling the \`start\` method
+     */
+    AnimationTimelineMode["Trigger"] = "trigger";
+    /**
+     * Timeline is controlled manually by setting the progress or globalTime
+     */
+    AnimationTimelineMode["Manual"] = "manual";
+})(AnimationTimelineMode = exports.AnimationTimelineMode || (exports.AnimationTimelineMode = {}));
+// -----------------------------------------------------------------------------
+// AnimationTimeline class
+// -----------------------------------------------------------------------------
+class AnimationTimeline {
+    constructor(options = {}) {
+        this.tracks = [];
+        this.activeTrackIndices = new Set();
+        this.hasCalledFinishedCallback = false;
+        this.globalTime = 0;
+        this.running = false;
+        this.finished = false;
+        this.options = {
+            ...AnimationTimeline.DEFAULT_OPTIONS,
+            ...options,
+        };
+        if (this.options.mode === AnimationTimelineMode.Auto) {
+            this.start();
+        }
+    }
+    /**
+     * Get the total duration of the timeline
+     */
+    get duration() {
+        var _a, _b, _c;
+        if (this.options.durationMode === 'relative' && this.options.duration) {
+            return this.options.duration;
+        }
+        // Calculate duration from tracks in absolute mode
+        let maxEnd = 0;
+        for (const track of this.tracks) {
+            const animDuration = (_b = (_a = track.animation.options) === null || _a === void 0 ? void 0 : _a.duration) !== null && _b !== void 0 ? _b : 0;
+            const end = (_c = track.end) !== null && _c !== void 0 ? _c : track.start + animDuration;
+            maxEnd = Math.max(maxEnd, end);
+        }
+        return maxEnd;
+    }
+    /**
+     * Get normalized progress (0-1)
+     */
+    get progress() {
+        const duration = this.duration;
+        return duration > 0 ? (0, utils_1.clamp)(this.globalTime / duration, 0, 1) : 0;
+    }
+    /**
+     * Set normalized progress (0-1)
+     */
+    set progress(value) {
+        this.globalTime = value * this.duration;
+        this.updateTracksAtTime(0); // Update with dt=0 to recompute values
+    }
+    /**
+     * Add an animation track to the timeline
+     */
+    addAnimation(animation, start, end, label) {
+        this.tracks.push({
+            animation,
+            label,
+            start,
+            end,
+        });
+    }
+    /**
+     * Add a multi-animation track to the timeline
+     */
+    addMultiAnimation(animation, start, end, label) {
+        this.tracks.push({
+            animation,
+            label,
+            start,
+            end,
+        });
+    }
+    /**
+     * Get all tracks with a specific label
+     */
+    getTracksByLabel(label) {
+        return this.tracks.filter(track => track.label === label);
+    }
+    /**
+     * Get current values from all active tracks
+     */
+    get current() {
+        const result = {};
+        for (const index of this.activeTrackIndices) {
+            const track = this.tracks[index];
+            if (track.label) {
+                result[track.label] = track.animation.current;
+            }
+        }
+        return result;
+    }
+    start() {
+        this.running = true;
+    }
+    stop() {
+        this.running = false;
+    }
+    reset() {
+        this.globalTime = 0;
+        this.running = false;
+        this.finished = false;
+        this.hasCalledFinishedCallback = false;
+        this.activeTrackIndices.clear();
+        // Reset all tracks
+        for (const track of this.tracks) {
+            track.animation.reset();
+            track.animation.stop();
+        }
+        if (this.options.mode === AnimationTimelineMode.Auto) {
+            this.start();
+        }
+    }
+    /**
+     * Seek to a specific time in the timeline
+     */
+    seek(time) {
+        const previousTime = this.globalTime;
+        this.globalTime = time;
+        // Reset all tracks and replay up to this point
+        for (const track of this.tracks) {
+            track.animation.reset();
+            track.animation.stop();
+        }
+        this.activeTrackIndices.clear();
+        // Update to current time
+        this.updateTracksAtTime(time - previousTime);
+    }
+    /**
+     * Seek to a normalized progress value (0-1)
+     */
+    seekToProgress(progress) {
+        this.seek(progress * this.duration);
+    }
+    updateTracksAtTime(dt) {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        const duration = this.duration;
+        const durationMode = this.options.durationMode || 'absolute';
+        for (let i = 0; i < this.tracks.length; i++) {
+            const track = this.tracks[i];
+            // Convert track times based on mode
+            let trackStart;
+            let trackEnd;
+            if (durationMode === 'relative') {
+                trackStart = track.start * duration;
+                trackEnd =
+                    track.end !== undefined
+                        ? track.end * duration
+                        : trackStart + ((_b = (_a = track.animation.options) === null || _a === void 0 ? void 0 : _a.duration) !== null && _b !== void 0 ? _b : 0);
+            }
+            else {
+                trackStart = track.start;
+                trackEnd =
+                    track.end !== undefined
+                        ? track.end
+                        : trackStart + ((_d = (_c = track.animation.options) === null || _c === void 0 ? void 0 : _c.duration) !== null && _d !== void 0 ? _d : 0);
+            }
+            const wasActive = this.activeTrackIndices.has(i);
+            const isActive = this.globalTime >= trackStart && this.globalTime <= trackEnd;
+            // Track started
+            if (isActive && !wasActive) {
+                this.activeTrackIndices.add(i);
+                track.animation.reset();
+                // Set up marker callback forwarding if this is an Animation
+                if (track.animation instanceof Animation) {
+                    const animation = track.animation;
+                    const originalOnMarkerReached = animation.animationOptions.onMarkerReached;
+                    // Wrap the onMarkerReached callback to also notify timeline
+                    animation.animationOptions.onMarkerReached = (marker) => {
+                        var _a, _b;
+                        originalOnMarkerReached === null || originalOnMarkerReached === void 0 ? void 0 : originalOnMarkerReached(marker);
+                        (_b = (_a = this.options).onMarkerReached) === null || _b === void 0 ? void 0 : _b.call(_a, marker, track);
+                    };
+                }
+                track.animation.start();
+                (_f = (_e = this.options).onTrackStart) === null || _f === void 0 ? void 0 : _f.call(_e, track);
+            }
+            // Track ended
+            if (!isActive && wasActive) {
+                this.activeTrackIndices.delete(i);
+                track.animation.stop();
+                (_h = (_g = this.options).onTrackEnd) === null || _h === void 0 ? void 0 : _h.call(_g, track);
+            }
+            // Update active track
+            if (isActive) {
+                track.animation.update(dt);
+            }
+        }
+    }
+    update(dt) {
+        var _a, _b;
+        if (this.options.mode !== AnimationTimelineMode.Manual && !this.running) {
+            return;
+        }
+        if (this.options.mode === AnimationTimelineMode.Manual) {
+            // In manual mode, just update tracks at current time
+            this.updateTracksAtTime(0);
+            return;
+        }
+        this.globalTime += dt;
+        // Update all active tracks
+        this.updateTracksAtTime(dt);
+        // Check if timeline finished
+        const duration = this.duration;
+        if (this.globalTime >= duration && !this.hasCalledFinishedCallback) {
+            this.running = false;
+            this.finished = true;
+            this.hasCalledFinishedCallback = true;
+            (_b = (_a = this.options).onFinished) === null || _b === void 0 ? void 0 : _b.call(_a);
+        }
+        // Reset finished flag if we move away from the end
+        if (this.globalTime < duration && this.hasCalledFinishedCallback) {
+            this.hasCalledFinishedCallback = false;
+            this.finished = false;
+        }
+    }
+}
+exports.AnimationTimeline = AnimationTimeline;
+AnimationTimeline.DEFAULT_OPTIONS = {
+    mode: AnimationTimelineMode.Auto,
+    durationMode: 'absolute',
+};
+// -----------------------------------------------------------------------------
+// Built-in easing functions
+// -----------------------------------------------------------------------------
+exports.EasingFunctions = {
+    linear: t => t,
+    'ease-in-quad': t => t * t,
+    'ease-out-quad': t => t * (2 - t),
+    'ease-in-out-quad': t => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
+    'ease-in-cubic': t => t * t * t,
+    'ease-out-cubic': t => --t * t * t + 1,
+    'ease-in-out-cubic': t => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+    'ease-in-quart': t => t * t * t * t,
+    'ease-out-quart': t => 1 - --t * t * t * t,
+    'ease-in-out-quart': t => t < 0.5 ? 8 * t * t * t * t : 1 - 8 * --t * t * t * t,
+    'ease-in-quint': t => t * t * t * t * t,
+    'ease-out-quint': t => 1 + --t * t * t * t * t,
+    'ease-in-out-quint': t => t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t,
+    'ease-in-sine': t => 1 - Math.cos((t * Math.PI) / 2),
+    'ease-out-sine': t => Math.sin((t * Math.PI) / 2),
+    'ease-in-out-sine': t => -(Math.cos(Math.PI * t) - 1) / 2,
+    'ease-in-expo': t => (t === 0 ? 0 : Math.pow(2, 10 * (t - 1))),
+    'ease-out-expo': t => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
+    'ease-in-out-expo': t => t === 0
+        ? 0
+        : t === 1
+            ? 1
+            : t < 0.5
+                ? Math.pow(2, 20 * t - 10) / 2
+                : (2 - Math.pow(2, -20 * t + 10)) / 2,
+    'ease-in-circ': t => 1 - Math.sqrt(1 - t * t),
+    'ease-out-circ': t => Math.sqrt(1 - --t * t),
+    'ease-in-out-circ': t => t < 0.5
+        ? (1 - Math.sqrt(1 - 4 * t * t)) / 2
+        : (Math.sqrt(1 - (2 * t - 2) * (2 * t - 2)) + 1) / 2,
+    'ease-in-back': (t, magnitude = 1.70158) => t * t * ((magnitude + 1) * t - magnitude),
+    'ease-out-back': (t, magnitude = 1.70158) => --t * t * ((magnitude + 1) * t + magnitude) + 1,
+    'ease-in-out-back': (t, magnitude = 1.70158) => {
+        const scaledTime = t * 2;
+        const scaledTime2 = scaledTime - 2;
+        const s = magnitude * 1.525;
+        if (scaledTime < 1) {
+            return 0.5 * scaledTime * scaledTime * ((s + 1) * scaledTime - s);
+        }
+        return 0.5 * (scaledTime2 * scaledTime2 * ((s + 1) * scaledTime2 + s) + 2);
+    },
+    'ease-in-elastic': (t, magnitude = 1, period = 0.3) => {
+        if (t === 0)
+            return 0;
+        if (t === 1)
+            return 1;
+        let s;
+        if (magnitude < 1) {
+            magnitude = 1;
+            s = period / 4;
+        }
+        else {
+            s = (period / (2 * Math.PI)) * Math.asin(1 / magnitude);
+        }
+        return -(magnitude *
+            Math.pow(2, 10 * (t - 1)) *
+            Math.sin(((t - 1 - s) * (2 * Math.PI)) / period));
+    },
+    'ease-out-elastic': (t, magnitude = 1, period = 0.3) => {
+        if (t === 0)
+            return 0;
+        if (t === 1)
+            return 1;
+        let s;
+        if (magnitude < 1) {
+            magnitude = 1;
+            s = period / 4;
+        }
+        else {
+            s = (period / (2 * Math.PI)) * Math.asin(1 / magnitude);
+        }
+        return (magnitude *
+            Math.pow(2, -10 * t) *
+            Math.sin(((t - s) * (2 * Math.PI)) / period) +
+            1);
+    },
+    'ease-in-out-elastic': (t, magnitude = 1, period = 0.45) => {
+        if (t === 0)
+            return 0;
+        if (t === 1)
+            return 1;
+        let s;
+        if (magnitude < 1) {
+            magnitude = 1;
+            s = period / 4;
+        }
+        else {
+            s = (period / (2 * Math.PI)) * Math.asin(1 / magnitude);
+        }
+        const scaledTime = t * 2;
+        if (scaledTime < 1) {
+            return (-0.5 *
+                (magnitude *
+                    Math.pow(2, 10 * (scaledTime - 1)) *
+                    Math.sin(((scaledTime - 1 - s) * (2 * Math.PI)) / period)));
+        }
+        return (magnitude *
+            Math.pow(2, -10 * (scaledTime - 1)) *
+            Math.sin(((scaledTime - 1 - s) * (2 * Math.PI)) / period) *
+            0.5 +
+            1);
+    },
+    'ease-in-bounce': (t, bounces = 4, decay = 2) => 1 - bounceOut(1 - t, bounces, decay),
+    'ease-out-bounce': (t, bounces = 4, decay = 2) => bounceOut(t, bounces, decay),
+    'ease-in-out-bounce': (t, bounces = 4, decay = 2) => t < 0.5
+        ? (1 - bounceOut(1 - 2 * t, bounces, decay)) * 0.5
+        : bounceOut(2 * t - 1, bounces, decay) * 0.5 + 0.5,
+};
+function bounceOut(t, bounces = 4, decay = 2) {
+    const pow = Math.pow(1 - t, decay);
+    return 1 - Math.abs(Math.cos(t * Math.PI * bounces)) * pow;
+}
+/**
+ * Helper function to transform points based on relative mode
+ */
+function transformPoints(points, start, end, relative) {
+    if (relative === 'none') {
+        return points;
+    }
+    if (relative === 'start') {
+        // Points are offsets from start
+        const isVec2Type = isVec2(start);
+        return points.map(p => {
+            if (isVec2Type && isVec2(p)) {
+                return { x: start.x + p.x, y: start.y + p.y };
+            }
+            else if (isVec3(p) && isVec3(start)) {
+                return { x: start.x + p.x, y: start.y + p.y, z: start.z + p.z };
+            }
+            return p;
+        });
+    }
+    if (relative === 'start-end') {
+        // Points are in normalized 0-1 space, scaled between start and end
+        const isVec2Type = isVec2(start);
+        return points.map(p => {
+            if (isVec2Type && isVec2(p) && isVec2(end)) {
+                return {
+                    x: start.x + p.x * (end.x - start.x),
+                    y: start.y + p.y * (end.y - start.y),
+                };
+            }
+            else if (isVec3(p) && isVec3(start) && isVec3(end)) {
+                return {
+                    x: start.x + p.x * (end.x - start.x),
+                    y: start.y + p.y * (end.y - start.y),
+                    z: start.z + p.z * (end.z - start.z),
+                };
+            }
+            return p;
+        });
+    }
+    return points;
+}
+/**
+ * Evaluate a Bezier curve at parameter t
+ */
+function evaluateBezier(controlPoints, t, order) {
+    if (controlPoints.length !== order + 1) {
+        throw new Error(\`Bezier curve of order \${order} requires \${order + 1} control points, but \${controlPoints.length} were provided\`);
+    }
+    const isVec2Type = isVec2(controlPoints[0]);
+    if (order === 1) {
+        // Linear Bezier
+        const p0 = controlPoints[0];
+        const p1 = controlPoints[1];
+        if (isVec2Type && isVec2(p0) && isVec2(p1)) {
+            return {
+                x: (1 - t) * p0.x + t * p1.x,
+                y: (1 - t) * p0.y + t * p1.y,
+            };
+        }
+        else if (isVec3(p0) && isVec3(p1)) {
+            return {
+                x: (1 - t) * p0.x + t * p1.x,
+                y: (1 - t) * p0.y + t * p1.y,
+                z: (1 - t) * p0.z + t * p1.z,
+            };
+        }
+    }
+    if (order === 2) {
+        // Quadratic Bezier
+        const p0 = controlPoints[0];
+        const p1 = controlPoints[1];
+        const p2 = controlPoints[2];
+        const t2 = t * t;
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        if (isVec2Type && isVec2(p0) && isVec2(p1) && isVec2(p2)) {
+            return {
+                x: mt2 * p0.x + 2 * mt * t * p1.x + t2 * p2.x,
+                y: mt2 * p0.y + 2 * mt * t * p1.y + t2 * p2.y,
+            };
+        }
+        else if (isVec3(p0) && isVec3(p1) && isVec3(p2)) {
+            return {
+                x: mt2 * p0.x + 2 * mt * t * p1.x + t2 * p2.x,
+                y: mt2 * p0.y + 2 * mt * t * p1.y + t2 * p2.y,
+                z: mt2 * p0.z + 2 * mt * t * p1.z + t2 * p2.z,
+            };
+        }
+    }
+    if (order === 3) {
+        // Cubic Bezier
+        const p0 = controlPoints[0];
+        const p1 = controlPoints[1];
+        const p2 = controlPoints[2];
+        const p3 = controlPoints[3];
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        const mt3 = mt2 * mt;
+        if (isVec2Type && isVec2(p0) && isVec2(p1) && isVec2(p2) && isVec2(p3)) {
+            return {
+                x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+                y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y,
+            };
+        }
+        else if (isVec3(p0) && isVec3(p1) && isVec3(p2) && isVec3(p3)) {
+            return {
+                x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+                y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y,
+                z: mt3 * p0.z + 3 * mt2 * t * p1.z + 3 * mt * t2 * p2.z + t3 * p3.z,
+            };
+        }
+    }
+    throw new Error('Unsupported Bezier order or vector type');
+}
+/**
+ * Evaluate Catmull-Rom basis functions
+ */
+function catmullRomBasis(t, tension) {
+    const t2 = t * t;
+    const t3 = t2 * t;
+    return [
+        -tension * t3 + 2 * tension * t2 - tension * t,
+        (2 - tension) * t3 + (tension - 3) * t2 + 1,
+        (tension - 2) * t3 + (3 - 2 * tension) * t2 + tension * t,
+        tension * t3 - tension * t2,
+    ];
+}
+/**
+ * Evaluate a Catmull-Rom spline segment at parameter t
+ */
+function evaluateCatmullRomSegment(p0, p1, p2, p3, t, tension) {
+    const basis = catmullRomBasis(t, tension);
+    const isVec2Type = isVec2(p0);
+    if (isVec2Type && isVec2(p0) && isVec2(p1) && isVec2(p2) && isVec2(p3)) {
+        return {
+            x: basis[0] * p0.x + basis[1] * p1.x + basis[2] * p2.x + basis[3] * p3.x,
+            y: basis[0] * p0.y + basis[1] * p1.y + basis[2] * p2.y + basis[3] * p3.y,
+        };
+    }
+    else if (isVec3(p0) && isVec3(p1) && isVec3(p2) && isVec3(p3)) {
+        return {
+            x: basis[0] * p0.x + basis[1] * p1.x + basis[2] * p2.x + basis[3] * p3.x,
+            y: basis[0] * p0.y + basis[1] * p1.y + basis[2] * p2.y + basis[3] * p3.y,
+            z: basis[0] * p0.z + basis[1] * p1.z + basis[2] * p2.z + basis[3] * p3.z,
+        };
+    }
+    throw new Error('Unsupported vector type for Catmull-Rom spline');
+}
+/**
+ * Create a Bezier path interpolation function
+ *
+ * @param options Bezier path options
+ * @returns An interpolation function that evaluates the Bezier curve
+ *
+ * @example
+ * \`\`\`typescript
+ * const animation = new Animation({
+ *   initialValue: { x: 0, y: 0 },
+ *   targetValue: { x: 100, y: 100 },
+ *   duration: 2,
+ *   interpolationFunction: bezierPath({
+ *     points: [
+ *       { x: 0.25, y: 0.8 },
+ *       { x: 0.75, y: 0.2 }
+ *     ],
+ *     order: 3,
+ *     relative: 'start-end'
+ *   })
+ * });
+ * \`\`\`
+ */
+function bezierPath(options) {
+    const { points, order, relative = 'none', useAnimationEndpoints = true, } = options;
+    return (a, b, t) => {
+        // Throw error if trying to use with scalar values
+        if (isNumber(a) || isNumber(b)) {
+            throw new Error('bezierPath interpolation function cannot be used with scalar number values. Use vec2 or vec3 instead.');
+        }
+        // Transform points based on relative mode
+        const transformedPoints = transformPoints(points, a, b, relative);
+        // Build control points array
+        let controlPoints;
+        if (useAnimationEndpoints) {
+            // Use animation start/end as first/last control points
+            controlPoints = [a, ...transformedPoints, b];
+        }
+        else {
+            // Use all points from the array
+            controlPoints = transformedPoints;
+        }
+        // Evaluate Bezier curve
+        return evaluateBezier(controlPoints, t, order);
+    };
+}
+exports.bezierPath = bezierPath;
+/**
+ * Create a Catmull-Rom spline interpolation function
+ *
+ * @param options Catmull-Rom spline options
+ * @returns An interpolation function that evaluates the Catmull-Rom spline
+ *
+ * @example
+ * \`\`\`typescript
+ * const animation = new Animation({
+ *   initialValue: { x: 0, y: 0 },
+ *   targetValue: { x: 100, y: 100 },
+ *   duration: 2,
+ *   interpolationFunction: catmullRomPath({
+ *     points: [
+ *       { x: 25, y: 80 },
+ *       { x: 75, y: 20 }
+ *     ],
+ *     tension: 0.5,
+ *     relative: 'none'
+ *   })
+ * });
+ * \`\`\`
+ */
+function catmullRomPath(options) {
+    const { points, tension = 0.5, relative = 'none', useAnimationEndpoints = true, } = options;
+    return (a, b, t) => {
+        // Throw error if trying to use with scalar values
+        if (isNumber(a) || isNumber(b)) {
+            throw new Error('catmullRomPath interpolation function cannot be used with scalar number values. Use vec2 or vec3 instead.');
+        }
+        // Transform points based on relative mode
+        const transformedPoints = transformPoints(points, a, b, relative);
+        // Build control points array
+        let allPoints;
+        if (useAnimationEndpoints) {
+            allPoints = [a, ...transformedPoints, b];
+        }
+        else {
+            allPoints = transformedPoints;
+        }
+        // Need at least 2 points for a Catmull-Rom spline
+        if (allPoints.length < 2) {
+            throw new Error('Catmull-Rom spline requires at least 2 control points');
+        }
+        // For a single segment (2 points), just do linear interpolation
+        if (allPoints.length === 2) {
+            const p0 = allPoints[0];
+            const p1 = allPoints[1];
+            const isVec2Type = isVec2(p0);
+            if (isVec2Type && isVec2(p0) && isVec2(p1)) {
+                return {
+                    x: p0.x + (p1.x - p0.x) * t,
+                    y: p0.y + (p1.y - p0.y) * t,
+                };
+            }
+            else if (isVec3(p0) && isVec3(p1)) {
+                return {
+                    x: p0.x + (p1.x - p0.x) * t,
+                    y: p0.y + (p1.y - p0.y) * t,
+                    z: p0.z + (p1.z - p0.z) * t,
+                };
+            }
+        }
+        // For Catmull-Rom, we need to find which segment we're in
+        // The spline passes through all interior points
+        const numSegments = allPoints.length - 1;
+        const segmentIndex = Math.min(Math.floor(t * numSegments), numSegments - 1);
+        const segmentT = t * numSegments - segmentIndex;
+        // Get the 4 control points for this segment
+        // p0 and p3 are for computing tangents, p1 and p2 are the segment endpoints
+        const p1 = allPoints[segmentIndex];
+        const p2 = allPoints[segmentIndex + 1];
+        // For p0, use previous point or extrapolate
+        const p0 = segmentIndex > 0
+            ? allPoints[segmentIndex - 1]
+            : extrapolatePoint(p1, p2, -1);
+        // For p3, use next point or extrapolate
+        const p3 = segmentIndex < numSegments - 1
+            ? allPoints[segmentIndex + 2]
+            : extrapolatePoint(p1, p2, 2);
+        return evaluateCatmullRomSegment(p0, p1, p2, p3, segmentT, tension);
+    };
+}
+exports.catmullRomPath = catmullRomPath;
+/**
+ * Extrapolate a point beyond two given points
+ */
+function extrapolatePoint(p1, p2, factor) {
+    const isVec2Type = isVec2(p1);
+    if (isVec2Type && isVec2(p1) && isVec2(p2)) {
+        return {
+            x: p1.x + (p2.x - p1.x) * factor,
+            y: p1.y + (p2.y - p1.y) * factor,
+        };
+    }
+    else if (isVec3(p1) && isVec3(p2)) {
+        return {
+            x: p1.x + (p2.x - p1.x) * factor,
+            y: p1.y + (p2.y - p1.y) * factor,
+            z: p1.z + (p2.z - p1.z) * factor,
+        };
+    }
+    throw new Error('Unsupported vector type for extrapolation');
+}
+
+
+//# sourceURL=webpack://@basementuniverse/animation/./index.ts?
+}`);
+                })
+              ),
+              /***/
+              "./node_modules/@basementuniverse/utils/utils.js": (
+                /*!*******************************************************!*\
+                  !*** ./node_modules/@basementuniverse/utils/utils.js ***!
+                  \*******************************************************/
+                /***/
+                ((module) => {
+                  eval('{/**\n * @overview A library of useful functions\n * @author Gordon Larrigan\n */\n\n/**\n * Memoize a function\n * @param {Function} f The function to memoize\n * @returns {Function} A memoized version of the function\n */\nconst memoize = f => {\n  var cache = {};\n  return function(...args) {\n    return cache[args] ?? (cache[args] = f.apply(this, args));\n  };\n};\n\n/**\n * Check if two numbers are approximately equal\n * @param {number} a Number a\n * @param {number} b Number b\n * @param {number} [p=Number.EPSILON] The precision value\n * @return {boolean} True if numbers a and b are approximately equal\n */\nconst floatEquals = (a, b, p = Number.EPSILON) => Math.abs(a - b) < p;\n\n/**\n * Clamp a number between min and max\n * @param {number} a The number to clamp\n * @param {number} [min=0] The minimum value\n * @param {number} [max=1] The maximum value\n * @return {number} A clamped number\n */\nconst clamp = (a, min = 0, max = 1) => a < min ? min : (a > max ? max : a);\n\n/**\n * Get the fractional part of a number\n * @param {number} a The number from which to get the fractional part\n * @return {number} The fractional part of the number\n */\nconst frac = a => a >= 0 ? a - Math.floor(a) : a - Math.ceil(a);\n\n/**\n * Round n to d decimal places\n * @param {number} n The number to round\n * @param {number} [d=0] The number of decimal places to round to\n * @return {number} A rounded number\n */\nconst round = (n, d = 0) => {\n  const p = Math.pow(10, d);\n  return Math.round(n * p + Number.EPSILON) / p;\n}\n\n/**\n * Do a linear interpolation between a and b\n * @param {number} a The minimum number\n * @param {number} b The maximum number\n * @param {number} i The interpolation value, should be in the interval [0, 1]\n * @return {number} An interpolated value in the interval [a, b]\n */\nconst lerp = (a, b, i) => a + (b - a) * i;\n\n/**\n * Get the position of i between a and b\n * @param {number} a The minimum number\n * @param {number} b The maximum number\n * @param {number} i The interpolated value in the interval [a, b]\n * @return {number} The position of i between a and b\n */\nconst unlerp = (a, b, i) => (i - a) / (b - a);\n\n/**\n * Do a bilinear interpolation\n * @param {number} c00 Top-left value\n * @param {number} c10 Top-right value\n * @param {number} c01 Bottom-left value\n * @param {number} c11 Bottom-right value\n * @param {number} ix Interpolation value along x\n * @param {number} iy Interpolation value along y\n * @return {number} A bilinear interpolated value\n */\nconst blerp = (c00, c10, c01, c11, ix, iy) => lerp(lerp(c00, c10, ix), lerp(c01, c11, ix), iy);\n\n/**\n * Re-map a number i from range a1...a2 to b1...b2\n * @param {number} i The number to re-map\n * @param {number} a1\n * @param {number} a2\n * @param {number} b1\n * @param {number} b2\n * @return {number}\n */\nconst remap = (i, a1, a2, b1, b2) => b1 + (i - a1) * (b2 - b1) / (a2 - a1);\n\n/**\n * Do a smooth interpolation between a and b\n * @param {number} a The minimum number\n * @param {number} b The maximum number\n * @param {number} i The interpolation value\n * @return {number} An interpolated value in the interval [a, b]\n */\nconst smoothstep = (a, b, i) => lerp(a, b, 3 * Math.pow(i, 2) - 2 * Math.pow(i, 3));\n\n/**\n * Get an angle in radians\n * @param {number} degrees The angle in degrees\n * @return {number} The angle in radians\n */\nconst radians = degrees => (Math.PI / 180) * degrees;\n\n/**\n * Get an angle in degrees\n * @param {number} radians The angle in radians\n * @return {number} The angle in degrees\n */\nconst degrees = radians => (180 / Math.PI) * radians;\n\n/**\n * Get a random float in the interval [min, max)\n * @param {number} min Inclusive min\n * @param {number} max Exclusive max\n * @return {number} A random float in the interval [min, max)\n */\nconst randomBetween = (min, max) => Math.random() * (max - min) + min;\n\n/**\n * Get a random integer in the interval [min, max]\n * @param {number} min Inclusive min\n * @param {number} max Inclusive max\n * @return {number} A random integer in the interval [min, max]\n */\nconst randomIntBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;\n\n/**\n * Get a normally-distributed random number\n * @param {number} [mu=0.5] The mean value\n * @param {number} [sigma=0.5] The standard deviation\n * @param {number} [samples=2] The number of samples\n * @return {number} A normally-distributed random number\n */\nconst cltRandom = (mu = 0.5, sigma = 0.5, samples = 2) => {\n  let total = 0;\n  for (let i = samples; i--;) {\n    total += Math.random();\n  }\n  return mu + (total - samples / 2) / (samples / 2) * sigma;\n};\n\n/**\n * Get a normally-distributed random integer in the interval [min, max]\n * @param {number} min Inclusive min\n * @param {number} max Inclusive max\n * @return {number} A normally-distributed random integer\n */\nconst cltRandomInt = (min, max) => Math.floor(min + cltRandom(0.5, 0.5, 2) * (max + 1 - min));\n\n/**\n * Return a weighted random integer\n * @param {Array<number>} w An array of weights\n * @return {number} An index from w\n */\nconst weightedRandom = w => {\n  let total = w.reduce((a, i) => a + i, 0), n = 0;\n  const r = Math.random() * total;\n  while (total > r) {\n    total -= w[n++];\n  }\n  return n - 1;\n};\n\n/**\n * An interpolation function\n * @callback InterpolationFunction\n * @param {number} a The minimum number\n * @param {number} b The maximum number\n * @param {number} i The interpolation value, should be in the interval [0, 1]\n * @return {number} The interpolated value in the interval [a, b]\n */\n\n/**\n * Return an interpolated value from an array\n * @param {Array<number>} a An array of values interpolate\n * @param {number} i A number in the interval [0, 1]\n * @param {InterpolationFunction} [f=Math.lerp] The interpolation function to use\n * @return {number} An interpolated value in the interval [min(a), max(a)]\n */\nconst lerpArray = (a, i, f = lerp) => {\n  const s = i * (a.length - 1);\n  const p = clamp(Math.trunc(s), 0, a.length - 1);\n  return f(a[p] || 0, a[p + 1] || 0, frac(s));\n};\n\n/**\n * Get the dot product of two vectors\n * @param {Array<number>} a Vector a\n * @param {Array<number>} b Vector b\n * @return {number} a \u2219 b\n */\nconst dot = (a, b) => a.reduce((n, v, i) => n + v * b[i], 0);\n\n/**\n * Get the factorial of a number\n * @param {number} a\n * @return {number} a!\n */\nconst factorial = a => {\n  let result = 1;\n  for (let i = 2; i <= a; i++) {\n    result *= i;\n  }\n  return result;\n};\n\n/**\n * Get the number of permutations of r elements from a set of n elements\n * @param {number} n\n * @param {number} r\n * @return {number} nPr\n */\nconst npr = (n, r) => factorial(n) / factorial(n - r);\n\n/**\n * Get the number of combinations of r elements from a set of n elements\n * @param {number} n\n * @param {number} r\n * @return {number} nCr\n */\nconst ncr = (n, r) => factorial(n) / (factorial(r) * factorial(n - r));\n\n/**\n * Generate all permutations of r elements from an array\n *\n * @example\n * ```js\n * permutations([1, 2, 3], 2);\n * ```\n *\n * Output:\n * ```json\n * [\n *   [1, 2],\n *   [1, 3],\n *   [2, 1],\n *   [2, 3],\n *   [3, 1],\n *   [3, 2]\n * ]\n * ```\n * @param {Array<*>} a\n * @param {number} r The number of elements to choose in each permutation\n * @return {Array<Array<*>>} An array of permutation arrays\n */\nconst permutations = (a, r) => {\n  if (r === 1) {\n    return a.map(item => [item]);\n  }\n\n  return a.reduce(\n    (acc, item, i) => [\n      ...acc,\n      ...permutations(a.slice(0, i).concat(a.slice(i + 1)), r - 1).map(c => [item, ...c]),\n    ],\n    []\n  );\n}\n\n/**\n * Generate all combinations of r elements from an array\n *\n * @example\n * ```js\n * combinations([1, 2, 3], 2);\n * ```\n *\n * Output:\n * ```json\n * [\n *   [1, 2],\n *   [1, 3],\n *   [2, 3]\n * ]\n * ```\n * @param {Array<*>} a\n * @param {number} r The number of elements to choose in each combination\n * @return {Array<Array<*>>} An array of combination arrays\n */\nconst combinations = (a, r) => {\n  if (r === 1) {\n    return a.map(item => [item]);\n  }\n\n  return a.reduce(\n    (acc, item, i) => [\n      ...acc,\n      ...combinations(a.slice(i + 1), r - 1).map(c => [item, ...c]),\n    ],\n    []\n  );\n};\n\n/**\n * Get a cartesian product of arrays\n *\n * @example\n * ```js\n * cartesian([1, 2, 3], [\'a\', \'b\']);\n * ```\n *\n * Output:\n * ```json\n * [\n *   [1, "a"],\n *   [1, "b"],\n *   [2, "a"],\n *   [2, "b"],\n *   [3, "a"],\n *   [3, "b"]\n * ]\n * ```\n */\nconst cartesian = (...arr) =>\n  arr.reduce(\n    (a, b) => a.flatMap(c => b.map(d => [...c, d])),\n    [[]]\n  );\n\n/**\n * A function for generating array values\n * @callback TimesFunction\n * @param {number} i The array index\n * @return {*} The array value\n */\n\n/**\n * Return a new array with length n by calling function f(i) on each element\n * @param {TimesFunction} f\n * @param {number} n The size of the array\n * @return {Array<*>}\n */\nconst times = (f, n) => Array(n).fill(0).map((_, i) => f(i));\n\n/**\n * Return an array containing numbers 0->(n - 1)\n * @param {number} n The size of the array\n * @return {Array<number>} An array of integers 0->(n - 1)\n */\nconst range = n => times(i => i, n);\n\n/**\n * Zip multiple arrays together, i.e. ([1, 2, 3], [a, b, c]) => [[1, a], [2, b], [3, c]]\n * @param {...Array<*>} a The arrays to zip\n * @return {Array<Array<*>>}\n */\nconst zip = (...a) => times(i => a.map(a => a[i]), Math.max(...a.map(a => a.length)));\n\n/**\n * Return array[i] with positive and negative wrapping\n * @param {Array<*>} a The array to access\n * @param {number} i The positively/negatively wrapped array index\n * @return {*} An element from the array\n */\nconst at = (a, i) => a[i < 0 ? a.length - (Math.abs(i + 1) % a.length) - 1 : i % a.length];\n\n/**\n * Return the last element of an array without removing it\n * @param {Array<*>} a\n * @return {*} The last element from the array\n */\nconst peek = (a) => {\n  if (!a.length) {\n    return undefined;\n  }\n\n  return a[a.length - 1];\n};\n\n/**\n * Return the index for a given position in an unrolled 2d array\n * @param {number} x The x position\n * @param {number} y The y position\n * @param {number} w The width of the 2d array\n * @returns {number} The index in the unrolled array\n */\nconst ind = (x, y, w) => x + y * w;\n\n/**\n * Return the position for a given index in an unrolled 2d array\n * @param {number} i The index\n * @param {number} w The width of the 2d array\n * @returns {Array<number>} The position as a 2-tuple\n */\nconst pos = (i, w) => [i % w, Math.floor(i / w)];\n\n/**\n * Chop an array into chunks of size n\n * @param {Array<*>} a\n * @param {number} n The chunk size\n * @return {Array<Array<*>>} An array of array chunks\n */\nconst chunk = (a, n) => times(i => a.slice(i * n, i * n + n), Math.ceil(a.length / n));\n\n/**\n * Randomly shuffle a shallow copy of an array\n * @param {Array<*>} a\n * @return {Array<*>} The shuffled array\n */\nconst shuffle = a => a.slice().sort(() => Math.random() - 0.5);\n\n/**\n * Flatten an object\n * @param {object} o\n * @param {string} concatenator The string to use for concatenating keys\n * @return {object} A flattened object\n */\nconst flat = (o, concatenator = \'.\') => {\n  return Object.keys(o).reduce((acc, key) => {\n    if (o[key] instanceof Date) {\n      return {\n        ...acc,\n        [key]: o[key].toISOString(),\n      };\n    }\n\n    if (typeof o[key] !== \'object\' || !o[key]) {\n      return {\n        ...acc,\n        [key]: o[key],\n      };\n    }\n    const flattened = flat(o[key], concatenator);\n\n    return {\n      ...acc,\n      ...Object.keys(flattened).reduce(\n        (childAcc, childKey) => ({\n          ...childAcc,\n          [`${key}${concatenator}${childKey}`]: flattened[childKey],\n        }),\n        {}\n      ),\n    };\n  }, {});\n};\n\n/**\n * Unflatten an object\n * @param {object} o\n * @param {string} concatenator The string to check for in concatenated keys\n * @return {object} An un-flattened object\n */\nconst unflat = (o, concatenator = \'.\') => {\n  let result = {}, temp, substrings, property, i;\n\n  for (property in o) {\n    substrings = property.split(concatenator);\n    temp = result;\n    for (i = 0; i < substrings.length - 1; i++) {\n      if (!(substrings[i] in temp)) {\n        if (isFinite(substrings[i + 1])) {\n          temp[substrings[i]] = [];\n        } else {\n          temp[substrings[i]] = {};\n        }\n      }\n      temp = temp[substrings[i]];\n    }\n    temp[substrings[substrings.length - 1]] = o[property];\n  }\n\n  return result;\n};\n\n/**\n * A split predicate\n * @callback SplitPredicate\n * @param {any} value The current value\n * @return {boolean} True if the array should split at this index\n */\n\n/**\n * Split an array into sub-arrays based on a predicate\n * @param {Array<*>} array\n * @param {SplitPredicate} predicate\n * @return {Array<Array<*>>} An array of arrays\n */\nconst split = (array, predicate) => {\n  const result = [];\n  let current = [];\n  for (const value of array) {\n    if (predicate(value)) {\n      if (current.length) {\n        result.push(current);\n      }\n      current = [value];\n    } else {\n      current.push(value);\n    }\n  }\n  result.push(current);\n\n  return result;\n};\n\n/**\n * Pluck keys from an object\n * @param {object} o\n * @param {...string} keys The keys to pluck from the object\n * @return {object} An object containing the plucked keys\n */\nconst pluck = (o, ...keys) => {\n  return keys.reduce(\n    (result, key) => Object.assign(result, { [key]: o[key] }),\n    {}\n  );\n};\n\n/**\n * Exclude keys from an object\n * @param {object} o\n * @param {...string} keys The keys to exclude from the object\n * @return {object} An object containing all keys except excluded keys\n */\nconst exclude = (o, ...keys) => {\n  return Object.fromEntries(\n    Object.entries(o).filter(([key]) => !keys.includes(key))\n  );\n};\n\nif (true) {\n  module.exports = {\n    memoize,\n    floatEquals,\n    clamp,\n    frac,\n    round,\n    lerp,\n    unlerp,\n    blerp,\n    remap,\n    smoothstep,\n    radians,\n    degrees,\n    randomBetween,\n    randomIntBetween,\n    cltRandom,\n    cltRandomInt,\n    weightedRandom,\n    lerpArray,\n    dot,\n    factorial,\n    npr,\n    ncr,\n    permutations,\n    combinations,\n    cartesian,\n    times,\n    range,\n    zip,\n    at,\n    peek,\n    ind,\n    pos,\n    chunk,\n    shuffle,\n    flat,\n    unflat,\n    split,\n    pluck,\n    exclude,\n  };\n}\n\n\n//# sourceURL=webpack://@basementuniverse/animation/./node_modules/@basementuniverse/utils/utils.js?\n}');
+                })
+              ),
+              /***/
+              "./node_modules/@basementuniverse/vec/vec.js": (
+                /*!***************************************************!*\
+                  !*** ./node_modules/@basementuniverse/vec/vec.js ***!
+                  \***************************************************/
+                /***/
+                ((module) => {
+                  eval("{/**\n * @overview A small vector and matrix library\n * @author Gordon Larrigan\n */\n\nconst _vec_times = (f, n) => Array(n).fill(0).map((_, i) => f(i));\nconst _vec_chunk = (a, n) => _vec_times(i => a.slice(i * n, i * n + n), Math.ceil(a.length / n));\nconst _vec_dot = (a, b) => a.reduce((n, v, i) => n + v * b[i], 0);\nconst _vec_is_vec2 = a => typeof a === 'object' && 'x' in a && 'y' in a;\nconst _vec_is_vec3 = a => typeof a === 'object' && 'x' in a && 'y' in a && 'z' in a;\n\n/**\n * A 2d vector\n * @typedef {Object} vec2\n * @property {number} x The x component of the vector\n * @property {number} y The y component of the vector\n */\n\n/**\n * Create a new 2d vector\n * @param {number|vec2} [x] The x component of the vector, or a vector to copy\n * @param {number} [y] The y component of the vector\n * @return {vec2} A new 2d vector\n * @example <caption>various ways to initialise a vector</caption>\n * let a = vec2(3, 2); // (3, 2)\n * let b = vec2(4);    // (4, 4)\n * let c = vec2(a);    // (3, 2)\n * let d = vec2();     // (0, 0)\n */\nconst vec2 = (x, y) => {\n  if (!x && !y) {\n    return { x: 0, y: 0 };\n  }\n  if (_vec_is_vec2(x)) {\n    return { x: x.x || 0, y: x.y || 0 };\n  }\n  return { x: x, y: y ?? x };\n};\n\n/**\n * Get the components of a vector as an array\n * @param {vec2} a The vector to get components from\n * @return {Array<number>} The vector components as an array\n */\nvec2.components = a => [a.x, a.y];\n\n/**\n * Create a vector from an array of components\n * @param {Array<number>} components The components of the vector\n * @return {vec2} A new vector\n */\nvec2.fromComponents = components => vec2(...components.slice(0, 2));\n\n/**\n * Return a unit vector (1, 0)\n * @return {vec2} A unit vector (1, 0)\n */\nvec2.ux = () => vec2(1, 0);\n\n/**\n * Return a unit vector (0, 1)\n * @return {vec2} A unit vector (0, 1)\n */\nvec2.uy = () => vec2(0, 1);\n\n/**\n * Add vectors\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a + b\n */\nvec2.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b) });\n\n/**\n * Subtract vectors\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a - b\n */\nvec2.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b) });\n\n/**\n * Scale a vector\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a * b\n */\nvec2.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b) });\n\n/**\n * Scale a vector by a scalar, alias for vec2.mul\n * @param {vec2} a Vector a\n * @param {number} b Scalar b\n * @return {vec2} a * b\n */\nvec2.scale = (a, b) => vec2.mul(a, b);\n\n/**\n * Divide a vector\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a / b\n */\nvec2.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b) });\n\n/**\n * Get the length of a vector\n * @param {vec2} a Vector a\n * @return {number} |a|\n */\nvec2.len = a => Math.sqrt(a.x * a.x + a.y * a.y);\n\n/**\n * Get the length of a vector using taxicab geometry\n * @param {vec2} a Vector a\n * @return {number} |a|\n */\nvec2.manhattan = a => Math.abs(a.x) + Math.abs(a.y);\n\n/**\n * Normalise a vector\n * @param {vec2} a The vector to normalise\n * @return {vec2} ^a\n */\nvec2.nor = a => {\n  let len = vec2.len(a);\n  return len ? { x: a.x / len, y: a.y / len } : vec2();\n};\n\n/**\n * Get a dot product of vectors\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {number} a \u2219 b\n */\nvec2.dot = (a, b) => a.x * b.x + a.y * b.y;\n\n/**\n * Rotate a vector by r radians\n * @param {vec2} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec2} A rotated vector\n */\nvec2.rot = (a, r) => {\n  let s = Math.sin(r),\n    c = Math.cos(r);\n  return { x: c * a.x - s * a.y, y: s * a.x + c * a.y };\n};\n\n/**\n * Fast method to rotate a vector by -90, 90 or 180 degrees\n * @param {vec2} a The vector to rotate\n * @param {number} r 1 for 90 degrees (cw), -1 for -90 degrees (ccw), 2 or -2 for 180 degrees\n * @return {vec2} A rotated vector\n */\nvec2.rotf = (a, r) => {\n  switch (r) {\n    case 1: return vec2(a.y, -a.x);\n    case -1: return vec2(-a.y, a.x);\n    case 2: case -2: return vec2(-a.x, -a.y);\n    default: return a;\n  }\n};\n\n/**\n * Scalar cross product of two vectors\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {number} a \xD7 b\n */\nvec2.cross = (a, b) => {\n  return a.x * b.y - a.y * b.x;\n};\n\n/**\n * Check if two vectors are equal\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {boolean} True if vectors a and b are equal, false otherwise\n */\nvec2.eq = (a, b) => a.x === b.x && a.y === b.y;\n\n/**\n * Get the angle of a vector\n * @param {vec2} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec2.rad = a => Math.atan2(a.y, a.x);\n\n/**\n * Copy a vector\n * @param {vec2} a The vector to copy\n * @return {vec2} A copy of vector a\n */\nvec2.cpy = a => vec2(a);\n\n/**\n * A function to call on each component of a 2d vector\n * @callback vec2MapCallback\n * @param {number} value The component value\n * @param {'x' | 'y'} label The component label (x or y)\n * @return {number} The mapped component\n */\n\n/**\n * Call a function on each component of a vector and build a new vector from the results\n * @param {vec2} a Vector a\n * @param {vec2MapCallback} f The function to call on each component of the vector\n * @return {vec2} Vector a mapped through f\n */\nvec2.map = (a, f) => ({ x: f(a.x, 'x'), y: f(a.y, 'y') });\n\n/**\n * Convert a vector into a string\n * @param {vec2} a The vector to convert\n * @param {string} [s=', '] The separator string\n * @return {string} A string representation of the vector\n */\nvec2.str = (a, s = ', ') => `${a.x}${s}${a.y}`;\n\n/**\n * Swizzle a vector with a string of component labels\n *\n * The string can contain:\n * - `x` or `y`\n * - `u` or `v` (aliases for `x` and `y`, respectively)\n * - `X`, `Y`, `U`, `V` (negated versions of the above)\n * - `0` or `1` (these will be passed through unchanged)\n * - `.` to return the component that would normally be at this position (or 0)\n *\n * Any other characters will default to 0\n * @param {vec2} a The vector to swizzle\n * @param {string} [s='..'] The swizzle string\n * @return {Array<number>} The swizzled components\n * @example <caption>swizzling a vector</caption>\n * let a = vec2(3, -2);\n * vec2.swiz(a, 'x');    // [3]\n * vec2.swiz(a, 'yx');   // [-2, 3]\n * vec2.swiz(a, 'xY');   // [3, 2]\n * vec2.swiz(a, 'Yy');   // [2, -2]\n * vec2.swiz(a, 'x.x');  // [3, -2, 3]\n * vec2.swiz(a, 'y01x'); // [-2, 0, 1, 3]\n */\nvec2.swiz = (a, s = '..') => {\n  const result = [];\n  s.split('').forEach((c, i) => {\n    switch (c) {\n      case 'x': case 'u': result.push(a.x); break;\n      case 'y': case 'v': result.push(a.y); break;\n      case 'X': case 'U': result.push(-a.x); break;\n      case 'Y': case 'V': result.push(-a.y); break;\n      case '0': result.push(0); break;\n      case '1': result.push(1); break;\n      case '.': result.push([a.x, a.y][i] ?? 0); break;\n      default: result.push(0);\n    }\n  });\n  return result;\n};\n\n/**\n * Polar coordinates for a 2d vector\n * @typedef {Object} polarCoordinates2d\n * @property {number} r The magnitude (radius) of the vector\n * @property {number} theta The angle of the vector\n */\n\n/**\n * Convert a vector into polar coordinates\n * @param {vec2} a The vector to convert\n * @return {polarCoordinates2d} The magnitude and angle of the vector\n */\nvec2.polar = a => ({ r: vec2.len(a), theta: Math.atan2(a.y, a.x) });\n\n/**\n * Convert polar coordinates into a vector\n * @param {number} r The magnitude (radius) of the vector\n * @param {number} theta The angle of the vector\n * @return {vec2} A vector with the given angle and magnitude\n */\nvec2.fromPolar = (r, theta) => vec2(r * Math.cos(theta), r * Math.sin(theta));\n\n/**\n * A 3d vector\n * @typedef {Object} vec3\n * @property {number} x The x component of the vector\n * @property {number} y The y component of the vector\n * @property {number} z The z component of the vector\n */\n\n/**\n * Create a new 3d vector\n * @param {number|vec3|vec2} [x] The x component of the vector, or a vector to copy\n * @param {number} [y] The y component of the vector, or the z component if x is a vec2\n * @param {number} [z] The z component of the vector\n * @return {vec3} A new 3d vector\n * @example <caption>various ways to initialise a vector</caption>\n * let a = vec3(3, 2, 1);       // (3, 2, 1)\n * let b = vec3(4, 5);          // (4, 5, 0)\n * let c = vec3(6);             // (6, 6, 6)\n * let d = vec3(a);             // (3, 2, 1)\n * let e = vec3();              // (0, 0, 0)\n * let f = vec3(vec2(1, 2), 3); // (1, 2, 3)\n * let g = vec3(vec2(4, 5));    // (4, 5, 0)\n */\nconst vec3 = (x, y, z) => {\n  if (!x && !y && !z) {\n    return { x: 0, y: 0, z: 0 };\n  }\n  if (_vec_is_vec3(x)) {\n    return { x: x.x || 0, y: x.y || 0, z: x.z || 0 };\n  }\n  if (_vec_is_vec2(x)) {\n    return { x: x.x || 0, y: x.y || 0, z: y || 0 };\n  }\n  return { x: x, y: y ?? x, z: z ?? x };\n};\n\n/**\n * Get the components of a vector as an array\n * @param {vec3} a The vector to get components from\n * @return {Array<number>} The vector components as an array\n */\nvec3.components = a => [a.x, a.y, a.z];\n\n/**\n * Create a vector from an array of components\n * @param {Array<number>} components The components of the vector\n * @return {vec3} A new vector\n */\nvec3.fromComponents = components => vec3(...components.slice(0, 3));\n\n/**\n * Return a unit vector (1, 0, 0)\n * @return {vec3} A unit vector (1, 0, 0)\n */\nvec3.ux = () => vec3(1, 0, 0);\n\n/**\n * Return a unit vector (0, 1, 0)\n * @return {vec3} A unit vector (0, 1, 0)\n */\nvec3.uy = () => vec3(0, 1, 0);\n\n/**\n * Return a unit vector (0, 0, 1)\n * @return {vec3} A unit vector (0, 0, 1)\n */\nvec3.uz = () => vec3(0, 0, 1);\n\n/**\n * Add vectors\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a + b\n */\nvec3.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b), z: a.z + (b.z ?? b) });\n\n/**\n * Subtract vectors\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a - b\n */\nvec3.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b), z: a.z - (b.z ?? b) });\n\n/**\n * Scale a vector\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a * b\n */\nvec3.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b), z: a.z * (b.z ?? b) });\n\n/**\n * Scale a vector by a scalar, alias for vec3.mul\n * @param {vec3} a Vector a\n * @param {number} b Scalar b\n * @return {vec3} a * b\n */\nvec3.scale = (a, b) => vec3.mul(a, b);\n\n/**\n * Divide a vector\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a / b\n */\nvec3.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b), z: a.z / (b.z ?? b) });\n\n/**\n * Get the length of a vector\n * @param {vec3} a Vector a\n * @return {number} |a|\n */\nvec3.len = a => Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);\n\n/**\n * Get the length of a vector using taxicab geometry\n * @param {vec3} a Vector a\n * @return {number} |a|\n */\nvec3.manhattan = a => Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);\n\n/**\n * Normalise a vector\n * @param {vec3} a The vector to normalise\n * @return {vec3} ^a\n */\nvec3.nor = a => {\n  let len = vec3.len(a);\n  return len ? { x: a.x / len, y: a.y / len, z: a.z / len } : vec3();\n};\n\n/**\n * Get a dot product of vectors\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {number} a \u2219 b\n */\nvec3.dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;\n\n/**\n * Rotate a vector using a rotation matrix\n * @param {vec3} a The vector to rotate\n * @param {mat} m The rotation matrix\n * @return {vec3} A rotated vector\n */\nvec3.rot = (a, m) => vec3(\n  vec3.dot(vec3.fromComponents(mat.row(m, 1)), a),\n  vec3.dot(vec3.fromComponents(mat.row(m, 2)), a),\n  vec3.dot(vec3.fromComponents(mat.row(m, 3)), a)\n);\n\n/**\n * Rotate a vector by r radians around the x axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.rotx = (a, r) => vec3(\n  a.x,\n  a.y * Math.cos(r) - a.z * Math.sin(r),\n  a.y * Math.sin(r) + a.z * Math.cos(r)\n);\n\n/**\n * Rotate a vector by r radians around the y axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.roty = (a, r) => vec3(\n  a.x * Math.cos(r) + a.z * Math.sin(r),\n  a.y,\n  -a.x * Math.sin(r) + a.z * Math.cos(r)\n);\n\n/**\n * Rotate a vector by r radians around the z axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.rotz = (a, r) => vec3(\n  a.x * Math.cos(r) - a.y * Math.sin(r),\n  a.x * Math.sin(r) + a.y * Math.cos(r),\n  a.z\n);\n\n/**\n * Rotate a vector using a quaternion\n * @param {vec3} a The vector to rotate\n * @param {Array<number>} q The quaternion to rotate by\n * @return {vec3} A rotated vector\n */\nvec3.rotq = (v, q) => {\n  if (q.length !== 4) {\n    return vec3();\n  }\n\n  const d = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);\n  if (d === 0) {\n    return vec3();\n  }\n\n  const uq = [q[0] / d, q[1] / d, q[2] / d, q[3] / d];\n  const u = vec3(...uq.slice(0, 3));\n  const s = uq[3];\n  return vec3.add(\n    vec3.add(\n      vec3.mul(u, 2 * vec3.dot(u, v)),\n      vec3.mul(v, s * s - vec3.dot(u, u))\n    ),\n    vec3.mul(vec3.cross(u, v), 2 * s)\n  );\n};\n\n/**\n * Rotate a vector using Euler angles\n * @param {vec3} a The vector to rotate\n * @param {vec3} e The Euler angles to rotate by\n * @return {vec3} A rotated vector\n */\nvec3.rota = (a, e) => vec3.rotz(vec3.roty(vec3.rotx(a, e.x), e.y), e.z);\n\n/**\n * Get the cross product of vectors\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {vec3} a \xD7 b\n */\nvec3.cross = (a, b) => vec3(\n  a.y * b.z - a.z * b.y,\n  a.z * b.x - a.x * b.z,\n  a.x * b.y - a.y * b.x\n);\n\n/**\n * Check if two vectors are equal\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {boolean} True if vectors a and b are equal, false otherwise\n */\nvec3.eq = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;\n\n/**\n * Get the angle of a vector from the x axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.radx = a => Math.atan2(a.z, a.y);\n\n/**\n * Get the angle of a vector from the y axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.rady = a => Math.atan2(a.x, a.y);\n\n/**\n * Get the angle of a vector from the z axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.radz = a => Math.atan2(a.y, a.z);\n\n/**\n * Copy a vector\n * @param {vec3} a The vector to copy\n * @return {vec3} A copy of vector a\n */\nvec3.cpy = a => vec3(a);\n\n/**\n * A function to call on each component of a 3d vector\n * @callback vec3MapCallback\n * @param {number} value The component value\n * @param {'x' | 'y' | 'z'} label The component label (x, y or z)\n * @return {number} The mapped component\n */\n\n/**\n * Call a function on each component of a vector and build a new vector from the results\n * @param {vec3} a Vector a\n * @param {vec3MapCallback} f The function to call on each component of the vector\n * @return {vec3} Vector a mapped through f\n */\nvec3.map = (a, f) => ({ x: f(a.x, 'x'), y: f(a.y, 'y'), z: f(a.z, 'z') });\n\n/**\n * Convert a vector into a string\n * @param {vec3} a The vector to convert\n * @param {string} [s=', '] The separator string\n * @return {string} A string representation of the vector\n */\nvec3.str = (a, s = ', ') => `${a.x}${s}${a.y}${s}${a.z}`;\n\n/**\n * Swizzle a vector with a string of component labels\n *\n * The string can contain:\n * - `x`, `y` or `z`\n * - `u`, `v` or `w` (aliases for `x`, `y` and `z`, respectively)\n * - `r`, `g` or `b` (aliases for `x`, `y` and `z`, respectively)\n * - `X`, `Y`, `Z`, `U`, `V`, `W`, `R`, `G`, `B` (negated versions of the above)\n * - `0` or `1` (these will be passed through unchanged)\n * - `.` to return the component that would normally be at this position (or 0)\n *\n * Any other characters will default to 0\n * @param {vec3} a The vector to swizzle\n * @param {string} [s='...'] The swizzle string\n * @return {Array<number>} The swizzled components\n * @example <caption>swizzling a vector</caption>\n * let a = vec3(3, -2, 1);\n * vec3.swiz(a, 'x');     // [3]\n * vec3.swiz(a, 'zyx');   // [1, -2, 3]\n * vec3.swiz(a, 'xYZ');   // [3, 2, -1]\n * vec3.swiz(a, 'Zzx');   // [-1, 1, 3]\n * vec3.swiz(a, 'x.x');   // [3, -2, 3]\n * vec3.swiz(a, 'y01zx'); // [-2, 0, 1, 1, 3]\n */\nvec3.swiz = (a, s = '...') => {\n  const result = [];\n  s.split('').forEach((c, i) => {\n    switch (c) {\n      case 'x': case 'u': case 'r': result.push(a.x); break;\n      case 'y': case 'v': case 'g': result.push(a.y); break;\n      case 'z': case 'w': case 'b': result.push(a.z); break;\n      case 'X': case 'U': case 'R': result.push(-a.x); break;\n      case 'Y': case 'V': case 'G': result.push(-a.y); break;\n      case 'Z': case 'W': case 'B': result.push(-a.z); break;\n      case '0': result.push(0); break;\n      case '1': result.push(1); break;\n      case '.': result.push([a.x, a.y, a.z][i] ?? 0); break;\n      default: result.push(0);\n    }\n  });\n  return result;\n};\n\n/**\n * Polar coordinates for a 3d vector\n * @typedef {Object} polarCoordinates3d\n * @property {number} r The magnitude (radius) of the vector\n * @property {number} theta The tilt angle of the vector\n * @property {number} phi The pan angle of the vector\n */\n\n/**\n * Convert a vector into polar coordinates\n * @param {vec3} a The vector to convert\n * @return {polarCoordinates3d} The magnitude, tilt and pan of the vector\n */\nvec3.polar = a => {\n  let r = vec3.len(a),\n    theta = Math.acos(a.y / r),\n    phi = Math.atan2(a.z, a.x);\n  return { r, theta, phi };\n};\n\n/**\n * Convert polar coordinates into a vector\n * @param {number} r The magnitude (radius) of the vector\n * @param {number} theta The tilt of the vector\n * @param {number} phi The pan of the vector\n * @return {vec3} A vector with the given angle and magnitude\n */\nvec3.fromPolar = (r, theta, phi) => {\n  const sinTheta = Math.sin(theta);\n  return vec3(\n    r * sinTheta * Math.cos(phi),\n    r * Math.cos(theta),\n    r * sinTheta * Math.sin(phi)\n  );\n};\n\n/**\n * A matrix\n * @typedef {Object} mat\n * @property {number} m The number of rows in the matrix\n * @property {number} n The number of columns in the matrix\n * @property {Array<number>} entries The matrix values\n */\n\n/**\n * Create a new matrix\n * @param {number} [m=4] The number of rows\n * @param {number} [n=4] The number of columns\n * @param {Array<number>} [entries=[]] Matrix values in reading order\n * @return {mat} A new matrix\n */\nconst mat = (m = 4, n = 4, entries = []) => ({\n  m, n,\n  entries: entries.concat(Array(m * n).fill(0)).slice(0, m * n)\n});\n\n/**\n * Get an identity matrix of size n\n * @param {number} n The size of the matrix\n * @return {mat} An identity matrix\n */\nmat.identity = n => mat(n, n, Array(n * n).fill(0).map((v, i) => +(Math.floor(i / n) === i % n)));\n\n/**\n * Get an entry from a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @return {number} The value at position (i, j) in matrix a\n */\nmat.get = (a, i, j) => a.entries[(j - 1) + (i - 1) * a.n];\n\n/**\n * Set an entry of a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @param {number} v The value to set in matrix a\n */\nmat.set = (a, i, j, v) => { a.entries[(j - 1) + (i - 1) * a.n] = v; };\n\n/**\n * Get a row from a matrix as an array\n * @param {mat} a Matrix a\n * @param {number} m The row offset\n * @return {Array<number>} Row m from matrix a\n */\nmat.row = (a, m) => {\n  const s = (m - 1) * a.n;\n  return a.entries.slice(s, s + a.n);\n};\n\n/**\n * Get a column from a matrix as an array\n * @param {mat} a Matrix a\n * @param {number} n The column offset\n * @return {Array<number>} Column n from matrix a\n */\nmat.col = (a, n) => _vec_times(i => mat.get(a, (i + 1), n), a.m);\n\n/**\n * Add matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat} a + b\n */\nmat.add = (a, b) => a.m === b.m && a.n === b.n && mat.map(a, (v, i) => v + b.entries[i]);\n\n/**\n * Subtract matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat} a - b\n */\nmat.sub = (a, b) => a.m === b.m && a.n === b.n && mat.map(a, (v, i) => v - b.entries[i]);\n\n/**\n * Multiply matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat|false} ab or false if the matrices cannot be multiplied\n */\nmat.mul = (a, b) => {\n  if (a.n !== b.m) { return false; }\n  const result = mat(a.m, b.n);\n  for (let i = 1; i <= a.m; i++) {\n    for (let j = 1; j <= b.n; j++) {\n      mat.set(result, i, j, _vec_dot(mat.row(a, i), mat.col(b, j)));\n    }\n  }\n  return result;\n};\n\n/**\n * Multiply a matrix by a vector\n * @param {mat} a Matrix a\n * @param {vec2|vec3|number[]} b Vector b\n * @return {vec2|vec3|number[]|false} ab or false if the matrix and vector cannot be multiplied\n */\nmat.mulv = (a, b) => {\n  let n, bb, rt;\n  if (_vec_is_vec3(b)) {\n    bb = vec3.components(b);\n    n = 3;\n    rt = vec3.fromComponents;\n  } else if (_vec_is_vec2(b)) {\n    bb = vec2.components(b);\n    n = 2;\n    rt = vec2.fromComponents;\n  } else {\n    bb = b;\n    n = b.length ?? 0;\n    rt = v => v;\n  }\n  if (a.n !== n) { return false; }\n  const result = [];\n  for (let i = 1; i <= a.m; i++) {\n    result.push(_vec_dot(mat.row(a, i), bb));\n  }\n  return rt(result);\n}\n\n/**\n * Scale a matrix\n * @param {mat} a Matrix a\n * @param {number} b Scalar b\n * @return {mat} a * b\n */\nmat.scale = (a, b) => mat.map(a, v => v * b);\n\n/**\n * Transpose a matrix\n * @param {mat} a The matrix to transpose\n * @return {mat} A transposed matrix\n */\nmat.trans = a => mat(a.n, a.m, _vec_times(i => mat.col(a, (i + 1)), a.n).flat());\n\n/**\n * Get the minor of a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @return {mat|false} The (i, j) minor of matrix a or false if the matrix is not square\n */\nmat.minor = (a, i, j) => {\n  if (a.m !== a.n) { return false; }\n  const entries = [];\n  for (let ii = 1; ii <= a.m; ii++) {\n    if (ii === i) { continue; }\n    for (let jj = 1; jj <= a.n; jj++) {\n      if (jj === j) { continue; }\n      entries.push(mat.get(a, ii, jj));\n    }\n  }\n  return mat(a.m - 1, a.n - 1, entries);\n};\n\n/**\n * Get the determinant of a matrix\n * @param {mat} a Matrix a\n * @return {number|false} |a| or false if the matrix is not square\n */\nmat.det = a => {\n  if (a.m !== a.n) { return false; }\n  if (a.m === 1) {\n    return a.entries[0];\n  }\n  if (a.m === 2) {\n    return a.entries[0] * a.entries[3] - a.entries[1] * a.entries[2];\n  }\n  let total = 0, sign = 1;\n  for (let j = 1; j <= a.n; j++) {\n    total += sign * a.entries[j - 1] * mat.det(mat.minor(a, 1, j));\n    sign *= -1;\n  }\n  return total;\n};\n\n/**\n * Normalise a matrix\n * @param {mat} a The matrix to normalise\n * @return {mat|false} ^a or false if the matrix is not square\n */\nmat.nor = a => {\n  if (a.m !== a.n) { return false; }\n  const d = mat.det(a);\n  return mat.map(a, i => i * d);\n};\n\n/**\n * Get the adjugate of a matrix\n * @param {mat} a The matrix from which to get the adjugate\n * @return {mat} The adjugate of a\n */\nmat.adj = a => {\n  const minors = mat(a.m, a.n);\n  for (let i = 1; i <= a.m; i++) {\n    for (let j = 1; j <= a.n; j++) {\n      mat.set(minors, i, j, mat.det(mat.minor(a, i, j)));\n    }\n  }\n  const cofactors = mat.map(minors, (v, i) => v * (i % 2 ? -1 : 1));\n  return mat.trans(cofactors);\n};\n\n/**\n * Get the inverse of a matrix\n * @param {mat} a The matrix to invert\n * @return {mat|false} a^-1 or false if the matrix has no inverse\n */\nmat.inv = a => {\n  if (a.m !== a.n) { return false; }\n  const d = mat.det(a);\n  if (d === 0) { return false; }\n  return mat.scale(mat.adj(a), 1 / d);\n};\n\n/**\n * Check if two matrices are equal\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {boolean} True if matrices a and b are identical, false otherwise\n */\nmat.eq = (a, b) => a.m === b.m && a.n === b.n && mat.str(a) === mat.str(b);\n\n/**\n * Copy a matrix\n * @param {mat} a The matrix to copy\n * @return {mat} A copy of matrix a\n */\nmat.cpy = a => mat(a.m, a.n, [...a.entries]);\n\n/**\n * A function to call on each entry of a matrix\n * @callback matrixMapCallback\n * @param {number} value The entry value\n * @param {number} index The entry index\n * @param {Array<number>} entries The array of matrix entries\n * @return {number} The mapped entry\n */\n\n/**\n * Call a function on each entry of a matrix and build a new matrix from the results\n * @param {mat} a Matrix a\n * @param {matrixMapCallback} f The function to call on each entry of the matrix\n * @return {mat} Matrix a mapped through f\n */\nmat.map = (a, f) => mat(a.m, a.n, a.entries.map(f));\n\n/**\n * Convert a matrix into a string\n * @param {mat} a The matrix to convert\n * @param {string} [ms=', '] The separator string for columns\n * @param {string} [ns='\\n'] The separator string for rows\n * @return {string} A string representation of the matrix\n */\nmat.str = (a, ms = ', ', ns = '\\n') => _vec_chunk(a.entries, a.n).map(r => r.join(ms)).join(ns);\n\nif (true) {\n  module.exports = { vec2, vec3, mat };\n}\n\n\n//# sourceURL=webpack://@basementuniverse/animation/./node_modules/@basementuniverse/vec/vec.js?\n}");
+                })
+              )
+              /******/
+            };
+            var __webpack_module_cache__ = {};
+            function __webpack_require__(moduleId) {
+              var cachedModule = __webpack_module_cache__[moduleId];
+              if (cachedModule !== void 0) {
+                return cachedModule.exports;
+              }
+              var module2 = __webpack_module_cache__[moduleId] = {
+                /******/
+                // no module.id needed
+                /******/
+                // no module.loaded needed
+                /******/
+                exports: {}
+                /******/
+              };
+              __webpack_modules__[moduleId](module2, module2.exports, __webpack_require__);
+              return module2.exports;
+            }
+            var __webpack_exports__ = __webpack_require__("./index.ts");
+            return __webpack_exports__;
+          })()
+        );
+      });
+    }
+  });
+
+  // node_modules/@basementuniverse/camera/build/index.js
+  var require_build2 = __commonJS({
     "node_modules/@basementuniverse/camera/build/index.js"(exports, module) {
       (function webpackUniversalModuleDefinition(root, factory) {
         if (typeof exports === "object" && typeof module === "object")
@@ -97,7 +1472,7 @@ var GraphBuilder = (() => {
   });
 
   // node_modules/@basementuniverse/frame-timer/build/index.js
-  var require_build2 = __commonJS({
+  var require_build3 = __commonJS({
     "node_modules/@basementuniverse/frame-timer/build/index.js"(exports, module) {
       (function webpackUniversalModuleDefinition(root, factory) {
         if (typeof exports === "object" && typeof module === "object")
@@ -130,7 +1505,7 @@ var GraphBuilder = (() => {
   });
 
   // node_modules/@basementuniverse/input-manager/build/index.js
-  var require_build3 = __commonJS({
+  var require_build4 = __commonJS({
     "node_modules/@basementuniverse/input-manager/build/index.js"(exports, module) {
       (function webpackUniversalModuleDefinition(root, factory) {
         if (typeof exports === "object" && typeof module === "object")
@@ -1196,9 +2571,10 @@ InputManager.DEFAULT_OPTIONS = {
   };
 
   // src/GraphBuilder.ts
-  var import_camera = __toESM(require_build());
-  var import_frame_timer = __toESM(require_build2());
-  var import_input_manager = __toESM(require_build3());
+  var import_animation = __toESM(require_build());
+  var import_camera = __toESM(require_build2());
+  var import_frame_timer = __toESM(require_build3());
+  var import_input_manager = __toESM(require_build4());
   var import_vec9 = __toESM(require_vec());
 
   // src/constants.ts
@@ -1268,6 +2644,11 @@ InputManager.DEFAULT_OPTIONS = {
     portArrowSize: 6,
     portArrowColor: "#fff5",
     portArrowOffset: 0.44,
+    portPulseColor: "#66ccff",
+    portPulseLineWidth: 2,
+    portPulseFromRadius: 10,
+    portPulseToRadius: 30,
+    portPulseMaxOpacity: 0.8,
     // Edge
     edgeColor: "#fff2",
     edgeHoveredColor: "#fff4",
@@ -1281,7 +2662,54 @@ InputManager.DEFAULT_OPTIONS = {
     edgePreviewColor: "#fff6",
     edgePreviewLineWidth: 3,
     edgePreviewOutlineColor: "#fff3",
-    edgePreviewOutlineLineWidth: 10
+    edgePreviewOutlineLineWidth: 10,
+    edgeDashColor: "#7dd3fc",
+    edgeDashLineWidth: 3,
+    edgeDotColor: "#fde047",
+    edgeDotRadius: 4,
+    edgeDotOpacity: 1
+  };
+  var DEFAULT_EFFECTS = {
+    enabled: true,
+    timeScale: 1,
+    maxEdgeDotInstances: 200,
+    maxPortPulseInstances: 400,
+    edgeDash: {
+      running: false,
+      speed: 110,
+      dashPattern: [10, 6],
+      lineWidth: 3,
+      color: "#7dd3fc",
+      opacity: 0.9,
+      blendMode: "source-over",
+      phase: 0
+    },
+    edgeDot: {
+      running: false,
+      loop: false,
+      speed: 220,
+      duration: 0.5,
+      spawnInterval: 0.2,
+      radius: 4,
+      color: "#fde047",
+      opacity: 1,
+      blendMode: "source-over",
+      animation: {
+        interpolationFunction: "linear"
+      }
+    },
+    portPulse: {
+      duration: 0.5,
+      fromRadius: 10,
+      toRadius: 30,
+      lineWidth: 2,
+      color: "#66ccff",
+      maxOpacity: 0.8,
+      blendMode: "source-over",
+      animation: {
+        interpolationFunction: "ease-out-cubic"
+      }
+    }
   };
   var DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = {
     iterations: 120,
@@ -1841,6 +3269,10 @@ InputManager.DEFAULT_OPTIONS = {
       this.nodeState = /* @__PURE__ */ new Map();
       this.edgeState = /* @__PURE__ */ new Map();
       this.portState = /* @__PURE__ */ new Map();
+      this.edgeDashEffects = /* @__PURE__ */ new Map();
+      this.edgeDotEffects = /* @__PURE__ */ new Map();
+      this.portPulseEffects = /* @__PURE__ */ new Map();
+      this.effectsPaused = false;
       this.eventBus = new EventBus();
       this.tool = "select" /* Select */;
       this.previousTool = null;
@@ -1853,6 +3285,44 @@ InputManager.DEFAULT_OPTIONS = {
       this.resizingNodeId = null;
       this.creatingEdge = null;
       this.panOffset = null;
+      this.effects = {
+        edgeDash: {
+          get: (target, channel = "default") => this.getEdgeDashEffectConfig(target, channel),
+          set: (target, patch, channel = "default") => this.setEdgeDashEffectConfig(target, patch, channel),
+          start: (target, patch, channel = "default") => this.startEdgeDashEffect(target, patch, channel),
+          stop: (target, channel = "default") => this.stopEdgeDashEffect(target, channel),
+          clear: (target, channel = "default") => this.clearEdgeDashEffects(target, channel)
+        },
+        edgeDot: {
+          get: (target, channel = "default") => this.getEdgeDotEffectConfig(target, channel),
+          set: (target, patch, channel = "default") => this.setEdgeDotEffectConfig(target, patch, channel),
+          trigger: (target, patch, channel = "default") => this.triggerEdgeDotEffect(target, patch, channel),
+          start: (target, patch, channel = "default") => this.startEdgeDotEffect(target, patch, channel),
+          stop: (target, channel = "default") => this.stopEdgeDotEffect(target, channel),
+          clear: (target, channel = "default") => this.clearEdgeDotEffects(target, channel)
+        },
+        portPulse: {
+          trigger: (target, patch, channel = "default") => this.triggerPortPulseEffect(target, patch, channel),
+          clear: (target, channel = "default") => this.clearPortPulseEffects(target, channel)
+        },
+        global: {
+          setEnabled: (enabled) => {
+            this.options.effects.enabled = enabled;
+          },
+          setTimeScale: (timeScale) => {
+            this.options.effects.timeScale = Math.max(0, timeScale);
+          },
+          pause: () => {
+            this.effectsPaused = true;
+          },
+          resume: () => {
+            this.effectsPaused = false;
+          },
+          clearAll: () => {
+            this.clearAllEffects();
+          }
+        }
+      };
       if (canvas === null) {
         throw new Error("Canvas element not found");
       }
@@ -1877,6 +3347,30 @@ InputManager.DEFAULT_OPTIONS = {
         resolveEdgeTheme: options.resolveEdgeTheme,
         camera: options.camera ?? {},
         theme: { ...DEFAULT_THEME, ...options.theme },
+        effects: {
+          ...DEFAULT_EFFECTS,
+          ...options.effects,
+          edgeDash: {
+            ...DEFAULT_EFFECTS.edgeDash,
+            ...options.effects?.edgeDash
+          },
+          edgeDot: {
+            ...DEFAULT_EFFECTS.edgeDot,
+            ...options.effects?.edgeDot,
+            animation: {
+              ...DEFAULT_EFFECTS.edgeDot.animation,
+              ...options.effects?.edgeDot?.animation
+            }
+          },
+          portPulse: {
+            ...DEFAULT_EFFECTS.portPulse,
+            ...options.effects?.portPulse,
+            animation: {
+              ...DEFAULT_EFFECTS.portPulse.animation,
+              ...options.effects?.portPulse?.animation
+            }
+          }
+        },
         callbacks: options.callbacks ?? {},
         capabilities: { ...DEFAULT_CAPABILITIES, ...options.capabilities }
       };
@@ -1933,6 +3427,7 @@ InputManager.DEFAULT_OPTIONS = {
     }
     dispose() {
       this.stop();
+      this.clearAllEffects();
       this.graph.nodes = [];
       this.graph.edges = [];
       this.nodeState.clear();
@@ -2024,6 +3519,7 @@ InputManager.DEFAULT_OPTIONS = {
       };
     }
     load(graph) {
+      this.clearAllEffects();
       this.graph = this.cloneGraph(graph);
       this.nodeState.clear();
       this.edgeState.clear();
@@ -2166,6 +3662,7 @@ InputManager.DEFAULT_OPTIONS = {
       if (nodeRemoving.cancelled) {
         return false;
       }
+      this.clearEdgeEffectsForNode(nodeId);
       this.graph.edges = this.graph.edges.filter(
         (edge) => edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId
       );
@@ -2173,6 +3670,7 @@ InputManager.DEFAULT_OPTIONS = {
       this.nodeState.delete(nodeId);
       for (const port of node.ports) {
         this.portState.delete(this.portKey(nodeId, port.id));
+        this.clearPortPulseEffects({ nodeId, portId: port.id });
       }
       if (this.selectedNodeId === nodeId) {
         this.selectedNodeId = null;
@@ -2270,6 +3768,8 @@ InputManager.DEFAULT_OPTIONS = {
       this.graph.edges = this.graph.edges.filter(
         (edge) => !(this.portRefEq(edge.a, existing.a) && this.portRefEq(edge.b, existing.b))
       );
+      this.clearEdgeDashEffects({ a: existing.a, b: existing.b });
+      this.clearEdgeDotEffects({ a: existing.a, b: existing.b });
       this.edgeState.delete(this.edgeKey(existing));
       this.eventBus.emit("edgeRemoved", {
         edge: {
@@ -2379,6 +3879,7 @@ InputManager.DEFAULT_OPTIONS = {
       for (const edge of this.graph.edges) {
         this.drawEdge(edge);
       }
+      this.drawEffects();
       if (this.creatingEdge) {
         this.drawEdgePreviewPort();
         this.drawEdgePreview();
@@ -2401,6 +3902,7 @@ InputManager.DEFAULT_OPTIONS = {
       this.updateEdgeStates(mouse);
       this.handleInteractions(mouse);
       this.easeNodes();
+      this.updateEffects(dt);
       import_input_manager.default.update();
     }
     loop() {
@@ -3230,6 +4732,684 @@ InputManager.DEFAULT_OPTIONS = {
         this.context.fill();
         this.context.restore();
       }
+    }
+    drawEffects() {
+      for (const state of this.edgeDashEffects.values()) {
+        if (!state.config.running) {
+          continue;
+        }
+        const edge = this.findEdgeByKey(state.edgeKey);
+        if (!edge) {
+          continue;
+        }
+        this.drawEdgeDashEffect(edge, state);
+      }
+      for (const state of this.edgeDotEffects.values()) {
+        const edge = this.findEdgeByKey(state.edgeKey);
+        if (!edge) {
+          continue;
+        }
+        this.drawEdgeDotEffect(edge, state);
+      }
+      for (const state of this.portPulseEffects.values()) {
+        this.drawPortPulseEffect(state);
+      }
+    }
+    updateEffects(dt) {
+      if (!this.options.effects.enabled || this.effectsPaused) {
+        return;
+      }
+      const scaledDt = dt * this.options.effects.timeScale;
+      if (scaledDt <= 0) {
+        return;
+      }
+      for (const state of this.edgeDashEffects.values()) {
+        if (!state.config.running) {
+          continue;
+        }
+        state.config.phase += state.config.speed * scaledDt;
+      }
+      for (const state of this.edgeDotEffects.values()) {
+        if (state.config.running && state.config.loop) {
+          state.spawnElapsed += scaledDt;
+          const spawnInterval = Math.max(0.01, state.config.spawnInterval);
+          while (state.spawnElapsed >= spawnInterval) {
+            state.spawnElapsed -= spawnInterval;
+            this.addEdgeDotInstance(state, state.config);
+          }
+        }
+        for (const instance of state.instances) {
+          instance.animation.update(scaledDt);
+        }
+        const completed = state.instances.filter(
+          (instance) => instance.animation.finished
+        );
+        state.instances = state.instances.filter(
+          (instance) => !instance.animation.finished
+        );
+        for (const instance of completed) {
+          const edge = this.findEdgeByKey(state.edgeKey);
+          if (!edge) {
+            continue;
+          }
+          this.eventBus.emit("effectCompleted", {
+            kind: "edgeDot",
+            channel: state.channel,
+            target: { a: { ...edge.a }, b: { ...edge.b } },
+            id: instance.id
+          });
+        }
+      }
+      for (const state of this.portPulseEffects.values()) {
+        for (const instance of state.instances) {
+          instance.animation.update(scaledDt);
+        }
+        const completed = state.instances.filter(
+          (instance) => instance.animation.finished
+        );
+        state.instances = state.instances.filter(
+          (instance) => !instance.animation.finished
+        );
+        for (const instance of completed) {
+          const portRef = this.portRefFromKey(state.portKey);
+          if (!portRef) {
+            continue;
+          }
+          this.eventBus.emit("effectCompleted", {
+            kind: "portPulse",
+            channel: state.channel,
+            target: portRef,
+            id: instance.id
+          });
+        }
+      }
+    }
+    drawEdgeDashEffect(edge, state) {
+      const geometry = this.resolveEdgeGeometry(edge);
+      if (!geometry) {
+        return;
+      }
+      const { callbacks } = this.options;
+      if (callbacks.drawEdgeDashEffect) {
+        callbacks.drawEdgeDashEffect(this.context, {
+          edge,
+          channel: state.channel,
+          from: (0, import_vec9.vec2)(geometry.from),
+          to: (0, import_vec9.vec2)(geometry.to),
+          fromDirection: (0, import_vec9.vec2)(geometry.fromDirection),
+          toDirection: (0, import_vec9.vec2)(geometry.toDirection),
+          phase: state.config.phase,
+          config: { ...state.config }
+        });
+        return;
+      }
+      this.context.save();
+      this.context.globalCompositeOperation = state.config.blendMode;
+      this.context.globalAlpha = Math.max(0, Math.min(1, state.config.opacity));
+      this.context.strokeStyle = state.config.color;
+      this.context.lineWidth = Math.max(0.1, state.config.lineWidth);
+      this.context.setLineDash(state.config.dashPattern);
+      this.context.lineDashOffset = -state.config.phase;
+      curveFromTo(
+        this.context,
+        geometry.from,
+        geometry.to,
+        geometry.fromDirection,
+        geometry.toDirection,
+        this.options.gridSize
+      );
+      this.context.stroke();
+      this.context.restore();
+    }
+    drawEdgeDotEffect(edge, state) {
+      const geometry = this.resolveEdgeGeometry(edge);
+      if (!geometry) {
+        return;
+      }
+      const { callbacks } = this.options;
+      const { cp1, cp2, join } = getCurveGeometry(
+        geometry.from,
+        geometry.to,
+        geometry.fromDirection,
+        geometry.toDirection,
+        this.options.gridSize
+      );
+      for (const instance of state.instances) {
+        const progress = instance.animation.current;
+        const sample = sampleBezierChain(
+          geometry.from,
+          cp1,
+          join,
+          cp2,
+          geometry.to,
+          progress
+        );
+        if (callbacks.drawEdgeDotEffect) {
+          callbacks.drawEdgeDotEffect(this.context, {
+            edge,
+            channel: state.channel,
+            id: instance.id,
+            position: (0, import_vec9.vec2)(sample.position),
+            direction: (0, import_vec9.vec2)(sample.tangent),
+            progress,
+            config: { ...state.config }
+          });
+          continue;
+        }
+        this.context.save();
+        this.context.globalCompositeOperation = state.config.blendMode;
+        this.context.globalAlpha = Math.max(0, Math.min(1, state.config.opacity));
+        this.context.fillStyle = state.config.color;
+        this.context.beginPath();
+        this.context.arc(
+          sample.position.x,
+          sample.position.y,
+          Math.max(0.1, state.config.radius),
+          0,
+          Math.PI * 2
+        );
+        this.context.fill();
+        this.context.restore();
+      }
+    }
+    drawPortPulseEffect(state) {
+      const resolved = this.resolvePortFromKey(state.portKey);
+      if (!resolved) {
+        return;
+      }
+      const { node, port } = resolved;
+      const portState = this.ensurePortState(node.id, port.id, port.side);
+      const { callbacks } = this.options;
+      for (const instance of state.instances) {
+        const config = instance.config;
+        const progress = instance.animation.current;
+        const radius = this.lerp(config.fromRadius, config.toRadius, progress);
+        const opacity = Math.max(0, 1 - progress) * config.maxOpacity;
+        if (callbacks.drawPortPulseEffect) {
+          callbacks.drawPortPulseEffect(this.context, {
+            node,
+            port,
+            channel: state.channel,
+            id: instance.id,
+            position: (0, import_vec9.vec2)(portState.position),
+            progress,
+            radius,
+            opacity,
+            config: { ...config }
+          });
+          continue;
+        }
+        this.context.save();
+        this.context.globalCompositeOperation = config.blendMode;
+        this.context.globalAlpha = Math.max(0, Math.min(1, opacity));
+        this.context.strokeStyle = config.color;
+        this.context.lineWidth = Math.max(0.1, config.lineWidth);
+        this.context.beginPath();
+        this.context.arc(
+          portState.position.x,
+          portState.position.y,
+          radius,
+          0,
+          Math.PI * 2
+        );
+        this.context.stroke();
+        this.context.restore();
+      }
+    }
+    getEdgeDashEffectConfig(target, channel) {
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return null;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const existing = this.edgeDashEffects.get(key);
+      return existing ? { ...existing.config } : null;
+    }
+    setEdgeDashEffectConfig(target, patch, channel) {
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return false;
+      }
+      const edgeTheme = this.effectiveEdgeTheme(resolved.edge);
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const existing = this.edgeDashEffects.get(key);
+      const config = {
+        ...this.options.effects.edgeDash,
+        color: edgeTheme.edgeDashColor,
+        lineWidth: edgeTheme.edgeDashLineWidth,
+        ...existing?.config ?? {},
+        ...patch
+      };
+      this.edgeDashEffects.set(key, {
+        edgeKey: resolved.edgeKey,
+        channel,
+        config
+      });
+      return true;
+    }
+    startEdgeDashEffect(target, patch = {}, channel) {
+      const updated = this.setEdgeDashEffectConfig(
+        target,
+        { ...patch, running: true },
+        channel
+      );
+      if (!updated) {
+        return false;
+      }
+      this.eventBus.emit("effectStarted", {
+        kind: "edgeDash",
+        channel,
+        target
+      });
+      return true;
+    }
+    stopEdgeDashEffect(target, channel) {
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return false;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const existing = this.edgeDashEffects.get(key);
+      if (!existing) {
+        return false;
+      }
+      existing.config.running = false;
+      this.eventBus.emit("effectStopped", {
+        kind: "edgeDash",
+        channel,
+        target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } }
+      });
+      return true;
+    }
+    clearEdgeDashEffects(target, channel = "default") {
+      if (!target) {
+        for (const [key2, state] of this.edgeDashEffects.entries()) {
+          if (channel !== "*" && state.channel !== channel) {
+            continue;
+          }
+          const edge = this.findEdgeByKey(state.edgeKey);
+          if (edge) {
+            this.eventBus.emit("effectCleared", {
+              kind: "edgeDash",
+              channel: state.channel,
+              target: { a: { ...edge.a }, b: { ...edge.b } }
+            });
+          }
+          this.edgeDashEffects.delete(key2);
+        }
+        return;
+      }
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      if (this.edgeDashEffects.delete(key)) {
+        this.eventBus.emit("effectCleared", {
+          kind: "edgeDash",
+          channel,
+          target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } }
+        });
+      }
+    }
+    getEdgeDotEffectConfig(target, channel) {
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return null;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const existing = this.edgeDotEffects.get(key);
+      return existing ? { ...existing.config } : null;
+    }
+    setEdgeDotEffectConfig(target, patch, channel) {
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return false;
+      }
+      const edgeTheme = this.effectiveEdgeTheme(resolved.edge);
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const existing = this.edgeDotEffects.get(key);
+      const config = {
+        ...this.options.effects.edgeDot,
+        color: edgeTheme.edgeDotColor,
+        radius: edgeTheme.edgeDotRadius,
+        opacity: edgeTheme.edgeDotOpacity,
+        ...existing?.config ?? {},
+        ...patch,
+        animation: {
+          ...this.options.effects.edgeDot.animation,
+          ...existing?.config.animation ?? {},
+          ...patch.animation ?? {}
+        }
+      };
+      this.edgeDotEffects.set(key, {
+        edgeKey: resolved.edgeKey,
+        channel,
+        config,
+        spawnElapsed: existing?.spawnElapsed ?? 0,
+        instances: existing?.instances ?? []
+      });
+      return true;
+    }
+    triggerEdgeDotEffect(target, patch = {}, channel) {
+      const updated = this.setEdgeDotEffectConfig(target, patch, channel);
+      if (!updated) {
+        return null;
+      }
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return null;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const state = this.edgeDotEffects.get(key);
+      if (!state) {
+        return null;
+      }
+      const instance = this.addEdgeDotInstance(state, state.config);
+      if (!instance) {
+        return null;
+      }
+      this.eventBus.emit("effectStarted", {
+        kind: "edgeDot",
+        channel,
+        target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } },
+        id: instance.id
+      });
+      return {
+        id: instance.id,
+        stop: () => this.stopEdgeDotInstance(key, instance.id)
+      };
+    }
+    startEdgeDotEffect(target, patch = {}, channel) {
+      const updated = this.setEdgeDotEffectConfig(
+        target,
+        { ...patch, running: true, loop: true },
+        channel
+      );
+      if (!updated) {
+        return false;
+      }
+      this.eventBus.emit("effectStarted", {
+        kind: "edgeDot",
+        channel,
+        target
+      });
+      return true;
+    }
+    stopEdgeDotEffect(target, channel) {
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return false;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      const state = this.edgeDotEffects.get(key);
+      if (!state) {
+        return false;
+      }
+      state.config.running = false;
+      state.config.loop = false;
+      this.eventBus.emit("effectStopped", {
+        kind: "edgeDot",
+        channel,
+        target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } }
+      });
+      return true;
+    }
+    clearEdgeDotEffects(target, channel = "default") {
+      if (!target) {
+        for (const [key2, state] of this.edgeDotEffects.entries()) {
+          if (channel !== "*" && state.channel !== channel) {
+            continue;
+          }
+          const edge = this.findEdgeByKey(state.edgeKey);
+          if (edge) {
+            this.eventBus.emit("effectCleared", {
+              kind: "edgeDot",
+              channel: state.channel,
+              target: { a: { ...edge.a }, b: { ...edge.b } }
+            });
+          }
+          this.edgeDotEffects.delete(key2);
+        }
+        return;
+      }
+      const resolved = this.resolveEdgeTarget(target);
+      if (!resolved) {
+        return;
+      }
+      const key = this.effectKey(resolved.edgeKey, channel);
+      if (this.edgeDotEffects.delete(key)) {
+        this.eventBus.emit("effectCleared", {
+          kind: "edgeDot",
+          channel,
+          target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } }
+        });
+      }
+    }
+    triggerPortPulseEffect(target, patch = {}, channel) {
+      const resolved = this.resolveNodeAndPort(target);
+      if (!resolved) {
+        return null;
+      }
+      const key = this.effectKey(
+        this.portKey(target.nodeId, target.portId),
+        channel
+      );
+      const config = {
+        ...this.options.effects.portPulse,
+        color: this.effectivePortTheme(resolved.port).portPulseColor,
+        lineWidth: this.effectivePortTheme(resolved.port).portPulseLineWidth,
+        fromRadius: this.effectivePortTheme(resolved.port).portPulseFromRadius,
+        toRadius: this.effectivePortTheme(resolved.port).portPulseToRadius,
+        maxOpacity: this.effectivePortTheme(resolved.port).portPulseMaxOpacity,
+        ...patch,
+        animation: {
+          ...this.options.effects.portPulse.animation,
+          ...patch.animation ?? {}
+        }
+      };
+      const state = this.portPulseEffects.get(key) ?? {
+        portKey: this.portKey(target.nodeId, target.portId),
+        channel,
+        instances: []
+      };
+      const id = this.createId("effect-port-pulse");
+      const duration = Math.max(0.01, config.duration);
+      const instance = {
+        id,
+        channel,
+        animation: this.createUnitAnimation(duration, config.animation),
+        config
+      };
+      instance.animation.start();
+      if (state.instances.length >= this.options.effects.maxPortPulseInstances) {
+        state.instances.shift();
+      }
+      state.instances.push(instance);
+      this.portPulseEffects.set(key, state);
+      this.eventBus.emit("effectStarted", {
+        kind: "portPulse",
+        channel,
+        target,
+        id
+      });
+      return {
+        id,
+        stop: () => this.stopPortPulseInstance(key, id)
+      };
+    }
+    clearPortPulseEffects(target, channel = "default") {
+      if (!target) {
+        for (const [key2, state] of this.portPulseEffects.entries()) {
+          if (channel !== "*" && state.channel !== channel) {
+            continue;
+          }
+          const portRef = this.portRefFromKey(state.portKey);
+          if (portRef) {
+            this.eventBus.emit("effectCleared", {
+              kind: "portPulse",
+              channel: state.channel,
+              target: portRef
+            });
+          }
+          this.portPulseEffects.delete(key2);
+        }
+        return;
+      }
+      const key = this.effectKey(
+        this.portKey(target.nodeId, target.portId),
+        channel
+      );
+      if (this.portPulseEffects.delete(key)) {
+        this.eventBus.emit("effectCleared", {
+          kind: "portPulse",
+          channel,
+          target
+        });
+      }
+    }
+    clearAllEffects() {
+      this.clearEdgeDashEffects(void 0, "*");
+      this.clearEdgeDotEffects(void 0, "*");
+      this.clearPortPulseEffects(void 0, "*");
+    }
+    clearEdgeEffectsForNode(nodeId) {
+      for (const edge of this.graph.edges) {
+        if (edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId) {
+          continue;
+        }
+        this.clearEdgeDashEffects({ a: edge.a, b: edge.b });
+        this.clearEdgeDotEffects({ a: edge.a, b: edge.b });
+      }
+    }
+    addEdgeDotInstance(state, config) {
+      if (state.instances.length >= this.options.effects.maxEdgeDotInstances) {
+        state.instances.shift();
+      }
+      const id = this.createId("effect-edge-dot");
+      const duration = Math.max(0.01, config.duration);
+      const instance = {
+        id,
+        channel: state.channel,
+        animation: this.createUnitAnimation(duration, config.animation)
+      };
+      instance.animation.start();
+      state.instances.push(instance);
+      return instance;
+    }
+    stopEdgeDotInstance(effectKey, id) {
+      const state = this.edgeDotEffects.get(effectKey);
+      if (!state) {
+        return false;
+      }
+      const previousLength = state.instances.length;
+      state.instances = state.instances.filter((instance) => instance.id !== id);
+      if (state.instances.length === previousLength) {
+        return false;
+      }
+      const edge = this.findEdgeByKey(state.edgeKey);
+      if (edge) {
+        this.eventBus.emit("effectStopped", {
+          kind: "edgeDot",
+          channel: state.channel,
+          target: { a: { ...edge.a }, b: { ...edge.b } },
+          id
+        });
+      }
+      return true;
+    }
+    stopPortPulseInstance(effectKey, id) {
+      const state = this.portPulseEffects.get(effectKey);
+      if (!state) {
+        return false;
+      }
+      const previousLength = state.instances.length;
+      state.instances = state.instances.filter((instance) => instance.id !== id);
+      if (state.instances.length === previousLength) {
+        return false;
+      }
+      const target = this.portRefFromKey(state.portKey);
+      if (target) {
+        this.eventBus.emit("effectStopped", {
+          kind: "portPulse",
+          channel: state.channel,
+          target,
+          id
+        });
+      }
+      return true;
+    }
+    resolveEdgeTarget(target) {
+      const edge = this.findEdge(target.a, target.b);
+      if (!edge) {
+        return null;
+      }
+      return {
+        edge,
+        edgeKey: this.edgeKey(edge)
+      };
+    }
+    resolveEdgeGeometry(edge) {
+      const aEndpoint = this.resolvePortEndpoint(edge.a);
+      const bEndpoint = this.resolvePortEndpoint(edge.b);
+      if (!aEndpoint || !bEndpoint) {
+        return null;
+      }
+      return {
+        from: import_vec9.vec2.add(
+          aEndpoint.position,
+          import_vec9.vec2.mul(aEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+        ),
+        to: import_vec9.vec2.add(
+          bEndpoint.position,
+          import_vec9.vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+        ),
+        fromDirection: aEndpoint.direction,
+        toDirection: bEndpoint.direction
+      };
+    }
+    findEdgeByKey(edgeKey) {
+      return this.graph.edges.find((edge) => this.edgeKey(edge) === edgeKey) ?? null;
+    }
+    resolvePortFromKey(portKey) {
+      const target = this.portRefFromKey(portKey);
+      if (!target) {
+        return null;
+      }
+      const resolved = this.resolveNodeAndPort(target);
+      if (!resolved) {
+        return null;
+      }
+      return {
+        ...resolved,
+        target
+      };
+    }
+    effectKey(baseKey, channel) {
+      return `${baseKey}::${channel}`;
+    }
+    portRefFromKey(portKey) {
+      const split = portKey.indexOf(":");
+      if (split === -1) {
+        return null;
+      }
+      return {
+        nodeId: portKey.slice(0, split),
+        portId: portKey.slice(split + 1)
+      };
+    }
+    lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+    createUnitAnimation(duration, options) {
+      return new import_animation.Animation({
+        initialValue: 0,
+        targetValue: 1,
+        mode: import_animation.AnimationMode.Trigger,
+        repeat: import_animation.RepeatMode.Once,
+        duration,
+        ...options
+      });
     }
     selectNode(nodeId) {
       this.selectedNodeId = nodeId;

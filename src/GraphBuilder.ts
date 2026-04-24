@@ -1,3 +1,8 @@
+import {
+  Animation,
+  AnimationMode,
+  RepeatMode,
+} from '@basementuniverse/animation';
 import Camera from '@basementuniverse/camera';
 import FrameTimer from '@basementuniverse/frame-timer';
 import InputManager from '@basementuniverse/input-manager';
@@ -6,6 +11,7 @@ import {
   CAMERA_KEYBOARD_PAN_SPEED,
   CAMERA_ZOOM_STEP,
   DEFAULT_CAPABILITIES,
+  DEFAULT_EFFECTS,
   DEFAULT_NODE_SIZE,
   DEFAULT_THEME,
   DELETE_BUTTON_SIZE,
@@ -29,22 +35,34 @@ import { layoutForceDirected, layoutLayered } from './layout';
 import type {
   Edge,
   EdgeConnectionValidationResult,
+  EdgeDashEffectConfig,
+  EdgeDashRuntimeState,
+  EdgeDotEffectConfig,
+  EdgeDotRuntimeInstance,
+  EdgeDotRuntimeState,
+  EdgeEffectTarget,
   EdgeState,
   EdgeTheme,
   EdgeToolEndpoint,
+  EffectTriggerHandle,
   Graph,
   GraphBuilderCapabilities,
+  GraphBuilderEffectsController,
   GraphBuilderEventHandler,
   GraphBuilderEventMap,
   GraphBuilderOptions,
   GraphDocument,
   GraphDomain,
+  GraphEffectChannel,
   LoadFromDomainOptions,
   Node,
   NodeState,
   NodeTemplate,
   NodeTheme,
   Port,
+  PortPulseEffectConfig,
+  PortPulseRuntimeInstance,
+  PortPulseRuntimeState,
   PortRef,
   PortState,
   PortTheme,
@@ -98,6 +116,10 @@ export default class GraphBuilder<
   private nodeState: Map<string, NodeState> = new Map();
   private edgeState: Map<string, EdgeState> = new Map();
   private portState: Map<string, PortState> = new Map();
+  private edgeDashEffects: Map<string, EdgeDashRuntimeState> = new Map();
+  private edgeDotEffects: Map<string, EdgeDotRuntimeState> = new Map();
+  private portPulseEffects: Map<string, PortPulseRuntimeState> = new Map();
+  private effectsPaused = false;
 
   private eventBus = new EventBus<
     GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>
@@ -116,6 +138,58 @@ export default class GraphBuilder<
   private resizingNodeId: string | null = null;
   private creatingEdge: EdgeTool | null = null;
   private panOffset: vec2 | null = null;
+
+  public readonly effects: GraphBuilderEffectsController = {
+    edgeDash: {
+      get: (target, channel = 'default') =>
+        this.getEdgeDashEffectConfig(target, channel),
+      set: (target, patch, channel = 'default') =>
+        this.setEdgeDashEffectConfig(target, patch, channel),
+      start: (target, patch, channel = 'default') =>
+        this.startEdgeDashEffect(target, patch, channel),
+      stop: (target, channel = 'default') =>
+        this.stopEdgeDashEffect(target, channel),
+      clear: (target, channel = 'default') =>
+        this.clearEdgeDashEffects(target, channel),
+    },
+    edgeDot: {
+      get: (target, channel = 'default') =>
+        this.getEdgeDotEffectConfig(target, channel),
+      set: (target, patch, channel = 'default') =>
+        this.setEdgeDotEffectConfig(target, patch, channel),
+      trigger: (target, patch, channel = 'default') =>
+        this.triggerEdgeDotEffect(target, patch, channel),
+      start: (target, patch, channel = 'default') =>
+        this.startEdgeDotEffect(target, patch, channel),
+      stop: (target, channel = 'default') =>
+        this.stopEdgeDotEffect(target, channel),
+      clear: (target, channel = 'default') =>
+        this.clearEdgeDotEffects(target, channel),
+    },
+    portPulse: {
+      trigger: (target, patch, channel = 'default') =>
+        this.triggerPortPulseEffect(target, patch, channel),
+      clear: (target, channel = 'default') =>
+        this.clearPortPulseEffects(target, channel),
+    },
+    global: {
+      setEnabled: enabled => {
+        this.options.effects.enabled = enabled;
+      },
+      setTimeScale: timeScale => {
+        this.options.effects.timeScale = Math.max(0, timeScale);
+      },
+      pause: () => {
+        this.effectsPaused = true;
+      },
+      resume: () => {
+        this.effectsPaused = false;
+      },
+      clearAll: () => {
+        this.clearAllEffects();
+      },
+    },
+  };
 
   public constructor(
     canvas: HTMLElement | null,
@@ -147,6 +221,30 @@ export default class GraphBuilder<
       resolveEdgeTheme: options.resolveEdgeTheme,
       camera: options.camera ?? {},
       theme: { ...DEFAULT_THEME, ...options.theme },
+      effects: {
+        ...DEFAULT_EFFECTS,
+        ...options.effects,
+        edgeDash: {
+          ...DEFAULT_EFFECTS.edgeDash,
+          ...options.effects?.edgeDash,
+        },
+        edgeDot: {
+          ...DEFAULT_EFFECTS.edgeDot,
+          ...options.effects?.edgeDot,
+          animation: {
+            ...DEFAULT_EFFECTS.edgeDot.animation,
+            ...options.effects?.edgeDot?.animation,
+          },
+        },
+        portPulse: {
+          ...DEFAULT_EFFECTS.portPulse,
+          ...options.effects?.portPulse,
+          animation: {
+            ...DEFAULT_EFFECTS.portPulse.animation,
+            ...options.effects?.portPulse?.animation,
+          },
+        },
+      },
       callbacks: options.callbacks ?? {},
       capabilities: { ...DEFAULT_CAPABILITIES, ...options.capabilities },
     };
@@ -224,6 +322,7 @@ export default class GraphBuilder<
 
   public dispose() {
     this.stop();
+    this.clearAllEffects();
     this.graph.nodes = [];
     this.graph.edges = [];
     this.nodeState.clear();
@@ -331,6 +430,7 @@ export default class GraphBuilder<
   }
 
   public load(graph: Graph<TNodeData, TEdgeData, TPortData>) {
+    this.clearAllEffects();
     this.graph = this.cloneGraph(graph);
     this.nodeState.clear();
     this.edgeState.clear();
@@ -517,6 +617,8 @@ export default class GraphBuilder<
       return false;
     }
 
+    this.clearEdgeEffectsForNode(nodeId);
+
     this.graph.edges = this.graph.edges.filter(
       edge => edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId
     );
@@ -525,6 +627,7 @@ export default class GraphBuilder<
     this.nodeState.delete(nodeId);
     for (const port of node.ports) {
       this.portState.delete(this.portKey(nodeId, port.id));
+      this.clearPortPulseEffects({ nodeId, portId: port.id });
     }
 
     if (this.selectedNodeId === nodeId) {
@@ -658,6 +761,8 @@ export default class GraphBuilder<
           this.portRefEq(edge.b, existing.b)
         )
     );
+    this.clearEdgeDashEffects({ a: existing.a, b: existing.b });
+    this.clearEdgeDotEffects({ a: existing.a, b: existing.b });
     this.edgeState.delete(this.edgeKey(existing));
 
     this.eventBus.emit('edgeRemoved', {
@@ -817,6 +922,7 @@ export default class GraphBuilder<
     for (const edge of this.graph.edges) {
       this.drawEdge(edge);
     }
+    this.drawEffects();
     if (this.creatingEdge) {
       this.drawEdgePreviewPort();
       this.drawEdgePreview();
@@ -845,6 +951,7 @@ export default class GraphBuilder<
     this.updateEdgeStates(mouse);
     this.handleInteractions(mouse);
     this.easeNodes();
+    this.updateEffects(dt);
 
     InputManager.update();
   }
@@ -1913,6 +2020,836 @@ export default class GraphBuilder<
       this.context.fill();
       this.context.restore();
     }
+  }
+
+  private drawEffects() {
+    for (const state of this.edgeDashEffects.values()) {
+      if (!state.config.running) {
+        continue;
+      }
+
+      const edge = this.findEdgeByKey(state.edgeKey);
+      if (!edge) {
+        continue;
+      }
+      this.drawEdgeDashEffect(edge, state);
+    }
+
+    for (const state of this.edgeDotEffects.values()) {
+      const edge = this.findEdgeByKey(state.edgeKey);
+      if (!edge) {
+        continue;
+      }
+      this.drawEdgeDotEffect(edge, state);
+    }
+
+    for (const state of this.portPulseEffects.values()) {
+      this.drawPortPulseEffect(state);
+    }
+  }
+
+  private updateEffects(dt: number) {
+    if (!this.options.effects.enabled || this.effectsPaused) {
+      return;
+    }
+
+    const scaledDt = dt * this.options.effects.timeScale;
+    if (scaledDt <= 0) {
+      return;
+    }
+
+    for (const state of this.edgeDashEffects.values()) {
+      if (!state.config.running) {
+        continue;
+      }
+      state.config.phase += state.config.speed * scaledDt;
+    }
+
+    for (const state of this.edgeDotEffects.values()) {
+      if (state.config.running && state.config.loop) {
+        state.spawnElapsed += scaledDt;
+        const spawnInterval = Math.max(0.01, state.config.spawnInterval);
+        while (state.spawnElapsed >= spawnInterval) {
+          state.spawnElapsed -= spawnInterval;
+          this.addEdgeDotInstance(state, state.config);
+        }
+      }
+
+      for (const instance of state.instances) {
+        instance.animation.update(scaledDt);
+      }
+
+      const completed = state.instances.filter(
+        instance => instance.animation.finished
+      );
+      state.instances = state.instances.filter(
+        instance => !instance.animation.finished
+      );
+      for (const instance of completed) {
+        const edge = this.findEdgeByKey(state.edgeKey);
+        if (!edge) {
+          continue;
+        }
+        this.eventBus.emit('effectCompleted', {
+          kind: 'edgeDot',
+          channel: state.channel,
+          target: { a: { ...edge.a }, b: { ...edge.b } },
+          id: instance.id,
+        });
+      }
+    }
+
+    for (const state of this.portPulseEffects.values()) {
+      for (const instance of state.instances) {
+        instance.animation.update(scaledDt);
+      }
+
+      const completed = state.instances.filter(
+        instance => instance.animation.finished
+      );
+      state.instances = state.instances.filter(
+        instance => !instance.animation.finished
+      );
+      for (const instance of completed) {
+        const portRef = this.portRefFromKey(state.portKey);
+        if (!portRef) {
+          continue;
+        }
+        this.eventBus.emit('effectCompleted', {
+          kind: 'portPulse',
+          channel: state.channel,
+          target: portRef,
+          id: instance.id,
+        });
+      }
+    }
+  }
+
+  private drawEdgeDashEffect(
+    edge: Edge<TEdgeData>,
+    state: EdgeDashRuntimeState
+  ) {
+    const geometry = this.resolveEdgeGeometry(edge);
+    if (!geometry) {
+      return;
+    }
+
+    const { callbacks } = this.options;
+    if (callbacks.drawEdgeDashEffect) {
+      callbacks.drawEdgeDashEffect(this.context, {
+        edge,
+        channel: state.channel,
+        from: vec2(geometry.from),
+        to: vec2(geometry.to),
+        fromDirection: vec2(geometry.fromDirection),
+        toDirection: vec2(geometry.toDirection),
+        phase: state.config.phase,
+        config: { ...state.config },
+      });
+      return;
+    }
+
+    this.context.save();
+    this.context.globalCompositeOperation = state.config.blendMode;
+    this.context.globalAlpha = Math.max(0, Math.min(1, state.config.opacity));
+    this.context.strokeStyle = state.config.color;
+    this.context.lineWidth = Math.max(0.1, state.config.lineWidth);
+    this.context.setLineDash(state.config.dashPattern);
+    this.context.lineDashOffset = -state.config.phase;
+    curveFromTo(
+      this.context,
+      geometry.from,
+      geometry.to,
+      geometry.fromDirection,
+      geometry.toDirection,
+      this.options.gridSize
+    );
+    this.context.stroke();
+    this.context.restore();
+  }
+
+  private drawEdgeDotEffect(edge: Edge<TEdgeData>, state: EdgeDotRuntimeState) {
+    const geometry = this.resolveEdgeGeometry(edge);
+    if (!geometry) {
+      return;
+    }
+
+    const { callbacks } = this.options;
+    const { cp1, cp2, join } = getCurveGeometry(
+      geometry.from,
+      geometry.to,
+      geometry.fromDirection,
+      geometry.toDirection,
+      this.options.gridSize
+    );
+
+    for (const instance of state.instances) {
+      const progress = instance.animation.current;
+      const sample = sampleBezierChain(
+        geometry.from,
+        cp1,
+        join,
+        cp2,
+        geometry.to,
+        progress
+      );
+
+      if (callbacks.drawEdgeDotEffect) {
+        callbacks.drawEdgeDotEffect(this.context, {
+          edge,
+          channel: state.channel,
+          id: instance.id,
+          position: vec2(sample.position),
+          direction: vec2(sample.tangent),
+          progress,
+          config: { ...state.config },
+        });
+        continue;
+      }
+
+      this.context.save();
+      this.context.globalCompositeOperation = state.config.blendMode;
+      this.context.globalAlpha = Math.max(0, Math.min(1, state.config.opacity));
+      this.context.fillStyle = state.config.color;
+      this.context.beginPath();
+      this.context.arc(
+        sample.position.x,
+        sample.position.y,
+        Math.max(0.1, state.config.radius),
+        0,
+        Math.PI * 2
+      );
+      this.context.fill();
+      this.context.restore();
+    }
+  }
+
+  private drawPortPulseEffect(state: PortPulseRuntimeState) {
+    const resolved = this.resolvePortFromKey(state.portKey);
+    if (!resolved) {
+      return;
+    }
+
+    const { node, port } = resolved;
+    const portState = this.ensurePortState(node.id, port.id, port.side);
+    const { callbacks } = this.options;
+
+    for (const instance of state.instances) {
+      const config = instance.config;
+      const progress = instance.animation.current;
+      const radius = this.lerp(config.fromRadius, config.toRadius, progress);
+      const opacity = Math.max(0, 1 - progress) * config.maxOpacity;
+
+      if (callbacks.drawPortPulseEffect) {
+        callbacks.drawPortPulseEffect(this.context, {
+          node,
+          port,
+          channel: state.channel,
+          id: instance.id,
+          position: vec2(portState.position),
+          progress,
+          radius,
+          opacity,
+          config: { ...config },
+        });
+        continue;
+      }
+
+      this.context.save();
+      this.context.globalCompositeOperation = config.blendMode;
+      this.context.globalAlpha = Math.max(0, Math.min(1, opacity));
+      this.context.strokeStyle = config.color;
+      this.context.lineWidth = Math.max(0.1, config.lineWidth);
+      this.context.beginPath();
+      this.context.arc(
+        portState.position.x,
+        portState.position.y,
+        radius,
+        0,
+        Math.PI * 2
+      );
+      this.context.stroke();
+      this.context.restore();
+    }
+  }
+
+  private getEdgeDashEffectConfig(
+    target: EdgeEffectTarget,
+    channel: GraphEffectChannel
+  ): EdgeDashEffectConfig | null {
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return null;
+    }
+
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const existing = this.edgeDashEffects.get(key);
+    return existing ? { ...existing.config } : null;
+  }
+
+  private setEdgeDashEffectConfig(
+    target: EdgeEffectTarget,
+    patch: Partial<EdgeDashEffectConfig>,
+    channel: GraphEffectChannel
+  ): boolean {
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return false;
+    }
+
+    const edgeTheme = this.effectiveEdgeTheme(resolved.edge);
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const existing = this.edgeDashEffects.get(key);
+    const config: EdgeDashEffectConfig = {
+      ...this.options.effects.edgeDash,
+      color: edgeTheme.edgeDashColor,
+      lineWidth: edgeTheme.edgeDashLineWidth,
+      ...(existing?.config ?? {}),
+      ...patch,
+    };
+
+    this.edgeDashEffects.set(key, {
+      edgeKey: resolved.edgeKey,
+      channel,
+      config,
+    });
+
+    return true;
+  }
+
+  private startEdgeDashEffect(
+    target: EdgeEffectTarget,
+    patch: Partial<EdgeDashEffectConfig> = {},
+    channel: GraphEffectChannel
+  ): boolean {
+    const updated = this.setEdgeDashEffectConfig(
+      target,
+      { ...patch, running: true },
+      channel
+    );
+    if (!updated) {
+      return false;
+    }
+
+    this.eventBus.emit('effectStarted', {
+      kind: 'edgeDash',
+      channel,
+      target,
+    });
+    return true;
+  }
+
+  private stopEdgeDashEffect(
+    target: EdgeEffectTarget,
+    channel: GraphEffectChannel
+  ): boolean {
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return false;
+    }
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const existing = this.edgeDashEffects.get(key);
+    if (!existing) {
+      return false;
+    }
+
+    existing.config.running = false;
+    this.eventBus.emit('effectStopped', {
+      kind: 'edgeDash',
+      channel,
+      target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } },
+    });
+    return true;
+  }
+
+  private clearEdgeDashEffects(
+    target?: EdgeEffectTarget,
+    channel: GraphEffectChannel = 'default'
+  ) {
+    if (!target) {
+      for (const [key, state] of this.edgeDashEffects.entries()) {
+        if (channel !== '*' && state.channel !== channel) {
+          continue;
+        }
+        const edge = this.findEdgeByKey(state.edgeKey);
+        if (edge) {
+          this.eventBus.emit('effectCleared', {
+            kind: 'edgeDash',
+            channel: state.channel,
+            target: { a: { ...edge.a }, b: { ...edge.b } },
+          });
+        }
+        this.edgeDashEffects.delete(key);
+      }
+      return;
+    }
+
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return;
+    }
+
+    const key = this.effectKey(resolved.edgeKey, channel);
+    if (this.edgeDashEffects.delete(key)) {
+      this.eventBus.emit('effectCleared', {
+        kind: 'edgeDash',
+        channel,
+        target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } },
+      });
+    }
+  }
+
+  private getEdgeDotEffectConfig(
+    target: EdgeEffectTarget,
+    channel: GraphEffectChannel
+  ): EdgeDotEffectConfig | null {
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return null;
+    }
+
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const existing = this.edgeDotEffects.get(key);
+    return existing ? { ...existing.config } : null;
+  }
+
+  private setEdgeDotEffectConfig(
+    target: EdgeEffectTarget,
+    patch: Partial<EdgeDotEffectConfig>,
+    channel: GraphEffectChannel
+  ): boolean {
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return false;
+    }
+
+    const edgeTheme = this.effectiveEdgeTheme(resolved.edge);
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const existing = this.edgeDotEffects.get(key);
+    const config: EdgeDotEffectConfig = {
+      ...this.options.effects.edgeDot,
+      color: edgeTheme.edgeDotColor,
+      radius: edgeTheme.edgeDotRadius,
+      opacity: edgeTheme.edgeDotOpacity,
+      ...(existing?.config ?? {}),
+      ...patch,
+      animation: {
+        ...this.options.effects.edgeDot.animation,
+        ...(existing?.config.animation ?? {}),
+        ...(patch.animation ?? {}),
+      },
+    };
+
+    this.edgeDotEffects.set(key, {
+      edgeKey: resolved.edgeKey,
+      channel,
+      config,
+      spawnElapsed: existing?.spawnElapsed ?? 0,
+      instances: existing?.instances ?? [],
+    });
+
+    return true;
+  }
+
+  private triggerEdgeDotEffect(
+    target: EdgeEffectTarget,
+    patch: Partial<EdgeDotEffectConfig> = {},
+    channel: GraphEffectChannel
+  ): EffectTriggerHandle | null {
+    const updated = this.setEdgeDotEffectConfig(target, patch, channel);
+    if (!updated) {
+      return null;
+    }
+
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return null;
+    }
+
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const state = this.edgeDotEffects.get(key);
+    if (!state) {
+      return null;
+    }
+
+    const instance = this.addEdgeDotInstance(state, state.config);
+    if (!instance) {
+      return null;
+    }
+
+    this.eventBus.emit('effectStarted', {
+      kind: 'edgeDot',
+      channel,
+      target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } },
+      id: instance.id,
+    });
+
+    return {
+      id: instance.id,
+      stop: () => this.stopEdgeDotInstance(key, instance.id),
+    };
+  }
+
+  private startEdgeDotEffect(
+    target: EdgeEffectTarget,
+    patch: Partial<EdgeDotEffectConfig> = {},
+    channel: GraphEffectChannel
+  ): boolean {
+    const updated = this.setEdgeDotEffectConfig(
+      target,
+      { ...patch, running: true, loop: true },
+      channel
+    );
+    if (!updated) {
+      return false;
+    }
+
+    this.eventBus.emit('effectStarted', {
+      kind: 'edgeDot',
+      channel,
+      target,
+    });
+    return true;
+  }
+
+  private stopEdgeDotEffect(
+    target: EdgeEffectTarget,
+    channel: GraphEffectChannel
+  ): boolean {
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return false;
+    }
+
+    const key = this.effectKey(resolved.edgeKey, channel);
+    const state = this.edgeDotEffects.get(key);
+    if (!state) {
+      return false;
+    }
+
+    state.config.running = false;
+    state.config.loop = false;
+    this.eventBus.emit('effectStopped', {
+      kind: 'edgeDot',
+      channel,
+      target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } },
+    });
+    return true;
+  }
+
+  private clearEdgeDotEffects(
+    target?: EdgeEffectTarget,
+    channel: GraphEffectChannel = 'default'
+  ) {
+    if (!target) {
+      for (const [key, state] of this.edgeDotEffects.entries()) {
+        if (channel !== '*' && state.channel !== channel) {
+          continue;
+        }
+        const edge = this.findEdgeByKey(state.edgeKey);
+        if (edge) {
+          this.eventBus.emit('effectCleared', {
+            kind: 'edgeDot',
+            channel: state.channel,
+            target: { a: { ...edge.a }, b: { ...edge.b } },
+          });
+        }
+        this.edgeDotEffects.delete(key);
+      }
+      return;
+    }
+
+    const resolved = this.resolveEdgeTarget(target);
+    if (!resolved) {
+      return;
+    }
+
+    const key = this.effectKey(resolved.edgeKey, channel);
+    if (this.edgeDotEffects.delete(key)) {
+      this.eventBus.emit('effectCleared', {
+        kind: 'edgeDot',
+        channel,
+        target: { a: { ...resolved.edge.a }, b: { ...resolved.edge.b } },
+      });
+    }
+  }
+
+  private triggerPortPulseEffect(
+    target: PortRef,
+    patch: Partial<PortPulseEffectConfig> = {},
+    channel: GraphEffectChannel
+  ): EffectTriggerHandle | null {
+    const resolved = this.resolveNodeAndPort(target);
+    if (!resolved) {
+      return null;
+    }
+
+    const key = this.effectKey(
+      this.portKey(target.nodeId, target.portId),
+      channel
+    );
+    const config: PortPulseEffectConfig = {
+      ...this.options.effects.portPulse,
+      color: this.effectivePortTheme(resolved.port).portPulseColor,
+      lineWidth: this.effectivePortTheme(resolved.port).portPulseLineWidth,
+      fromRadius: this.effectivePortTheme(resolved.port).portPulseFromRadius,
+      toRadius: this.effectivePortTheme(resolved.port).portPulseToRadius,
+      maxOpacity: this.effectivePortTheme(resolved.port).portPulseMaxOpacity,
+      ...patch,
+      animation: {
+        ...this.options.effects.portPulse.animation,
+        ...(patch.animation ?? {}),
+      },
+    };
+
+    const state = this.portPulseEffects.get(key) ?? {
+      portKey: this.portKey(target.nodeId, target.portId),
+      channel,
+      instances: [],
+    };
+
+    const id = this.createId('effect-port-pulse');
+    const duration = Math.max(0.01, config.duration);
+    const instance: PortPulseRuntimeInstance = {
+      id,
+      channel,
+      animation: this.createUnitAnimation(duration, config.animation),
+      config,
+    };
+    instance.animation.start();
+
+    if (state.instances.length >= this.options.effects.maxPortPulseInstances) {
+      state.instances.shift();
+    }
+    state.instances.push(instance);
+    this.portPulseEffects.set(key, state);
+
+    this.eventBus.emit('effectStarted', {
+      kind: 'portPulse',
+      channel,
+      target,
+      id,
+    });
+
+    return {
+      id,
+      stop: () => this.stopPortPulseInstance(key, id),
+    };
+  }
+
+  private clearPortPulseEffects(
+    target?: PortRef,
+    channel: GraphEffectChannel = 'default'
+  ) {
+    if (!target) {
+      for (const [key, state] of this.portPulseEffects.entries()) {
+        if (channel !== '*' && state.channel !== channel) {
+          continue;
+        }
+
+        const portRef = this.portRefFromKey(state.portKey);
+        if (portRef) {
+          this.eventBus.emit('effectCleared', {
+            kind: 'portPulse',
+            channel: state.channel,
+            target: portRef,
+          });
+        }
+
+        this.portPulseEffects.delete(key);
+      }
+      return;
+    }
+
+    const key = this.effectKey(
+      this.portKey(target.nodeId, target.portId),
+      channel
+    );
+    if (this.portPulseEffects.delete(key)) {
+      this.eventBus.emit('effectCleared', {
+        kind: 'portPulse',
+        channel,
+        target,
+      });
+    }
+  }
+
+  private clearAllEffects() {
+    this.clearEdgeDashEffects(undefined, '*');
+    this.clearEdgeDotEffects(undefined, '*');
+    this.clearPortPulseEffects(undefined, '*');
+  }
+
+  private clearEdgeEffectsForNode(nodeId: string) {
+    for (const edge of this.graph.edges) {
+      if (edge.a.nodeId !== nodeId && edge.b.nodeId !== nodeId) {
+        continue;
+      }
+      this.clearEdgeDashEffects({ a: edge.a, b: edge.b });
+      this.clearEdgeDotEffects({ a: edge.a, b: edge.b });
+    }
+  }
+
+  private addEdgeDotInstance(
+    state: EdgeDotRuntimeState,
+    config: EdgeDotEffectConfig
+  ): EdgeDotRuntimeInstance | null {
+    if (state.instances.length >= this.options.effects.maxEdgeDotInstances) {
+      state.instances.shift();
+    }
+
+    const id = this.createId('effect-edge-dot');
+    const duration = Math.max(0.01, config.duration);
+    const instance: EdgeDotRuntimeInstance = {
+      id,
+      channel: state.channel,
+      animation: this.createUnitAnimation(duration, config.animation),
+    };
+    instance.animation.start();
+
+    state.instances.push(instance);
+    return instance;
+  }
+
+  private stopEdgeDotInstance(effectKey: string, id: string): boolean {
+    const state = this.edgeDotEffects.get(effectKey);
+    if (!state) {
+      return false;
+    }
+
+    const previousLength = state.instances.length;
+    state.instances = state.instances.filter(instance => instance.id !== id);
+    if (state.instances.length === previousLength) {
+      return false;
+    }
+
+    const edge = this.findEdgeByKey(state.edgeKey);
+    if (edge) {
+      this.eventBus.emit('effectStopped', {
+        kind: 'edgeDot',
+        channel: state.channel,
+        target: { a: { ...edge.a }, b: { ...edge.b } },
+        id,
+      });
+    }
+
+    return true;
+  }
+
+  private stopPortPulseInstance(effectKey: string, id: string): boolean {
+    const state = this.portPulseEffects.get(effectKey);
+    if (!state) {
+      return false;
+    }
+
+    const previousLength = state.instances.length;
+    state.instances = state.instances.filter(instance => instance.id !== id);
+    if (state.instances.length === previousLength) {
+      return false;
+    }
+
+    const target = this.portRefFromKey(state.portKey);
+    if (target) {
+      this.eventBus.emit('effectStopped', {
+        kind: 'portPulse',
+        channel: state.channel,
+        target,
+        id,
+      });
+    }
+
+    return true;
+  }
+
+  private resolveEdgeTarget(target: EdgeEffectTarget) {
+    const edge = this.findEdge(target.a, target.b);
+    if (!edge) {
+      return null;
+    }
+
+    return {
+      edge,
+      edgeKey: this.edgeKey(edge),
+    };
+  }
+
+  private resolveEdgeGeometry(edge: Edge<TEdgeData>) {
+    const aEndpoint = this.resolvePortEndpoint(edge.a);
+    const bEndpoint = this.resolvePortEndpoint(edge.b);
+    if (!aEndpoint || !bEndpoint) {
+      return null;
+    }
+
+    return {
+      from: vec2.add(
+        aEndpoint.position,
+        vec2.mul(aEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+      ),
+      to: vec2.add(
+        bEndpoint.position,
+        vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+      ),
+      fromDirection: aEndpoint.direction,
+      toDirection: bEndpoint.direction,
+    };
+  }
+
+  private findEdgeByKey(edgeKey: string): Edge<TEdgeData> | null {
+    return (
+      this.graph.edges.find(edge => this.edgeKey(edge) === edgeKey) ?? null
+    );
+  }
+
+  private resolvePortFromKey(portKey: string) {
+    const target = this.portRefFromKey(portKey);
+    if (!target) {
+      return null;
+    }
+    const resolved = this.resolveNodeAndPort(target);
+    if (!resolved) {
+      return null;
+    }
+
+    return {
+      ...resolved,
+      target,
+    };
+  }
+
+  private effectKey(baseKey: string, channel: GraphEffectChannel) {
+    return `${baseKey}::${channel}`;
+  }
+
+  private portRefFromKey(portKey: string): PortRef | null {
+    const split = portKey.indexOf(':');
+    if (split === -1) {
+      return null;
+    }
+
+    return {
+      nodeId: portKey.slice(0, split),
+      portId: portKey.slice(split + 1),
+    };
+  }
+
+  private lerp(a: number, b: number, t: number) {
+    return a + (b - a) * t;
+  }
+
+  private createUnitAnimation(
+    duration: number,
+    options:
+      | EdgeDotEffectConfig['animation']
+      | PortPulseEffectConfig['animation']
+  ) {
+    return new Animation<number>({
+      initialValue: 0,
+      targetValue: 1,
+      mode: AnimationMode.Trigger,
+      repeat: RepeatMode.Once,
+      duration,
+      ...options,
+    });
   }
 
   private selectNode(nodeId: string | null) {

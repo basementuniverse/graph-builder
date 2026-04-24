@@ -1,5 +1,5 @@
 import { vec2 } from '@basementuniverse/vec';
-import { ForceDirectedLayoutOptions, GraphBuilderCapabilities, GraphBuilderTheme, LayeredLayoutOptions } from './types';
+import { ForceDirectedLayoutOptions, GraphBuilderCapabilities, GraphBuilderEffectsOptions, GraphBuilderTheme, LayeredLayoutOptions } from './types';
 export declare const DEBUG = false;
 export declare const FPS_MIN = 30;
 export declare const GRID_SIZE = 32;
@@ -19,6 +19,7 @@ export declare const RESIZE_HANDLE_SIZE = 20;
 export declare const GRAPH_SERIALIZATION_VERSION = 1;
 export declare const DEFAULT_CAPABILITIES: Required<GraphBuilderCapabilities>;
 export declare const DEFAULT_THEME: GraphBuilderTheme;
+export declare const DEFAULT_EFFECTS: GraphBuilderEffectsOptions;
 export declare const DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS: ForceDirectedLayoutOptions;
 export declare const DEFAULT_LAYERED_LAYOUT_OPTIONS: LayeredLayoutOptions;
 //# sourceMappingURL=constants.d.ts.map

@@ -1,6 +1,14 @@
 import type { CameraOptions } from '@basementuniverse/camera';
 import type { vec2 } from '@basementuniverse/vec';
 import type { Edge } from './edge';
+import type {
+  EdgeDashEffectConfig,
+  EdgeDotEffectConfig,
+  GraphBuilderEffectsOptions,
+  GraphBuilderEffectsOptionsInput,
+  GraphEffectChannel,
+  PortPulseEffectConfig,
+} from './effects';
 import type { Node } from './node';
 import type { Port } from './port';
 import { EdgeTheme, GraphBuilderTheme } from './theme';
@@ -32,6 +40,7 @@ export type GraphBuilderOptions<
   camera?: Partial<CameraOptions>;
   autoStart?: boolean;
   theme?: Partial<GraphBuilderTheme>;
+  effects?: GraphBuilderEffectsOptionsInput;
   callbacks?: GraphBuilderCallbacks;
   capabilities?: GraphBuilderCapabilities;
   allowSelfConnection?: boolean;
@@ -71,6 +80,7 @@ export type RequiredGraphBuilderOptions<TNodeData, TEdgeData, TPortData> = {
   >['resolveEdgeTheme'];
   camera: Partial<CameraOptions>;
   theme: GraphBuilderTheme;
+  effects: GraphBuilderEffectsOptions;
   callbacks: GraphBuilderCallbacks;
   capabilities: Required<GraphBuilderCapabilities>;
 };
@@ -239,6 +249,39 @@ export type EdgePreviewDrawContext = {
   toDirection: vec2;
 };
 
+export type EdgeDashEffectDrawContext = {
+  edge: Edge;
+  channel: GraphEffectChannel;
+  from: vec2;
+  to: vec2;
+  fromDirection: vec2;
+  toDirection: vec2;
+  phase: number;
+  config: EdgeDashEffectConfig;
+};
+
+export type EdgeDotEffectDrawContext = {
+  edge: Edge;
+  channel: GraphEffectChannel;
+  id: string;
+  position: vec2;
+  direction: vec2;
+  progress: number;
+  config: EdgeDotEffectConfig;
+};
+
+export type PortPulseEffectDrawContext = {
+  node: Node;
+  port: Port;
+  channel: GraphEffectChannel;
+  id: string;
+  position: vec2;
+  progress: number;
+  radius: number;
+  opacity: number;
+  config: PortPulseEffectConfig;
+};
+
 /**
  * Optional rendering callbacks that can be supplied via `GraphBuilderOptions`.
  * Each callback completely replaces the built-in drawing for that element.
@@ -322,5 +365,32 @@ export type GraphBuilderCallbacks = {
   drawEdgePreview?: (
     context: CanvasRenderingContext2D,
     drawContext: EdgePreviewDrawContext
+  ) => void;
+
+  /**
+   * Called for each active edge dash effect.
+   * Replaces the default animated dashed curve rendering.
+   */
+  drawEdgeDashEffect?: (
+    context: CanvasRenderingContext2D,
+    drawContext: EdgeDashEffectDrawContext
+  ) => void;
+
+  /**
+   * Called for each active edge moving dot instance.
+   * Replaces the default moving dot rendering.
+   */
+  drawEdgeDotEffect?: (
+    context: CanvasRenderingContext2D,
+    drawContext: EdgeDotEffectDrawContext
+  ) => void;
+
+  /**
+   * Called for each active port pulse instance.
+   * Replaces the default expanding pulse ring rendering.
+   */
+  drawPortPulseEffect?: (
+    context: CanvasRenderingContext2D,
+    drawContext: PortPulseEffectDrawContext
   ) => void;
 };
