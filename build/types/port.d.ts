@@ -1,10 +1,13 @@
 import type { vec2 } from '@basementuniverse/vec';
 import { PortSide, PortType } from '../enums';
+import type { EdgeTheme, PortTheme } from './theme';
 export type Port<TPortData = unknown> = {
     id: string;
     label?: string;
     type: PortType;
     side: PortSide;
+    theme?: Partial<PortTheme>;
+    edgeTheme?: Partial<EdgeTheme>;
     data?: TPortData;
 };
 export type PortRef = {

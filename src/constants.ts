@@ -20,8 +20,8 @@ export const CAMERA_ZOOM_STEP = 0.1;
 
 export const DEFAULT_NODE_SIZE = vec2(200, 120);
 
-export const PORT_HOVER_DISTANCE = 16;
-export const PORT_CONNECT_DISTANCE = 24;
+export const PORT_HOVER_MARGIN = 8;
+export const PORT_CONNECT_MARGIN = 16;
 
 export const EDGE_CURVE_ENDPOINT_OFFSET = 8;
 export const EDGE_CURVE_SAMPLE_DISTANCE = 30;
@@ -85,6 +85,9 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   portInvalidRingColor: '#ff445588',
   portHoverRingLineWidth: 6,
   portHoverRingRadius: 12,
+  portArrowSize: 6,
+  portArrowColor: '#fff5',
+  portArrowOffset: 0.44,
 
   // Edge
   edgeColor: '#fff2',
@@ -92,6 +95,9 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   edgeLineWidth: 3,
   edgeHoverOutlineColor: '#fff2',
   edgeHoverOutlineLineWidth: 10,
+  edgeArrowSize: 8,
+  edgeArrowColor: '#fff5',
+  edgeArrowOffset: 0.5,
 
   // Edge preview
   edgePreviewColor: '#fff6',

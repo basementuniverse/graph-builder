@@ -35,6 +35,24 @@ export function line(context: CanvasRenderingContext2D, a: vec2, b: vec2) {
   context.stroke();
 }
 
+export function triangle(
+  context: CanvasRenderingContext2D,
+  position: vec2,
+  direction: vec2,
+  size: number
+) {
+  context.save();
+  context.translate(position.x, position.y);
+  context.rotate(vec2.rad(direction));
+  context.beginPath();
+  context.moveTo(size / 2, 0);
+  context.lineTo(-size / 2, size / 2);
+  context.lineTo(-size / 2, -size / 2);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
 export function roundedRect(
   context: CanvasRenderingContext2D,
   position: vec2,

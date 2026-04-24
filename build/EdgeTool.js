@@ -3,9 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vec_1 = require("@basementuniverse/vec");
 const constants_1 = require("./constants");
 class EdgeTool {
-    constructor(a) {
+    constructor(a, theme) {
         this.a = a;
         this.pointerDirection = null;
+        this.theme = theme;
         this.pointer = (0, vec_1.vec2)(a.position);
         this.smoothedFinalDirection = vec_1.vec2.mul(a.direction, -1);
     }

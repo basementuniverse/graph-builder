@@ -29,6 +29,8 @@ npm install @basementuniverse/graph-builder
 - [Layout algorithms](#layout-algorithms)
 - [Event handling](#event-handling)
 - [Theming](#theming)
+  - [Global theme](#global-theme)
+  - [Per-element theming](#per-element-theming)
 - [Custom rendering callbacks](#custom-rendering-callbacks)
 - [Capabilities](#capabilities)
 - [Lifecycle](#lifecycle)
@@ -150,14 +152,15 @@ A `Node` has the following shape:
 
 ```ts
 type Node<TNodeData = unknown, TPortData = unknown> = {
-  id: string;           // auto-generated when using createNode()
-  position: vec2;       // world-space top-left corner
-  size: vec2;           // width × height
-  label?: string;       // optional display label
-  ports: Port[];        // connection points
-  resizable?: boolean;  // show resize handle (default: true)
-  deletable?: boolean;  // show delete button (default: true)
-  data?: TNodeData;     // arbitrary custom data
+  id: string;                    // auto-generated when using createNode()
+  position: vec2;                // world-space top-left corner
+  size: vec2;                    // width × height
+  label?: string;                // optional display label
+  ports: Port[];                 // connection points
+  resizable?: boolean;           // show resize handle (default: true)
+  deletable?: boolean;           // show delete button (default: true)
+  theme?: Partial<NodeTheme>;    // per-node visual overrides (see Per-element theming)
+  data?: TNodeData;              // arbitrary custom data
 };
 ```
 
@@ -169,8 +172,10 @@ import { PortSide, PortType } from '@basementuniverse/graph-builder';
 type Port<TPortData = unknown> = {
   id: string;
   label?: string;
-  type: PortType;   // PortType.Input | PortType.Output
-  side: PortSide;   // PortSide.Top | .Right | .Bottom | .Left
+  type: PortType;                  // PortType.Input | PortType.Output
+  side: PortSide;                  // PortSide.Top | .Right | .Bottom | .Left
+  theme?: Partial<PortTheme>;      // per-port visual overrides (see Per-element theming)
+  edgeTheme?: Partial<EdgeTheme>;  // theme applied to edges originating from this port
   data?: TPortData;
 };
 ```
@@ -248,6 +253,7 @@ An `Edge` connects two ports:
 type Edge<TEdgeData = unknown> = {
   a: { nodeId: string; portId: string };
   b: { nodeId: string; portId: string };
+  theme?: Partial<EdgeTheme>;  // per-edge visual overrides (see Per-element theming)
   data?: TEdgeData;
 };
 ```
@@ -539,6 +545,8 @@ builder.on('edgeRemoving', ({ edge }) => {
 
 ### Theming
 
+#### Global theme
+
 Pass a partial `theme` object to the constructor to override individual visual properties. All values are CSS colour strings unless noted:
 
 ```ts
@@ -601,6 +609,65 @@ const builder = new GraphBuilder(canvas, {
   },
 });
 ```
+
+#### Per-element theming
+
+Individual nodes, ports, and edges can each carry a `theme` property that overrides the global theme for that element alone. This lets you colour-code different parts of the graph without needing a custom rendering callback.
+
+**Node** — supply `theme: Partial<NodeTheme>` on any node object:
+
+```ts
+builder.createNode(vec2(100, 100), {
+  label: 'Important Node',
+  size: { x: 200, y: 120 },
+  ports: [
+    { id: 'out', type: PortType.Output, side: PortSide.Right },
+  ],
+  theme: {
+    nodeFillColor: 'rgba(40, 100, 200, 0.2)',
+    nodeSelectedFillColor: 'rgba(40, 100, 200, 0.4)',
+    nodeBorderColor: 'rgba(40, 100, 200, 0.4)',
+    nodeHoveredBorderColor: 'rgba(40, 100, 200, 0.7)',
+  },
+});
+```
+
+**Port** — supply `theme: Partial<PortTheme>` and/or `edgeTheme: Partial<EdgeTheme>` on any port. `edgeTheme` is automatically inherited by edges that originate from that port:
+
+```ts
+{
+  id: 'out-warn',
+  type: PortType.Output,
+  side: PortSide.Right,
+  theme: {
+    portFillColor: 'rgba(255, 140, 0, 0.2)',
+    portHoveredFillColor: 'rgba(255, 140, 0, 0.4)',
+    portBorderColor: 'rgba(255, 140, 0, 0.4)',
+    portHoveredBorderColor: 'rgba(255, 140, 0, 0.8)',
+  },
+  edgeTheme: {
+    edgeColor: 'rgba(255, 140, 0, 0.4)',
+    edgeHoveredColor: 'rgba(255, 140, 0, 0.7)',
+    edgeArrowColor: 'rgba(255, 140, 0, 0.6)',
+  },
+}
+```
+
+**Edge** — supply `theme: Partial<EdgeTheme>` directly on an edge for one-off overrides:
+
+```ts
+builder.createEdge(
+  { nodeId: 'node-1', portId: 'out' },
+  { nodeId: 'node-2', portId: 'in'  },
+  undefined,           // edge data
+  {                    // edge theme override
+    edgeColor: 'rgba(200, 80, 80, 0.5)',
+    edgeLineWidth: 4,
+  }
+);
+```
+
+> **Priority:** an edge's own `theme` takes highest precedence, followed by the source port's `edgeTheme`, then the global `theme`.
 
 ---
 

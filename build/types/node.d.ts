@@ -1,4 +1,5 @@
 import type { vec2 } from '@basementuniverse/vec';
+import type { NodeTheme } from './theme';
 import type { Port } from './port';
 export type Node<TNodeData = unknown, TPortData = unknown> = {
     id: string;
@@ -8,6 +9,7 @@ export type Node<TNodeData = unknown, TPortData = unknown> = {
     ports: Port<TPortData>[];
     resizable?: boolean;
     deletable?: boolean;
+    theme?: Partial<NodeTheme>;
     data?: TNodeData;
 };
 export type NodeTemplate<TNodeData = unknown, TPortData = unknown> = Omit<Node<TNodeData, TPortData>, 'id' | 'position'>;

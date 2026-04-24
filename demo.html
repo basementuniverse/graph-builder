@@ -141,6 +141,12 @@
           ],
           resizable: true,
           deletable: true,
+          theme: {
+            nodeFillColor: 'rgba(40, 100, 220, 0.2)',
+            nodeSelectedFillColor: 'rgba(40, 100, 220, 0.4)',
+            nodeBorderColor: 'rgba(40, 100, 220, 0.4)',
+            nodeHoveredBorderColor: 'rgba(40, 100, 220, 0.7)',
+          },
         },
         ioNode: {
           size: { x: 180, y: 100 },
@@ -148,8 +154,44 @@
           ports: [
             { id: 'in-left-1', label: 'Input 1', type: 'input', side: 'left' },
             { id: 'in-left-2', label: 'Input 2', type: 'input', side: 'left' },
-            { id: 'out-right-1', label: 'Output 1', type: 'output', side: 'right' },
-            { id: 'out-right-2', label: 'Output 2', type: 'output', side: 'right' },
+            {
+              id: 'out-right-1',
+              label: 'Output 1',
+              type: 'output',
+              side: 'right',
+              theme: {
+                portFillColor: 'rgba(255, 140, 0, 0.2)',
+                portHoveredFillColor: 'rgba(255, 140, 0, 0.4)',
+                portBorderColor: 'rgba(255, 140, 0, 0.4)',
+                portHoveredBorderColor: 'rgba(255, 140, 0, 0.8)',
+                portArrowColor: 'rgba(255, 140, 0, 0.6)',
+              },
+              edgeTheme: {
+                edgeColor: 'rgba(255, 140, 0, 0.4)',
+                edgeHoveredColor: 'rgba(255, 140, 0, 0.7)',
+                edgeHoverOutlineColor: 'rgba(255, 140, 0, 0.2)',
+                edgeArrowColor: 'rgba(255, 140, 0, 0.6)',
+              },
+            },
+            {
+              id: 'out-right-2',
+              label: 'Output 2',
+              type: 'output',
+              side: 'right',
+              theme: {
+                portFillColor: 'rgba(50, 200, 100, 0.2)',
+                portHoveredFillColor: 'rgba(50, 200, 100, 0.4)',
+                portBorderColor: 'rgba(50, 200, 100, 0.4)',
+                portHoveredBorderColor: 'rgba(50, 200, 100, 0.8)',
+                portArrowColor: 'rgba(50, 200, 100, 0.6)',
+              },
+              edgeTheme: {
+                edgeColor: 'rgba(50, 200, 100, 0.4)',
+                edgeHoveredColor: 'rgba(50, 200, 100, 0.7)',
+                edgeHoverOutlineColor: 'rgba(50, 200, 100, 0.2)',
+                edgeArrowColor: 'rgba(50, 200, 100, 0.6)',
+              },
+            },
           ],
           resizable: true,
           deletable: true,
@@ -176,6 +218,8 @@
         snapToGrid: false,
         showGrid: true,
         autoStart: true,
+        showPortArrows: true,
+        showEdgeArrows: true,
       });
 
       // Set the default node template for creation

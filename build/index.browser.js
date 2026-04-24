@@ -471,7 +471,7 @@ InputManager.DEFAULT_OPTIONS = {
       function isVec2(value) {
         return value && typeof value === "object" && "x" in value && typeof value.x === "number" && "y" in value && typeof value.y === "number" && !("z" in value);
       }
-      var vec29 = (x, y) => {
+      var vec210 = (x, y) => {
         if (!x && !y) {
           return { x: 0, y: 0 };
         }
@@ -480,50 +480,50 @@ InputManager.DEFAULT_OPTIONS = {
         }
         return { x, y: y ?? x };
       };
-      vec29.components = (a) => [a.x, a.y];
-      vec29.fromComponents = (components) => vec29(...components.slice(0, 2));
-      vec29.ux = () => vec29(1, 0);
-      vec29.uy = () => vec29(0, 1);
-      vec29.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b) });
-      vec29.addm = (...v) => v.reduce((a, b) => vec29.add(a, b), vec29());
-      vec29.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b) });
-      vec29.subm = (...v) => v.reduce((a, b) => vec29.sub(a, b));
-      vec29.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b) });
-      vec29.scale = (a, b) => vec29.mul(a, b);
-      vec29.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b) });
-      vec29.len = (a) => Math.sqrt(a.x * a.x + a.y * a.y);
-      vec29.manhattan = (a) => Math.abs(a.x) + Math.abs(a.y);
-      vec29.nor = (a) => {
-        let len = vec29.len(a);
-        return len ? { x: a.x / len, y: a.y / len } : vec29();
+      vec210.components = (a) => [a.x, a.y];
+      vec210.fromComponents = (components) => vec210(...components.slice(0, 2));
+      vec210.ux = () => vec210(1, 0);
+      vec210.uy = () => vec210(0, 1);
+      vec210.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b) });
+      vec210.addm = (...v) => v.reduce((a, b) => vec210.add(a, b), vec210());
+      vec210.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b) });
+      vec210.subm = (...v) => v.reduce((a, b) => vec210.sub(a, b));
+      vec210.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b) });
+      vec210.scale = (a, b) => vec210.mul(a, b);
+      vec210.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b) });
+      vec210.len = (a) => Math.sqrt(a.x * a.x + a.y * a.y);
+      vec210.manhattan = (a) => Math.abs(a.x) + Math.abs(a.y);
+      vec210.nor = (a) => {
+        let len = vec210.len(a);
+        return len ? { x: a.x / len, y: a.y / len } : vec210();
       };
-      vec29.dot = (a, b) => a.x * b.x + a.y * b.y;
-      vec29.rot = (a, r) => {
+      vec210.dot = (a, b) => a.x * b.x + a.y * b.y;
+      vec210.rot = (a, r) => {
         let s = Math.sin(r), c = Math.cos(r);
         return { x: c * a.x - s * a.y, y: s * a.x + c * a.y };
       };
-      vec29.rotf = (a, r) => {
+      vec210.rotf = (a, r) => {
         switch (r) {
           case 1:
-            return vec29(a.y, -a.x);
+            return vec210(a.y, -a.x);
           case -1:
-            return vec29(-a.y, a.x);
+            return vec210(-a.y, a.x);
           case 2:
           case -2:
-            return vec29(-a.x, -a.y);
+            return vec210(-a.x, -a.y);
           default:
             return a;
         }
       };
-      vec29.cross = (a, b) => {
+      vec210.cross = (a, b) => {
         return a.x * b.y - a.y * b.x;
       };
-      vec29.eq = (a, b) => a.x === b.x && a.y === b.y;
-      vec29.rad = (a) => Math.atan2(a.y, a.x);
-      vec29.cpy = (a) => vec29(a);
-      vec29.map = (a, f) => ({ x: f(a.x, "x"), y: f(a.y, "y") });
-      vec29.str = (a, s = ", ") => `${a.x}${s}${a.y}`;
-      vec29.swiz = (a, s = "..") => {
+      vec210.eq = (a, b) => a.x === b.x && a.y === b.y;
+      vec210.rad = (a) => Math.atan2(a.y, a.x);
+      vec210.cpy = (a) => vec210(a);
+      vec210.map = (a, f) => ({ x: f(a.x, "x"), y: f(a.y, "y") });
+      vec210.str = (a, s = ", ") => `${a.x}${s}${a.y}`;
+      vec210.swiz = (a, s = "..") => {
         const result = [];
         s.split("").forEach((c, i) => {
           switch (c) {
@@ -558,8 +558,8 @@ InputManager.DEFAULT_OPTIONS = {
         });
         return result;
       };
-      vec29.polar = (a) => ({ r: vec29.len(a), theta: Math.atan2(a.y, a.x) });
-      vec29.fromPolar = (r, theta) => vec29(r * Math.cos(theta), r * Math.sin(theta));
+      vec210.polar = (a) => ({ r: vec210.len(a), theta: Math.atan2(a.y, a.x) });
+      vec210.fromPolar = (r, theta) => vec210(r * Math.cos(theta), r * Math.sin(theta));
       function isVec3(value) {
         return value && typeof value === "object" && "x" in value && typeof value.x === "number" && "y" in value && typeof value.y === "number" && "z" in value && typeof value.z === "number";
       }
@@ -746,9 +746,9 @@ InputManager.DEFAULT_OPTIONS = {
           n = 3;
           rt = vec3.fromComponents;
         } else if (_vec_is_vec2(b)) {
-          bb = vec29.components(b);
+          bb = vec210.components(b);
           n = 2;
-          rt = vec29.fromComponents;
+          rt = vec210.fromComponents;
         } else {
           bb = b;
           n = b.length ?? 0;
@@ -832,7 +832,7 @@ InputManager.DEFAULT_OPTIONS = {
       mat.map = (a, f) => mat(a.m, a.n, a.entries.map(f));
       mat.str = (a, ms = ", ", ns = "\n") => _vec_chunk(a.entries, a.n).map((r) => r.join(ms)).join(ns);
       if (typeof module2 !== "undefined") {
-        module2.exports = { vec2: vec29, vec3, mat, isVec2, isVec3, isMat };
+        module2.exports = { vec2: vec210, vec3, mat, isVec2, isVec3, isMat };
       }
     }
   });
@@ -1199,7 +1199,7 @@ InputManager.DEFAULT_OPTIONS = {
   var import_camera = __toESM(require_build());
   var import_frame_timer = __toESM(require_build2());
   var import_input_manager = __toESM(require_build3());
-  var import_vec8 = __toESM(require_vec());
+  var import_vec9 = __toESM(require_vec());
 
   // src/constants.ts
   var import_vec = __toESM(require_vec());
@@ -1211,8 +1211,8 @@ InputManager.DEFAULT_OPTIONS = {
   var CAMERA_KEYBOARD_PAN_SPEED = 600;
   var CAMERA_ZOOM_STEP = 0.1;
   var DEFAULT_NODE_SIZE = (0, import_vec.vec2)(200, 120);
-  var PORT_HOVER_DISTANCE = 16;
-  var PORT_CONNECT_DISTANCE = 24;
+  var PORT_HOVER_MARGIN = 8;
+  var PORT_CONNECT_MARGIN = 16;
   var EDGE_CURVE_ENDPOINT_OFFSET = 8;
   var EDGE_CURVE_SAMPLE_DISTANCE = 30;
   var EDGE_HOVER_THRESHOLD = 24;
@@ -1265,12 +1265,18 @@ InputManager.DEFAULT_OPTIONS = {
     portInvalidRingColor: "#ff445588",
     portHoverRingLineWidth: 6,
     portHoverRingRadius: 12,
+    portArrowSize: 6,
+    portArrowColor: "#fff5",
+    portArrowOffset: 0.44,
     // Edge
     edgeColor: "#fff2",
     edgeHoveredColor: "#fff4",
     edgeLineWidth: 3,
     edgeHoverOutlineColor: "#fff2",
     edgeHoverOutlineLineWidth: 10,
+    edgeArrowSize: 8,
+    edgeArrowColor: "#fff5",
+    edgeArrowOffset: 0.5,
     // Edge preview
     edgePreviewColor: "#fff6",
     edgePreviewLineWidth: 3,
@@ -1295,9 +1301,10 @@ InputManager.DEFAULT_OPTIONS = {
   // src/EdgeTool.ts
   var import_vec2 = __toESM(require_vec());
   var EdgeTool = class _EdgeTool {
-    constructor(a) {
+    constructor(a, theme) {
       this.a = a;
       this.pointerDirection = null;
+      this.theme = theme;
       this.pointer = (0, import_vec2.vec2)(a.position);
       this.smoothedFinalDirection = import_vec2.vec2.mul(a.direction, -1);
     }
@@ -1455,6 +1462,7 @@ InputManager.DEFAULT_OPTIONS = {
   }
 
   // src/utils/canvas.ts
+  var import_vec4 = __toESM(require_vec());
   function cross(context, position, size) {
     const halfSize = size / 2;
     context.beginPath();
@@ -1478,6 +1486,18 @@ InputManager.DEFAULT_OPTIONS = {
     context.moveTo(a.x, a.y);
     context.lineTo(b.x, b.y);
     context.stroke();
+  }
+  function triangle(context, position, direction, size) {
+    context.save();
+    context.translate(position.x, position.y);
+    context.rotate(import_vec4.vec2.rad(direction));
+    context.beginPath();
+    context.moveTo(size / 2, 0);
+    context.lineTo(-size / 2, size / 2);
+    context.lineTo(-size / 2, -size / 2);
+    context.closePath();
+    context.fill();
+    context.restore();
   }
   function roundedRect(context, position, size, borderRadius) {
     const x = position.x;
@@ -1504,7 +1524,7 @@ InputManager.DEFAULT_OPTIONS = {
 
   // src/utils/curve.ts
   var import_utils = __toESM(require_utils());
-  var import_vec4 = __toESM(require_vec());
+  var import_vec5 = __toESM(require_vec());
   function curveFromTo(context, a, b, initialDirection, finalDirection, gridSize) {
     context.beginPath();
     const { cp1, cp2, join } = getCurveGeometry(
@@ -1520,46 +1540,78 @@ InputManager.DEFAULT_OPTIONS = {
     context.stroke();
   }
   function getCurveGeometry(a, b, initialDirection, finalDirection, gridSize) {
-    const distance = import_vec4.vec2.len(import_vec4.vec2.sub(a, b));
+    const distance = import_vec5.vec2.len(import_vec5.vec2.sub(a, b));
     const minDistance = gridSize * 4;
     let curveStrength = gridSize;
     if (distance < minDistance) {
       curveStrength = (0, import_utils.lerp)(0, gridSize, (0, import_utils.clamp)(distance / minDistance, 0, 1));
     }
-    const cp1 = import_vec4.vec2.add(a, import_vec4.vec2.mul(initialDirection, curveStrength));
-    const cp2 = import_vec4.vec2.add(b, import_vec4.vec2.mul(finalDirection, curveStrength));
-    const join = import_vec4.vec2.div(import_vec4.vec2.add(cp1, cp2), 2);
+    const cp1 = import_vec5.vec2.add(a, import_vec5.vec2.mul(initialDirection, curveStrength));
+    const cp2 = import_vec5.vec2.add(b, import_vec5.vec2.mul(finalDirection, curveStrength));
+    const join = import_vec5.vec2.div(import_vec5.vec2.add(cp1, cp2), 2);
     return { cp1, cp2, join };
+  }
+  function sampleBezierChain(a, cp1, join, cp2, b, t) {
+    t = Math.max(0, Math.min(1, t));
+    if (t <= 0.5) {
+      const s = t * 2;
+      return {
+        position: sampleQuadratic(a, cp1, join, s),
+        tangent: tangentQuadratic(a, cp1, join, s)
+      };
+    } else {
+      const s = (t - 0.5) * 2;
+      return {
+        position: sampleQuadratic(join, cp2, b, s),
+        tangent: tangentQuadratic(join, cp2, b, s)
+      };
+    }
+  }
+  function sampleQuadratic(a, cp, b, t) {
+    const mt = 1 - t;
+    return (0, import_vec5.vec2)(
+      mt * mt * a.x + 2 * mt * t * cp.x + t * t * b.x,
+      mt * mt * a.y + 2 * mt * t * cp.y + t * t * b.y
+    );
+  }
+  function tangentQuadratic(a, cp, b, t) {
+    const dx = 2 * (1 - t) * (cp.x - a.x) + 2 * t * (b.x - cp.x);
+    const dy = 2 * (1 - t) * (cp.y - a.y) + 2 * t * (b.y - cp.y);
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len === 0) {
+      return (0, import_vec5.vec2)(1, 0);
+    }
+    return (0, import_vec5.vec2)(dx / len, dy / len);
   }
   function pointToQuadraticBezierDistance(p, a, cp, b, t) {
     const x = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cp.x + t * t * b.x;
     const y = (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * cp.y + t * t * b.y;
-    return import_vec4.vec2.len(import_vec4.vec2.sub(p, { x, y }));
+    return import_vec5.vec2.len(import_vec5.vec2.sub(p, { x, y }));
   }
 
   // src/utils/layout.ts
-  var import_vec5 = __toESM(require_vec());
+  var import_vec6 = __toESM(require_vec());
   function toPosition(direction, layerIndex, nodeIndex, layerSpacing, nodeSpacing) {
     switch (direction) {
       case "bottom-up" /* BottomUp */:
-        return (0, import_vec5.vec2)(nodeIndex * nodeSpacing, -layerIndex * layerSpacing);
+        return (0, import_vec6.vec2)(nodeIndex * nodeSpacing, -layerIndex * layerSpacing);
       case "left-right" /* LeftRight */:
-        return (0, import_vec5.vec2)(layerIndex * layerSpacing, nodeIndex * nodeSpacing);
+        return (0, import_vec6.vec2)(layerIndex * layerSpacing, nodeIndex * nodeSpacing);
       case "right-left" /* RightLeft */:
-        return (0, import_vec5.vec2)(-layerIndex * layerSpacing, nodeIndex * nodeSpacing);
+        return (0, import_vec6.vec2)(-layerIndex * layerSpacing, nodeIndex * nodeSpacing);
       case "top-down" /* TopDown */:
       default:
-        return (0, import_vec5.vec2)(nodeIndex * nodeSpacing, layerIndex * layerSpacing);
+        return (0, import_vec6.vec2)(nodeIndex * nodeSpacing, layerIndex * layerSpacing);
     }
   }
 
   // src/utils/point.ts
-  var import_vec6 = __toESM(require_vec());
+  var import_vec7 = __toESM(require_vec());
   function pointInRectangle(point, rectangle) {
     return point.x >= rectangle.position.x && point.x <= rectangle.position.x + rectangle.size.x && point.y >= rectangle.position.y && point.y <= rectangle.position.y + rectangle.size.y;
   }
   function pointInCircle(point, circle) {
-    return import_vec6.vec2.len(import_vec6.vec2.sub(point, circle.position)) <= circle.radius;
+    return import_vec7.vec2.len(import_vec7.vec2.sub(point, circle.position)) <= circle.radius;
   }
 
   // src/utils/traversal.ts
@@ -1703,15 +1755,15 @@ InputManager.DEFAULT_OPTIONS = {
   }
 
   // src/utils/vec.ts
-  var import_vec7 = __toESM(require_vec());
+  var import_vec8 = __toESM(require_vec());
   function clampVec(value, min, max) {
-    return (0, import_vec7.vec2)(
+    return (0, import_vec8.vec2)(
       Math.min(Math.max(value.x, min.x), max.x),
       Math.min(Math.max(value.y, min.y), max.y)
     );
   }
   function roundVec(value, step) {
-    return (0, import_vec7.vec2)(
+    return (0, import_vec8.vec2)(
       Math.round(value.x / step) * step,
       Math.round(value.y / step) * step
     );
@@ -1817,16 +1869,19 @@ InputManager.DEFAULT_OPTIONS = {
         gridSize: Math.max(1, options.gridSize ?? GRID_SIZE),
         snapToGrid: options.snapToGrid ?? false,
         showGrid: options.showGrid ?? true,
+        showPortArrows: options.showPortArrows ?? false,
+        showEdgeArrows: options.showEdgeArrows ?? false,
         autoStart: options.autoStart ?? true,
         allowSelfConnection: options.allowSelfConnection ?? false,
         canConnectPorts: options.canConnectPorts,
+        resolveEdgeTheme: options.resolveEdgeTheme,
         camera: options.camera ?? {},
         theme: { ...DEFAULT_THEME, ...options.theme },
         callbacks: options.callbacks ?? {},
         capabilities: { ...DEFAULT_CAPABILITIES, ...options.capabilities }
       };
       this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
-      this.camera = new import_camera.default((0, import_vec8.vec2)(), {
+      this.camera = new import_camera.default((0, import_vec9.vec2)(), {
         moveEaseAmount: 0.9,
         scaleEaseAmount: 0.9,
         minScale: 0.5,
@@ -1848,7 +1903,7 @@ InputManager.DEFAULT_OPTIONS = {
       }
     }
     static {
-      this.screen = (0, import_vec8.vec2)();
+      this.screen = (0, import_vec9.vec2)();
     }
     static {
       this.inputInitialised = false;
@@ -1930,8 +1985,8 @@ InputManager.DEFAULT_OPTIONS = {
       return {
         nodes: this.graph.nodes.map((node) => ({
           ...node,
-          position: (0, import_vec8.vec2)(node.position),
-          size: (0, import_vec8.vec2)(node.size),
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
           ports: node.ports.map((port) => ({ ...port }))
         })),
         edges: this.graph.edges.map((edge) => ({
@@ -1947,7 +2002,7 @@ InputManager.DEFAULT_OPTIONS = {
         type: "graph-document",
         graph: this.serialize(),
         layout: {
-          cameraPosition: (0, import_vec8.vec2)(this.camera.position),
+          cameraPosition: (0, import_vec9.vec2)(this.camera.position),
           cameraScale: this.camera.scale,
           selectedNodeId: this.selectedNodeId
         }
@@ -1998,7 +2053,7 @@ InputManager.DEFAULT_OPTIONS = {
       }
       this.load(document.graph);
       if (document.layout) {
-        this.camera.positionImmediate = (0, import_vec8.vec2)(document.layout.cameraPosition);
+        this.camera.positionImmediate = (0, import_vec9.vec2)(document.layout.cameraPosition);
         this.camera.scale = document.layout.cameraScale;
         this.selectNode(document.layout.selectedNodeId);
       }
@@ -2013,8 +2068,8 @@ InputManager.DEFAULT_OPTIONS = {
           id: domainNode.id,
           data: domainNode.data,
           label: resolved?.label,
-          position: (0, import_vec8.vec2)(),
-          size: (0, import_vec8.vec2)(resolved?.size ?? DEFAULT_NODE_SIZE),
+          position: (0, import_vec9.vec2)(),
+          size: (0, import_vec9.vec2)(resolved?.size ?? DEFAULT_NODE_SIZE),
           ports: resolved?.ports?.map((port) => ({ ...port })) ?? [],
           resizable: resolved?.resizable ?? true,
           deletable: resolved?.deletable ?? true
@@ -2036,10 +2091,10 @@ InputManager.DEFAULT_OPTIONS = {
         throw new Error("No node template has been configured");
       }
       const nodeCreatingPayload = {
-        position: (0, import_vec8.vec2)(position),
+        position: (0, import_vec9.vec2)(position),
         template: {
           ...source,
-          size: (0, import_vec8.vec2)(source.size),
+          size: (0, import_vec9.vec2)(source.size),
           ports: source.ports.map((port) => ({ ...port }))
         }
       };
@@ -2052,13 +2107,14 @@ InputManager.DEFAULT_OPTIONS = {
       }
       const node = {
         id: this.createId("node"),
-        position: (0, import_vec8.vec2)(position),
-        size: (0, import_vec8.vec2)(source.size ?? DEFAULT_NODE_SIZE),
+        position: (0, import_vec9.vec2)(position),
+        size: (0, import_vec9.vec2)(source.size ?? DEFAULT_NODE_SIZE),
         label: source.label,
         ports: source.ports.map((port) => ({ ...port })),
         resizable: source.resizable ?? true,
         deletable: source.deletable ?? true,
-        data: source.data
+        data: source.data,
+        theme: source.theme
       };
       this.graph.nodes.push(node);
       this.ensureNodeState(node);
@@ -2074,8 +2130,8 @@ InputManager.DEFAULT_OPTIONS = {
       }
       const clonedNode = {
         ...node,
-        position: (0, import_vec8.vec2)(node.position),
-        size: (0, import_vec8.vec2)(node.size),
+        position: (0, import_vec9.vec2)(node.position),
+        size: (0, import_vec9.vec2)(node.size),
         ports: node.ports.map((port) => ({ ...port }))
       };
       this.graph.nodes.push(clonedNode);
@@ -2098,8 +2154,8 @@ InputManager.DEFAULT_OPTIONS = {
         nodeId,
         node: {
           ...node,
-          position: (0, import_vec8.vec2)(node.position),
-          size: (0, import_vec8.vec2)(node.size),
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
           ports: node.ports.map((port) => ({ ...port }))
         }
       };
@@ -2134,14 +2190,14 @@ InputManager.DEFAULT_OPTIONS = {
         nodeId,
         node: {
           ...node,
-          position: (0, import_vec8.vec2)(node.position),
-          size: (0, import_vec8.vec2)(node.size),
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
           ports: node.ports.map((port) => ({ ...port }))
         }
       });
       return true;
     }
-    createEdge(a, b, data) {
+    createEdge(a, b, data, options) {
       if (!this.options.capabilities.createEdges) {
         return false;
       }
@@ -2157,6 +2213,9 @@ InputManager.DEFAULT_OPTIONS = {
       const normalized = this.normalizeEdgeEndpoints(a, b, data);
       if (!normalized) {
         return false;
+      }
+      if (options?.theme) {
+        normalized.theme = options.theme;
       }
       const edgeCreatingPayload = {
         edge: {
@@ -2241,21 +2300,21 @@ InputManager.DEFAULT_OPTIONS = {
       const snapSizes = options.snapSizes ?? true;
       for (const node of this.graph.nodes) {
         if (snapPositions) {
-          const from = (0, import_vec8.vec2)(node.position);
+          const from = (0, import_vec9.vec2)(node.position);
           node.position = roundVec(node.position, this.options.gridSize);
           this.eventBus.emit("nodeMoved", {
             nodeId: node.id,
             from,
-            to: (0, import_vec8.vec2)(node.position)
+            to: (0, import_vec9.vec2)(node.position)
           });
         }
         if (snapSizes) {
-          const from = (0, import_vec8.vec2)(node.size);
+          const from = (0, import_vec9.vec2)(node.size);
           node.size = roundVec(node.size, this.options.gridSize);
           this.eventBus.emit("nodeResized", {
             nodeId: node.id,
             from,
-            to: (0, import_vec8.vec2)(node.size)
+            to: (0, import_vec9.vec2)(node.size)
           });
         }
       }
@@ -2267,8 +2326,8 @@ InputManager.DEFAULT_OPTIONS = {
         if (!node) {
           continue;
         }
-        node.position = (0, import_vec8.vec2)(position);
-        this.ensureNodeState(node).actualPosition = (0, import_vec8.vec2)(position);
+        node.position = (0, import_vec9.vec2)(position);
+        this.ensureNodeState(node).actualPosition = (0, import_vec9.vec2)(position);
       }
       this.eventBus.emit("graphArranged", {
         strategy: "forceDirected"
@@ -2289,8 +2348,8 @@ InputManager.DEFAULT_OPTIONS = {
         if (!node) {
           continue;
         }
-        node.position = (0, import_vec8.vec2)(position);
-        this.ensureNodeState(node).actualPosition = (0, import_vec8.vec2)(position);
+        node.position = (0, import_vec9.vec2)(position);
+        this.ensureNodeState(node).actualPosition = (0, import_vec9.vec2)(position);
       }
       this.eventBus.emit("graphArranged", {
         strategy: "layered"
@@ -2327,7 +2386,7 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.restore();
     }
     update(dt) {
-      _GraphBuilder.screen = (0, import_vec8.vec2)(this.canvas.width, this.canvas.height);
+      _GraphBuilder.screen = (0, import_vec9.vec2)(this.canvas.width, this.canvas.height);
       if (import_input_manager.default.keyDown("Space") && this.tool !== "pan" /* Pan */) {
         this.setTool("pan" /* Pan */, true);
       }
@@ -2360,37 +2419,37 @@ InputManager.DEFAULT_OPTIONS = {
         if (!this.panOffset) {
           this.panOffset = cameraPosition;
         }
-        this.camera.positionImmediate = import_vec8.vec2.add(
+        this.camera.positionImmediate = import_vec9.vec2.add(
           this.camera.position,
-          import_vec8.vec2.sub(this.panOffset, cameraPosition)
+          import_vec9.vec2.sub(this.panOffset, cameraPosition)
         );
       }
       if (!import_input_manager.default.mouseDown()) {
         this.panOffset = null;
       }
-      const pan = (0, import_vec8.vec2)(CAMERA_KEYBOARD_PAN_SPEED * dt, 0);
+      const pan = (0, import_vec9.vec2)(CAMERA_KEYBOARD_PAN_SPEED * dt, 0);
       if (import_input_manager.default.keyDown("KeyW") || import_input_manager.default.keyDown("ArrowUp")) {
-        this.camera.positionImmediate = import_vec8.vec2.add(
+        this.camera.positionImmediate = import_vec9.vec2.add(
           this.camera.position,
-          import_vec8.vec2.rotf(pan, 1)
+          import_vec9.vec2.rotf(pan, 1)
         );
       }
       if (import_input_manager.default.keyDown("KeyS") || import_input_manager.default.keyDown("ArrowDown")) {
-        this.camera.positionImmediate = import_vec8.vec2.add(
+        this.camera.positionImmediate = import_vec9.vec2.add(
           this.camera.position,
-          import_vec8.vec2.rotf(pan, -1)
+          import_vec9.vec2.rotf(pan, -1)
         );
       }
       if (import_input_manager.default.keyDown("KeyA") || import_input_manager.default.keyDown("ArrowLeft")) {
-        this.camera.positionImmediate = import_vec8.vec2.add(
+        this.camera.positionImmediate = import_vec9.vec2.add(
           this.camera.position,
-          import_vec8.vec2.rotf(pan, 2)
+          import_vec9.vec2.rotf(pan, 2)
         );
       }
       if (import_input_manager.default.keyDown("KeyD") || import_input_manager.default.keyDown("ArrowRight")) {
-        this.camera.positionImmediate = import_vec8.vec2.add(
+        this.camera.positionImmediate = import_vec9.vec2.add(
           this.camera.position,
-          import_vec8.vec2.rotf(pan, 0)
+          import_vec9.vec2.rotf(pan, 0)
         );
       }
       if (import_input_manager.default.mouseWheelUp()) {
@@ -2419,11 +2478,13 @@ InputManager.DEFAULT_OPTIONS = {
           this.creatingEdge.a.side
         ).hovered = true;
       }
-      const radius = this.tool === "create-edge" /* CreateEdge */ ? PORT_CONNECT_DISTANCE : PORT_HOVER_DISTANCE;
+      const isConnectMode = this.tool === "create-edge" /* CreateEdge */;
       const reversedNodes = [...this.graph.nodes].reverse();
       for (const node of reversedNodes) {
         for (const port of node.ports) {
           const state = this.ensurePortState(node.id, port.id, port.side);
+          const effectiveRadius = this.effectivePortTheme(port).portRadius;
+          const radius = effectiveRadius + (isConnectMode ? PORT_CONNECT_MARGIN : PORT_HOVER_MARGIN);
           const hovered = pointInCircle(mouse, {
             position: state.position,
             radius
@@ -2486,19 +2547,19 @@ InputManager.DEFAULT_OPTIONS = {
           continue;
         }
         const deleteHovered = this.options.capabilities.deleteNodes && (node.deletable ?? true) && this.tool === "select" /* Select */ && pointInRectangle(mouse, {
-          position: import_vec8.vec2.add(
+          position: import_vec9.vec2.add(
             node.position,
-            (0, import_vec8.vec2)(node.size.x - DELETE_BUTTON_SIZE, 0)
+            (0, import_vec9.vec2)(node.size.x - DELETE_BUTTON_SIZE, 0)
           ),
-          size: (0, import_vec8.vec2)(DELETE_BUTTON_SIZE)
+          size: (0, import_vec9.vec2)(DELETE_BUTTON_SIZE)
         });
         state.deleteHovered = deleteHovered;
         const resizeHovered = this.options.capabilities.resizeNodes && (node.resizable ?? true) && ["select" /* Select */, "resize-node" /* ResizeNode */].includes(this.tool) && pointInRectangle(mouse, {
-          position: import_vec8.vec2.add(
+          position: import_vec9.vec2.add(
             node.position,
-            import_vec8.vec2.sub(node.size, RESIZE_HANDLE_SIZE)
+            import_vec9.vec2.sub(node.size, RESIZE_HANDLE_SIZE)
           ),
-          size: (0, import_vec8.vec2)(RESIZE_HANDLE_SIZE)
+          size: (0, import_vec9.vec2)(RESIZE_HANDLE_SIZE)
         });
         state.resizeHovered = resizeHovered;
         if (resizeHovered && this.tool !== "resize-node" /* ResizeNode */) {
@@ -2552,13 +2613,13 @@ InputManager.DEFAULT_OPTIONS = {
       if (!aEndpoint || !bEndpoint) {
         return false;
       }
-      const a = import_vec8.vec2.add(
+      const a = import_vec9.vec2.add(
         aEndpoint.position,
-        import_vec8.vec2.mul(aEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+        import_vec9.vec2.mul(aEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
       );
-      const b = import_vec8.vec2.add(
+      const b = import_vec9.vec2.add(
         bEndpoint.position,
-        import_vec8.vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+        import_vec9.vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
       );
       const { cp1, cp2, join } = getCurveGeometry(
         a,
@@ -2567,7 +2628,7 @@ InputManager.DEFAULT_OPTIONS = {
         bEndpoint.direction,
         this.options.gridSize
       );
-      const samples = Math.ceil(import_vec8.vec2.len(import_vec8.vec2.sub(a, b)) / EDGE_CURVE_SAMPLE_DISTANCE) + 1;
+      const samples = Math.ceil(import_vec9.vec2.len(import_vec9.vec2.sub(a, b)) / EDGE_CURVE_SAMPLE_DISTANCE) + 1;
       for (let i = 0; i <= samples; i++) {
         const t = i / samples;
         const d1 = pointToQuadraticBezierDistance(mouse, a, cp1, join, t);
@@ -2615,22 +2676,22 @@ InputManager.DEFAULT_OPTIONS = {
         this.selectNode(hoveredNode.id);
         this.draggingNodeId = hoveredNode.id;
         hoveredNodeState.dragging = true;
-        hoveredNodeState.dragOffset = import_vec8.vec2.sub(mouse, hoveredNode.position);
+        hoveredNodeState.dragOffset = import_vec9.vec2.sub(mouse, hoveredNode.position);
       }
       if (this.options.capabilities.resizeNodes && this.tool === "resize-node" /* ResizeNode */ && hoveredNode && hoveredNodeState && hoveredNodeState.resizeHovered && !this.resizingNodeId && import_input_manager.default.mouseDown()) {
         this.resizingNodeId = hoveredNode.id;
         hoveredNodeState.resizing = true;
-        hoveredNodeState.resizeOffset = import_vec8.vec2.sub(
+        hoveredNodeState.resizeOffset = import_vec9.vec2.sub(
           mouse,
-          import_vec8.vec2.add(hoveredNode.position, hoveredNode.size)
+          import_vec9.vec2.add(hoveredNode.position, hoveredNode.size)
         );
       }
       if (this.draggingNodeId) {
         const node = this.graph.nodes.find((n) => n.id === this.draggingNodeId);
         const state = node ? this.ensureNodeState(node) : null;
         if (node && state) {
-          const from = (0, import_vec8.vec2)(node.position);
-          node.position = import_vec8.vec2.sub(mouse, state.dragOffset);
+          const from = (0, import_vec9.vec2)(node.position);
+          node.position = import_vec9.vec2.sub(mouse, state.dragOffset);
           if (this.options.snapToGrid) {
             node.position = roundVec(node.position, this.options.gridSize);
           }
@@ -2638,7 +2699,7 @@ InputManager.DEFAULT_OPTIONS = {
             this.eventBus.emit("nodeMoved", {
               nodeId: node.id,
               from,
-              to: (0, import_vec8.vec2)(node.position)
+              to: (0, import_vec9.vec2)(node.position)
             });
           }
         }
@@ -2647,11 +2708,11 @@ InputManager.DEFAULT_OPTIONS = {
         const node = this.graph.nodes.find((n) => n.id === this.resizingNodeId);
         const state = node ? this.ensureNodeState(node) : null;
         if (node && state) {
-          const from = (0, import_vec8.vec2)(node.size);
+          const from = (0, import_vec9.vec2)(node.size);
           node.size = clampVec(
-            import_vec8.vec2.sub(import_vec8.vec2.sub(mouse, node.position), state.resizeOffset),
-            (0, import_vec8.vec2)(NODE_MIN_SIZE),
-            (0, import_vec8.vec2)(NODE_MAX_SIZE)
+            import_vec9.vec2.sub(import_vec9.vec2.sub(mouse, node.position), state.resizeOffset),
+            (0, import_vec9.vec2)(NODE_MIN_SIZE),
+            (0, import_vec9.vec2)(NODE_MAX_SIZE)
           );
           if (this.options.snapToGrid) {
             node.size = roundVec(node.size, this.options.gridSize);
@@ -2660,7 +2721,7 @@ InputManager.DEFAULT_OPTIONS = {
             this.eventBus.emit("nodeResized", {
               nodeId: node.id,
               from,
-              to: (0, import_vec8.vec2)(node.size)
+              to: (0, import_vec9.vec2)(node.size)
             });
           }
         }
@@ -2668,7 +2729,7 @@ InputManager.DEFAULT_OPTIONS = {
       if (this.creatingEdge) {
         const hovered = this.hoveredPort ? this.resolvePortEndpoint(this.hoveredPort) : null;
         this.creatingEdge.update(
-          hovered ? (0, import_vec8.vec2)(hovered.position) : (0, import_vec8.vec2)(mouse),
+          hovered ? (0, import_vec9.vec2)(hovered.position) : (0, import_vec9.vec2)(mouse),
           hovered ? hovered.direction : null
         );
       }
@@ -2692,7 +2753,9 @@ InputManager.DEFAULT_OPTIONS = {
     }
     startCreatingEdge(endpoint) {
       this.setTool("create-edge" /* CreateEdge */, true);
-      this.creatingEdge = new EdgeTool(endpoint);
+      const sourceNode = this.graph.nodes.find((n) => n.id === endpoint.nodeId);
+      const sourcePort = sourceNode?.ports.find((p) => p.id === endpoint.portId);
+      this.creatingEdge = new EdgeTool(endpoint, sourcePort?.edgeTheme);
     }
     stopCreatingEdge() {
       if (!this.creatingEdge) {
@@ -2703,9 +2766,28 @@ InputManager.DEFAULT_OPTIONS = {
       if (hovered) {
         const validation = this.validateConnection(start, hovered);
         if (validation.allowed) {
+          const fromNodeAndPort = this.resolveNodeAndPort({
+            nodeId: start.nodeId,
+            portId: start.portId
+          });
+          const toNodeAndPort = this.resolveNodeAndPort({
+            nodeId: hovered.nodeId,
+            portId: hovered.portId
+          });
+          const resolvedTheme = {
+            ...this.creatingEdge.theme,
+            ...fromNodeAndPort && toNodeAndPort ? this.options.resolveEdgeTheme?.({
+              fromNode: fromNodeAndPort.node,
+              fromPort: fromNodeAndPort.port,
+              toNode: toNodeAndPort.node,
+              toPort: toNodeAndPort.port
+            }) : void 0
+          };
           this.createEdge(
             { nodeId: start.nodeId, portId: start.portId },
-            { nodeId: hovered.nodeId, portId: hovered.portId }
+            { nodeId: hovered.nodeId, portId: hovered.portId },
+            void 0,
+            Object.keys(resolvedTheme).length > 0 ? { theme: resolvedTheme } : void 0
           );
         } else {
           this.eventBus.emit("edgeConnectionRejected", {
@@ -2782,16 +2864,16 @@ InputManager.DEFAULT_OPTIONS = {
     easeNodes() {
       for (const node of this.graph.nodes) {
         const state = this.ensureNodeState(node);
-        state.actualPosition = import_vec8.vec2.add(
+        state.actualPosition = import_vec9.vec2.add(
           state.actualPosition,
-          import_vec8.vec2.mul(
-            import_vec8.vec2.sub(node.position, state.actualPosition),
+          import_vec9.vec2.mul(
+            import_vec9.vec2.sub(node.position, state.actualPosition),
             NODE_EASE_AMOUNT
           )
         );
-        state.actualSize = import_vec8.vec2.add(
+        state.actualSize = import_vec9.vec2.add(
           state.actualSize,
-          import_vec8.vec2.mul(import_vec8.vec2.sub(node.size, state.actualSize), NODE_EASE_AMOUNT)
+          import_vec9.vec2.mul(import_vec9.vec2.sub(node.size, state.actualSize), NODE_EASE_AMOUNT)
         );
       }
     }
@@ -2807,7 +2889,7 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.strokeStyle = theme.gridDotColor;
       for (let y = t - this.options.gridSize; y < b + this.options.gridSize; y += this.options.gridSize) {
         for (let x = l - this.options.gridSize; x < r + this.options.gridSize; x += this.options.gridSize) {
-          const position = (0, import_vec8.vec2)(x, y);
+          const position = (0, import_vec9.vec2)(x, y);
           if (callbacks.drawGridDot) {
             callbacks.drawGridDot(this.context, {
               position,
@@ -2822,32 +2904,33 @@ InputManager.DEFAULT_OPTIONS = {
     }
     drawNode(node) {
       const state = this.ensureNodeState(node);
-      const { theme, callbacks } = this.options;
+      const nodeTheme = this.effectiveNodeTheme(node);
+      const { callbacks } = this.options;
       if (callbacks.drawNodeFrame) {
         callbacks.drawNodeFrame(this.context, {
           node,
-          position: (0, import_vec8.vec2)(state.actualPosition),
-          size: (0, import_vec8.vec2)(state.actualSize),
+          position: (0, import_vec9.vec2)(state.actualPosition),
+          size: (0, import_vec9.vec2)(state.actualSize),
           hovered: state.hovered,
           selected: state.selected
         });
       } else {
         this.context.save();
-        this.context.strokeStyle = state.hovered ? theme.nodeHoveredBorderColor : theme.nodeBorderColor;
-        this.context.fillStyle = state.selected ? theme.nodeSelectedFillColor : theme.nodeFillColor;
-        this.context.lineWidth = theme.nodeBorderWidth;
+        this.context.strokeStyle = state.hovered ? nodeTheme.nodeHoveredBorderColor : nodeTheme.nodeBorderColor;
+        this.context.fillStyle = state.selected ? nodeTheme.nodeSelectedFillColor : nodeTheme.nodeFillColor;
+        this.context.lineWidth = nodeTheme.nodeBorderWidth;
         roundedRect(
           this.context,
           state.actualPosition,
           state.actualSize,
-          theme.nodeBorderRadius
+          nodeTheme.nodeBorderRadius
         );
         this.context.fill();
         roundedRect(
           this.context,
-          import_vec8.vec2.add(state.actualPosition, 1),
-          import_vec8.vec2.sub(state.actualSize, 2),
-          theme.nodeBorderRadius
+          import_vec9.vec2.add(state.actualPosition, 1),
+          import_vec9.vec2.sub(state.actualSize, 2),
+          nodeTheme.nodeBorderRadius
         );
         this.context.stroke();
         this.context.restore();
@@ -2856,20 +2939,20 @@ InputManager.DEFAULT_OPTIONS = {
         if (callbacks.drawDeleteButton) {
           callbacks.drawDeleteButton(this.context, {
             node,
-            position: (0, import_vec8.vec2)(state.actualPosition),
-            size: (0, import_vec8.vec2)(state.actualSize),
+            position: (0, import_vec9.vec2)(state.actualPosition),
+            size: (0, import_vec9.vec2)(state.actualSize),
             hovered: state.deleteHovered
           });
         } else {
           this.context.save();
-          this.context.strokeStyle = state.deleteHovered ? theme.deleteButtonHoveredColor : theme.deleteButtonColor;
-          this.context.lineWidth = theme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
+          this.context.strokeStyle = state.deleteHovered ? nodeTheme.deleteButtonHoveredColor : nodeTheme.deleteButtonColor;
+          this.context.lineWidth = nodeTheme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
           this.context.translate(
             state.actualPosition.x + state.actualSize.x - DELETE_BUTTON_SIZE / 2,
             state.actualPosition.y + DELETE_BUTTON_SIZE / 2
           );
           this.context.scale(DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE);
-          cross(this.context, (0, import_vec8.vec2)(), 0.4);
+          cross(this.context, (0, import_vec9.vec2)(), 0.4);
           this.context.restore();
         }
       }
@@ -2877,22 +2960,22 @@ InputManager.DEFAULT_OPTIONS = {
         if (callbacks.drawResizeHandle) {
           callbacks.drawResizeHandle(this.context, {
             node,
-            position: (0, import_vec8.vec2)(state.actualPosition),
-            size: (0, import_vec8.vec2)(state.actualSize),
+            position: (0, import_vec9.vec2)(state.actualPosition),
+            size: (0, import_vec9.vec2)(state.actualSize),
             hovered: state.resizeHovered
           });
         } else {
           this.context.save();
-          this.context.strokeStyle = state.resizeHovered ? theme.resizeHandleHoveredColor : theme.resizeHandleColor;
-          this.context.lineWidth = theme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
+          this.context.strokeStyle = state.resizeHovered ? nodeTheme.resizeHandleHoveredColor : nodeTheme.resizeHandleColor;
+          this.context.lineWidth = nodeTheme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
           this.context.translate(
             state.actualPosition.x + state.actualSize.x - RESIZE_HANDLE_SIZE,
             state.actualPosition.y + state.actualSize.y - RESIZE_HANDLE_SIZE
           );
           this.context.scale(RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
-          line(this.context, (0, import_vec8.vec2)(0, 0.8), (0, import_vec8.vec2)(0.8, 0));
-          line(this.context, (0, import_vec8.vec2)(0.3, 0.8), (0, import_vec8.vec2)(0.8, 0.3));
-          line(this.context, (0, import_vec8.vec2)(0.6, 0.8), (0, import_vec8.vec2)(0.8, 0.6));
+          line(this.context, (0, import_vec9.vec2)(0, 0.8), (0, import_vec9.vec2)(0.8, 0));
+          line(this.context, (0, import_vec9.vec2)(0.3, 0.8), (0, import_vec9.vec2)(0.8, 0.3));
+          line(this.context, (0, import_vec9.vec2)(0.6, 0.8), (0, import_vec9.vec2)(0.8, 0.6));
           this.context.restore();
         }
       }
@@ -2904,15 +2987,15 @@ InputManager.DEFAULT_OPTIONS = {
       if (callbacks.drawNodeContent) {
         callbacks.drawNodeContent(this.context, {
           node,
-          position: (0, import_vec8.vec2)(state.actualPosition),
-          size: (0, import_vec8.vec2)(state.actualSize),
+          position: (0, import_vec9.vec2)(state.actualPosition),
+          size: (0, import_vec9.vec2)(state.actualSize),
           hovered: state.hovered,
           selected: state.selected
         });
       } else if (node.label) {
         this.context.save();
-        this.context.fillStyle = theme.nodeLabelColor;
-        this.context.font = theme.nodeLabelFont;
+        this.context.fillStyle = nodeTheme.nodeLabelColor;
+        this.context.font = nodeTheme.nodeLabelFont;
         this.context.textAlign = "left";
         this.context.textBaseline = "top";
         this.context.fillText(
@@ -2932,14 +3015,15 @@ InputManager.DEFAULT_OPTIONS = {
         }
         return this.ensurePortState(node.id, port.id, port.side);
       })();
-      const direction = port && node ? this.ensurePortState(node.id, port.id, port.side).direction : (0, import_vec8.vec2)(0, -1);
+      const direction = port && node ? this.ensurePortState(node.id, port.id, port.side).direction : (0, import_vec9.vec2)(0, -1);
       const isPreview = stateOverride !== void 0 && node === null;
-      const { theme, callbacks } = this.options;
+      const portTheme = this.effectivePortTheme(port);
+      const { callbacks } = this.options;
       if (callbacks.drawPort) {
         callbacks.drawPort(this.context, {
           node,
           port,
-          position: (0, import_vec8.vec2)(state.position),
+          position: (0, import_vec9.vec2)(state.position),
           direction,
           hovered: state.hovered,
           connectable: state.connectable,
@@ -2956,7 +3040,7 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.arc(
         state.position.x,
         state.position.y,
-        theme.portCutoutRadius,
+        portTheme.portCutoutRadius,
         0,
         Math.PI * 2
       );
@@ -2964,14 +3048,14 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.restore();
       const isInvalid = !state.connectable;
       this.context.save();
-      this.context.strokeStyle = isInvalid ? theme.portInvalidBorderColor : state.hovered ? theme.portHoveredBorderColor : theme.portBorderColor;
-      this.context.fillStyle = isInvalid ? theme.portInvalidFillColor : state.hovered ? theme.portHoveredFillColor : theme.portFillColor;
-      this.context.lineWidth = theme.portBorderWidth;
+      this.context.strokeStyle = isInvalid ? portTheme.portInvalidBorderColor : state.hovered ? portTheme.portHoveredBorderColor : portTheme.portBorderColor;
+      this.context.fillStyle = isInvalid ? portTheme.portInvalidFillColor : state.hovered ? portTheme.portHoveredFillColor : portTheme.portFillColor;
+      this.context.lineWidth = portTheme.portBorderWidth;
       this.context.beginPath();
       this.context.arc(
         state.position.x,
         state.position.y,
-        theme.portRadius,
+        portTheme.portRadius,
         0,
         Math.PI * 2
       );
@@ -2980,17 +3064,29 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.restore();
       if (state.hovered) {
         this.context.save();
-        this.context.strokeStyle = isInvalid ? theme.portInvalidRingColor : theme.portHoverRingColor;
-        this.context.lineWidth = theme.portHoverRingLineWidth;
+        this.context.strokeStyle = isInvalid ? portTheme.portInvalidRingColor : portTheme.portHoverRingColor;
+        this.context.lineWidth = portTheme.portHoverRingLineWidth;
         this.context.beginPath();
         this.context.arc(
           state.position.x,
           state.position.y,
-          theme.portHoverRingRadius,
+          portTheme.portHoverRingRadius,
           0,
           Math.PI * 2
         );
         this.context.stroke();
+        this.context.restore();
+      }
+      if (this.options.showPortArrows && port !== null && !isPreview) {
+        const arrowDir = port.type === "output" /* Output */ ? direction : import_vec9.vec2.mul(direction, -1);
+        const base = import_vec9.vec2.add(
+          state.position,
+          import_vec9.vec2.mul(arrowDir, portTheme.portArrowOffset)
+        );
+        this.context.save();
+        this.context.fillStyle = portTheme.portArrowColor;
+        triangle(this.context, base, arrowDir, portTheme.portArrowSize);
+        this.context.fill();
         this.context.restore();
       }
     }
@@ -2999,7 +3095,7 @@ InputManager.DEFAULT_OPTIONS = {
         return;
       }
       this.drawPort(null, null, {
-        position: (0, import_vec8.vec2)(this.creatingEdge.pointer),
+        position: (0, import_vec9.vec2)(this.creatingEdge.pointer),
         hovered: true,
         connectable: true,
         invalidReason: null
@@ -3010,7 +3106,16 @@ InputManager.DEFAULT_OPTIONS = {
         return;
       }
       const { from, to, fromDirection, toDirection } = this.creatingEdge.getDrawData();
-      const { theme, callbacks } = this.options;
+      const sourceTheme = this.creatingEdge.theme ?? {};
+      const previewTheme = {
+        ...this.options.theme,
+        ...sourceTheme,
+        edgePreviewColor: sourceTheme.edgePreviewColor ?? sourceTheme.edgeColor ?? this.options.theme.edgePreviewColor,
+        edgePreviewLineWidth: sourceTheme.edgePreviewLineWidth ?? sourceTheme.edgeLineWidth ?? this.options.theme.edgePreviewLineWidth,
+        edgePreviewOutlineColor: sourceTheme.edgePreviewOutlineColor ?? sourceTheme.edgeHoverOutlineColor ?? this.options.theme.edgePreviewOutlineColor,
+        edgePreviewOutlineLineWidth: sourceTheme.edgePreviewOutlineLineWidth ?? sourceTheme.edgeHoverOutlineLineWidth ?? this.options.theme.edgePreviewOutlineLineWidth
+      };
+      const { callbacks } = this.options;
       if (callbacks.drawEdgePreview) {
         callbacks.drawEdgePreview(this.context, {
           from,
@@ -3021,8 +3126,8 @@ InputManager.DEFAULT_OPTIONS = {
         return;
       }
       this.context.save();
-      this.context.strokeStyle = theme.edgePreviewColor;
-      this.context.lineWidth = theme.edgePreviewLineWidth;
+      this.context.strokeStyle = previewTheme.edgePreviewColor;
+      this.context.lineWidth = previewTheme.edgePreviewLineWidth;
       curveFromTo(
         this.context,
         from,
@@ -3034,8 +3139,8 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.stroke();
       this.context.restore();
       this.context.save();
-      this.context.strokeStyle = theme.edgePreviewOutlineColor;
-      this.context.lineWidth = theme.edgePreviewOutlineLineWidth;
+      this.context.strokeStyle = previewTheme.edgePreviewOutlineColor;
+      this.context.lineWidth = previewTheme.edgePreviewOutlineLineWidth;
       curveFromTo(
         this.context,
         from,
@@ -3053,16 +3158,17 @@ InputManager.DEFAULT_OPTIONS = {
       if (!aEndpoint || !bEndpoint) {
         return;
       }
-      const a = import_vec8.vec2.add(
+      const a = import_vec9.vec2.add(
         aEndpoint.position,
-        import_vec8.vec2.mul(aEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+        import_vec9.vec2.mul(aEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
       );
-      const b = import_vec8.vec2.add(
+      const b = import_vec9.vec2.add(
         bEndpoint.position,
-        import_vec8.vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
+        import_vec9.vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
       );
       const hovered = this.ensureEdgeState(edge).hovered;
-      const { theme, callbacks } = this.options;
+      const edgeTheme = this.effectiveEdgeTheme(edge);
+      const { callbacks } = this.options;
       if (callbacks.drawEdge) {
         callbacks.drawEdge(this.context, {
           edge,
@@ -3075,8 +3181,8 @@ InputManager.DEFAULT_OPTIONS = {
         return;
       }
       this.context.save();
-      this.context.strokeStyle = hovered ? theme.edgeHoveredColor : theme.edgeColor;
-      this.context.lineWidth = theme.edgeLineWidth;
+      this.context.strokeStyle = hovered ? edgeTheme.edgeHoveredColor : edgeTheme.edgeColor;
+      this.context.lineWidth = edgeTheme.edgeLineWidth;
       curveFromTo(
         this.context,
         a,
@@ -3089,8 +3195,8 @@ InputManager.DEFAULT_OPTIONS = {
       this.context.restore();
       if (hovered) {
         this.context.save();
-        this.context.strokeStyle = theme.edgeHoverOutlineColor;
-        this.context.lineWidth = theme.edgeHoverOutlineLineWidth;
+        this.context.strokeStyle = edgeTheme.edgeHoverOutlineColor;
+        this.context.lineWidth = edgeTheme.edgeHoverOutlineLineWidth;
         curveFromTo(
           this.context,
           a,
@@ -3100,6 +3206,28 @@ InputManager.DEFAULT_OPTIONS = {
           this.options.gridSize
         );
         this.context.stroke();
+        this.context.restore();
+      }
+      if (this.options.showEdgeArrows) {
+        const { cp1, cp2, join } = getCurveGeometry(
+          a,
+          b,
+          aEndpoint.direction,
+          bEndpoint.direction,
+          this.options.gridSize
+        );
+        const { position: arrowPos, tangent: arrowDir } = sampleBezierChain(
+          a,
+          cp1,
+          join,
+          cp2,
+          b,
+          edgeTheme.edgeArrowOffset
+        );
+        this.context.save();
+        this.context.fillStyle = edgeTheme.edgeArrowColor;
+        triangle(this.context, arrowPos, arrowDir, edgeTheme.edgeArrowSize);
+        this.context.fill();
         this.context.restore();
       }
     }
@@ -3180,34 +3308,34 @@ InputManager.DEFAULT_OPTIONS = {
       const state = this.ensureNodeState(node);
       switch (port.side) {
         case "top" /* Top */:
-          return import_vec8.vec2.add(
+          return import_vec9.vec2.add(
             state.actualPosition,
-            (0, import_vec8.vec2)(
+            (0, import_vec9.vec2)(
               (index + 1) / (nodePortsSameSide.length + 1) * state.actualSize.x,
               0
             )
           );
         case "right" /* Right */:
-          return import_vec8.vec2.add(
+          return import_vec9.vec2.add(
             state.actualPosition,
-            (0, import_vec8.vec2)(
+            (0, import_vec9.vec2)(
               state.actualSize.x,
               (index + 1) / (nodePortsSameSide.length + 1) * state.actualSize.y
             )
           );
         case "bottom" /* Bottom */:
-          return import_vec8.vec2.add(
+          return import_vec9.vec2.add(
             state.actualPosition,
-            (0, import_vec8.vec2)(
+            (0, import_vec9.vec2)(
               (index + 1) / (nodePortsSameSide.length + 1) * state.actualSize.x,
               state.actualSize.y
             )
           );
         case "left" /* Left */:
         default:
-          return import_vec8.vec2.add(
+          return import_vec9.vec2.add(
             state.actualPosition,
-            (0, import_vec8.vec2)(
+            (0, import_vec9.vec2)(
               0,
               (index + 1) / (nodePortsSameSide.length + 1) * state.actualSize.y
             )
@@ -3216,10 +3344,10 @@ InputManager.DEFAULT_OPTIONS = {
     }
     directionFromSide(side) {
       return {
-        ["top" /* Top */]: (0, import_vec8.vec2)(0, -1),
-        ["right" /* Right */]: (0, import_vec8.vec2)(1, 0),
-        ["bottom" /* Bottom */]: (0, import_vec8.vec2)(0, 1),
-        ["left" /* Left */]: (0, import_vec8.vec2)(-1, 0)
+        ["top" /* Top */]: (0, import_vec9.vec2)(0, -1),
+        ["right" /* Right */]: (0, import_vec9.vec2)(1, 0),
+        ["bottom" /* Bottom */]: (0, import_vec9.vec2)(0, 1),
+        ["left" /* Left */]: (0, import_vec9.vec2)(-1, 0)
       }[side];
     }
     ensureNodeState(node) {
@@ -3234,10 +3362,10 @@ InputManager.DEFAULT_OPTIONS = {
         resizing: false,
         resizeHovered: false,
         deleteHovered: false,
-        dragOffset: (0, import_vec8.vec2)(),
-        resizeOffset: (0, import_vec8.vec2)(),
-        actualPosition: (0, import_vec8.vec2)(node.position),
-        actualSize: (0, import_vec8.vec2)(node.size)
+        dragOffset: (0, import_vec9.vec2)(),
+        resizeOffset: (0, import_vec9.vec2)(),
+        actualPosition: (0, import_vec9.vec2)(node.position),
+        actualSize: (0, import_vec9.vec2)(node.size)
       };
       this.nodeState.set(node.id, state);
       return state;
@@ -3261,7 +3389,7 @@ InputManager.DEFAULT_OPTIONS = {
         return existing;
       }
       const state = {
-        position: (0, import_vec8.vec2)(),
+        position: (0, import_vec9.vec2)(),
         direction: this.directionFromSide(side),
         hovered: false,
         connectable: true,
@@ -3274,8 +3402,8 @@ InputManager.DEFAULT_OPTIONS = {
       return {
         nodes: graph.nodes.map((node) => ({
           ...node,
-          position: (0, import_vec8.vec2)(node.position),
-          size: (0, import_vec8.vec2)(node.size),
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
           ports: node.ports.map((port) => ({ ...port }))
         })),
         edges: graph.edges.map((edge) => ({
@@ -3293,6 +3421,15 @@ InputManager.DEFAULT_OPTIONS = {
     }
     portKey(nodeId, portId) {
       return `${nodeId}:${portId}`;
+    }
+    effectiveNodeTheme(node) {
+      return { ...this.options.theme, ...node.theme };
+    }
+    effectivePortTheme(port) {
+      return { ...this.options.theme, ...port?.theme ?? {} };
+    }
+    effectiveEdgeTheme(edge) {
+      return { ...this.options.theme, ...edge.theme };
     }
     createId(prefix) {
       if (typeof globalThis.crypto !== "undefined" && globalThis.crypto.randomUUID) {

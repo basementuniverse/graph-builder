@@ -7,4 +7,5 @@ export * from './layout';
 export * from './node';
 export * from './port';
 export * from './serialization';
+export * from './theme';
 export * from './traversal';

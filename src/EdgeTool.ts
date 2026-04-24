@@ -1,15 +1,21 @@
 import { vec2 } from '@basementuniverse/vec';
 import { EDGE_CURVE_ENDPOINT_OFFSET } from './constants';
-import { EdgeToolEndpoint } from './types';
+import { EdgeTheme, EdgeToolEndpoint } from './types';
 
 export default class EdgeTool {
   private static readonly FINAL_DIRECTION_EASE = 0.2;
+
+  public theme: Partial<EdgeTheme> | undefined;
 
   public pointer: vec2;
   public pointerDirection: vec2 | null = null;
   public smoothedFinalDirection: vec2;
 
-  public constructor(public a: EdgeToolEndpoint) {
+  public constructor(
+    public a: EdgeToolEndpoint,
+    theme?: Partial<EdgeTheme>
+  ) {
+    this.theme = theme;
     this.pointer = vec2(a.position);
     this.smoothedFinalDirection = vec2.mul(a.direction, -1);
   }

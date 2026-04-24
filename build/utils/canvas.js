@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.roundedRect = exports.line = exports.plus = exports.cross = void 0;
+exports.roundedRect = exports.triangle = exports.line = exports.plus = exports.cross = void 0;
+const vec_1 = require("@basementuniverse/vec");
 function cross(context, position, size) {
     const halfSize = size / 2;
     context.beginPath();
@@ -28,6 +29,19 @@ function line(context, a, b) {
     context.stroke();
 }
 exports.line = line;
+function triangle(context, position, direction, size) {
+    context.save();
+    context.translate(position.x, position.y);
+    context.rotate(vec_1.vec2.rad(direction));
+    context.beginPath();
+    context.moveTo(size / 2, 0);
+    context.lineTo(-size / 2, size / 2);
+    context.lineTo(-size / 2, -size / 2);
+    context.closePath();
+    context.fill();
+    context.restore();
+}
+exports.triangle = triangle;
 function roundedRect(context, position, size, borderRadius) {
     const x = position.x;
     const y = position.y;

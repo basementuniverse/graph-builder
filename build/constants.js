@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_LAYERED_LAYOUT_OPTIONS = exports.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = exports.DEFAULT_THEME = exports.DEFAULT_CAPABILITIES = exports.GRAPH_SERIALIZATION_VERSION = exports.RESIZE_HANDLE_SIZE = exports.DELETE_BUTTON_SIZE = exports.EDGE_HOVER_THRESHOLD = exports.EDGE_CURVE_SAMPLE_DISTANCE = exports.EDGE_CURVE_ENDPOINT_OFFSET = exports.PORT_CONNECT_DISTANCE = exports.PORT_HOVER_DISTANCE = exports.DEFAULT_NODE_SIZE = exports.CAMERA_ZOOM_STEP = exports.CAMERA_KEYBOARD_PAN_SPEED = exports.NODE_EASE_AMOUNT = exports.NODE_MAX_SIZE = exports.NODE_MIN_SIZE = exports.GRID_SIZE = exports.FPS_MIN = exports.DEBUG = void 0;
+exports.DEFAULT_LAYERED_LAYOUT_OPTIONS = exports.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = exports.DEFAULT_THEME = exports.DEFAULT_CAPABILITIES = exports.GRAPH_SERIALIZATION_VERSION = exports.RESIZE_HANDLE_SIZE = exports.DELETE_BUTTON_SIZE = exports.EDGE_HOVER_THRESHOLD = exports.EDGE_CURVE_SAMPLE_DISTANCE = exports.EDGE_CURVE_ENDPOINT_OFFSET = exports.PORT_CONNECT_MARGIN = exports.PORT_HOVER_MARGIN = exports.DEFAULT_NODE_SIZE = exports.CAMERA_ZOOM_STEP = exports.CAMERA_KEYBOARD_PAN_SPEED = exports.NODE_EASE_AMOUNT = exports.NODE_MAX_SIZE = exports.NODE_MIN_SIZE = exports.GRID_SIZE = exports.FPS_MIN = exports.DEBUG = void 0;
 const vec_1 = require("@basementuniverse/vec");
 const enums_1 = require("./enums");
 exports.DEBUG = false;
@@ -12,8 +12,8 @@ exports.NODE_EASE_AMOUNT = 0.4;
 exports.CAMERA_KEYBOARD_PAN_SPEED = 600;
 exports.CAMERA_ZOOM_STEP = 0.1;
 exports.DEFAULT_NODE_SIZE = (0, vec_1.vec2)(200, 120);
-exports.PORT_HOVER_DISTANCE = 16;
-exports.PORT_CONNECT_DISTANCE = 24;
+exports.PORT_HOVER_MARGIN = 8;
+exports.PORT_CONNECT_MARGIN = 16;
 exports.EDGE_CURVE_ENDPOINT_OFFSET = 8;
 exports.EDGE_CURVE_SAMPLE_DISTANCE = 30;
 exports.EDGE_HOVER_THRESHOLD = 24;
@@ -59,11 +59,17 @@ exports.DEFAULT_THEME = {
     portInvalidRingColor: '#ff445588',
     portHoverRingLineWidth: 6,
     portHoverRingRadius: 12,
+    portArrowSize: 6,
+    portArrowColor: '#fff5',
+    portArrowOffset: 0.44,
     edgeColor: '#fff2',
     edgeHoveredColor: '#fff4',
     edgeLineWidth: 3,
     edgeHoverOutlineColor: '#fff2',
     edgeHoverOutlineLineWidth: 10,
+    edgeArrowSize: 8,
+    edgeArrowColor: '#fff5',
+    edgeArrowOffset: 0.5,
     edgePreviewColor: '#fff6',
     edgePreviewLineWidth: 3,
     edgePreviewOutlineColor: '#fff3',

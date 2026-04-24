@@ -18,8 +18,8 @@ import {
   NODE_EASE_AMOUNT,
   NODE_MAX_SIZE,
   NODE_MIN_SIZE,
-  PORT_CONNECT_DISTANCE,
-  PORT_HOVER_DISTANCE,
+  PORT_CONNECT_MARGIN,
+  PORT_HOVER_MARGIN,
   RESIZE_HANDLE_SIZE,
 } from './constants';
 import EdgeTool from './EdgeTool';
@@ -30,6 +30,7 @@ import type {
   Edge,
   EdgeConnectionValidationResult,
   EdgeState,
+  EdgeTheme,
   EdgeToolEndpoint,
   Graph,
   GraphBuilderCapabilities,
@@ -42,9 +43,11 @@ import type {
   Node,
   NodeState,
   NodeTemplate,
+  NodeTheme,
   Port,
   PortRef,
   PortState,
+  PortTheme,
   RequiredGraphBuilderOptions,
   VisitorControl,
 } from './types';
@@ -62,9 +65,11 @@ import {
   pointToQuadraticBezierDistance,
   roundedRect,
   roundVec,
+  sampleBezierChain,
   topologicalSort,
   traverseBFS,
   traverseDFS,
+  triangle,
 } from './utils';
 
 export default class GraphBuilder<
@@ -134,9 +139,12 @@ export default class GraphBuilder<
       gridSize: Math.max(1, options.gridSize ?? GRID_SIZE),
       snapToGrid: options.snapToGrid ?? false,
       showGrid: options.showGrid ?? true,
+      showPortArrows: options.showPortArrows ?? false,
+      showEdgeArrows: options.showEdgeArrows ?? false,
       autoStart: options.autoStart ?? true,
       allowSelfConnection: options.allowSelfConnection ?? false,
       canConnectPorts: options.canConnectPorts,
+      resolveEdgeTheme: options.resolveEdgeTheme,
       camera: options.camera ?? {},
       theme: { ...DEFAULT_THEME, ...options.theme },
       callbacks: options.callbacks ?? {},
@@ -440,6 +448,7 @@ export default class GraphBuilder<
       resizable: source.resizable ?? true,
       deletable: source.deletable ?? true,
       data: source.data,
+      theme: source.theme,
     };
 
     this.graph.nodes.push(node);
@@ -544,7 +553,12 @@ export default class GraphBuilder<
     return true;
   }
 
-  public createEdge(a: PortRef, b: PortRef, data?: TEdgeData): boolean {
+  public createEdge(
+    a: PortRef,
+    b: PortRef,
+    data?: TEdgeData,
+    options?: { theme?: Partial<EdgeTheme> }
+  ): boolean {
     if (!this.options.capabilities.createEdges) {
       return false;
     }
@@ -563,6 +577,10 @@ export default class GraphBuilder<
     const normalized = this.normalizeEdgeEndpoints(a, b, data);
     if (!normalized) {
       return false;
+    }
+
+    if (options?.theme) {
+      normalized.theme = options.theme;
     }
 
     const edgeCreatingPayload: GraphBuilderEventMap<
@@ -914,14 +932,15 @@ export default class GraphBuilder<
       ).hovered = true;
     }
 
-    const radius =
-      this.tool === ToolMode.CreateEdge
-        ? PORT_CONNECT_DISTANCE
-        : PORT_HOVER_DISTANCE;
+    const isConnectMode = this.tool === ToolMode.CreateEdge;
     const reversedNodes = [...this.graph.nodes].reverse();
     for (const node of reversedNodes) {
       for (const port of node.ports) {
         const state = this.ensurePortState(node.id, port.id, port.side);
+        const effectiveRadius = this.effectivePortTheme(port).portRadius;
+        const radius =
+          effectiveRadius +
+          (isConnectMode ? PORT_CONNECT_MARGIN : PORT_HOVER_MARGIN);
         const hovered = pointInCircle(mouse, {
           position: state.position,
           radius,
@@ -1301,7 +1320,9 @@ export default class GraphBuilder<
 
   private startCreatingEdge(endpoint: EdgeToolEndpoint) {
     this.setTool(ToolMode.CreateEdge, true);
-    this.creatingEdge = new EdgeTool(endpoint);
+    const sourceNode = this.graph.nodes.find(n => n.id === endpoint.nodeId);
+    const sourcePort = sourceNode?.ports.find(p => p.id === endpoint.portId);
+    this.creatingEdge = new EdgeTool(endpoint, sourcePort?.edgeTheme);
   }
 
   private stopCreatingEdge() {
@@ -1317,9 +1338,34 @@ export default class GraphBuilder<
     if (hovered) {
       const validation = this.validateConnection(start, hovered);
       if (validation.allowed) {
+        const fromNodeAndPort = this.resolveNodeAndPort({
+          nodeId: start.nodeId,
+          portId: start.portId,
+        });
+        const toNodeAndPort = this.resolveNodeAndPort({
+          nodeId: hovered.nodeId,
+          portId: hovered.portId,
+        });
+
+        const resolvedTheme: Partial<EdgeTheme> = {
+          ...this.creatingEdge.theme,
+          ...(fromNodeAndPort && toNodeAndPort
+            ? this.options.resolveEdgeTheme?.({
+                fromNode: fromNodeAndPort.node,
+                fromPort: fromNodeAndPort.port,
+                toNode: toNodeAndPort.node,
+                toPort: toNodeAndPort.port,
+              })
+            : undefined),
+        };
+
         this.createEdge(
           { nodeId: start.nodeId, portId: start.portId },
-          { nodeId: hovered.nodeId, portId: hovered.portId }
+          { nodeId: hovered.nodeId, portId: hovered.portId },
+          undefined,
+          Object.keys(resolvedTheme).length > 0
+            ? { theme: resolvedTheme }
+            : undefined
         );
       } else {
         this.eventBus.emit('edgeConnectionRejected', {
@@ -1465,7 +1511,8 @@ export default class GraphBuilder<
 
   private drawNode(node: Node<TNodeData, TPortData>) {
     const state = this.ensureNodeState(node);
-    const { theme, callbacks } = this.options;
+    const nodeTheme = this.effectiveNodeTheme(node);
+    const { callbacks } = this.options;
 
     if (callbacks.drawNodeFrame) {
       callbacks.drawNodeFrame(this.context, {
@@ -1478,24 +1525,24 @@ export default class GraphBuilder<
     } else {
       this.context.save();
       this.context.strokeStyle = state.hovered
-        ? theme.nodeHoveredBorderColor
-        : theme.nodeBorderColor;
+        ? nodeTheme.nodeHoveredBorderColor
+        : nodeTheme.nodeBorderColor;
       this.context.fillStyle = state.selected
-        ? theme.nodeSelectedFillColor
-        : theme.nodeFillColor;
-      this.context.lineWidth = theme.nodeBorderWidth;
+        ? nodeTheme.nodeSelectedFillColor
+        : nodeTheme.nodeFillColor;
+      this.context.lineWidth = nodeTheme.nodeBorderWidth;
       roundedRect(
         this.context,
         state.actualPosition,
         state.actualSize,
-        theme.nodeBorderRadius
+        nodeTheme.nodeBorderRadius
       );
       this.context.fill();
       roundedRect(
         this.context,
         vec2.add(state.actualPosition, 1),
         vec2.sub(state.actualSize, 2),
-        theme.nodeBorderRadius
+        nodeTheme.nodeBorderRadius
       );
       this.context.stroke();
       this.context.restore();
@@ -1512,10 +1559,10 @@ export default class GraphBuilder<
       } else {
         this.context.save();
         this.context.strokeStyle = state.deleteHovered
-          ? theme.deleteButtonHoveredColor
-          : theme.deleteButtonColor;
+          ? nodeTheme.deleteButtonHoveredColor
+          : nodeTheme.deleteButtonColor;
         this.context.lineWidth =
-          theme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
+          nodeTheme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
         this.context.translate(
           state.actualPosition.x + state.actualSize.x - DELETE_BUTTON_SIZE / 2,
           state.actualPosition.y + DELETE_BUTTON_SIZE / 2
@@ -1537,10 +1584,10 @@ export default class GraphBuilder<
       } else {
         this.context.save();
         this.context.strokeStyle = state.resizeHovered
-          ? theme.resizeHandleHoveredColor
-          : theme.resizeHandleColor;
+          ? nodeTheme.resizeHandleHoveredColor
+          : nodeTheme.resizeHandleColor;
         this.context.lineWidth =
-          theme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
+          nodeTheme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
         this.context.translate(
           state.actualPosition.x + state.actualSize.x - RESIZE_HANDLE_SIZE,
           state.actualPosition.y + state.actualSize.y - RESIZE_HANDLE_SIZE
@@ -1569,8 +1616,8 @@ export default class GraphBuilder<
       });
     } else if (node.label) {
       this.context.save();
-      this.context.fillStyle = theme.nodeLabelColor;
-      this.context.font = theme.nodeLabelFont;
+      this.context.fillStyle = nodeTheme.nodeLabelColor;
+      this.context.font = nodeTheme.nodeLabelFont;
       this.context.textAlign = 'left';
       this.context.textBaseline = 'top';
       this.context.fillText(
@@ -1607,7 +1654,8 @@ export default class GraphBuilder<
         : vec2(0, -1);
 
     const isPreview = stateOverride !== undefined && node === null;
-    const { theme, callbacks } = this.options;
+    const portTheme = this.effectivePortTheme(port);
+    const { callbacks } = this.options;
 
     if (callbacks.drawPort) {
       callbacks.drawPort(this.context, {
@@ -1632,7 +1680,7 @@ export default class GraphBuilder<
     this.context.arc(
       state.position.x,
       state.position.y,
-      theme.portCutoutRadius,
+      portTheme.portCutoutRadius,
       0,
       Math.PI * 2
     );
@@ -1643,21 +1691,21 @@ export default class GraphBuilder<
 
     this.context.save();
     this.context.strokeStyle = isInvalid
-      ? theme.portInvalidBorderColor
+      ? portTheme.portInvalidBorderColor
       : state.hovered
-        ? theme.portHoveredBorderColor
-        : theme.portBorderColor;
+        ? portTheme.portHoveredBorderColor
+        : portTheme.portBorderColor;
     this.context.fillStyle = isInvalid
-      ? theme.portInvalidFillColor
+      ? portTheme.portInvalidFillColor
       : state.hovered
-        ? theme.portHoveredFillColor
-        : theme.portFillColor;
-    this.context.lineWidth = theme.portBorderWidth;
+        ? portTheme.portHoveredFillColor
+        : portTheme.portFillColor;
+    this.context.lineWidth = portTheme.portBorderWidth;
     this.context.beginPath();
     this.context.arc(
       state.position.x,
       state.position.y,
-      theme.portRadius,
+      portTheme.portRadius,
       0,
       Math.PI * 2
     );
@@ -1668,18 +1716,32 @@ export default class GraphBuilder<
     if (state.hovered) {
       this.context.save();
       this.context.strokeStyle = isInvalid
-        ? theme.portInvalidRingColor
-        : theme.portHoverRingColor;
-      this.context.lineWidth = theme.portHoverRingLineWidth;
+        ? portTheme.portInvalidRingColor
+        : portTheme.portHoverRingColor;
+      this.context.lineWidth = portTheme.portHoverRingLineWidth;
       this.context.beginPath();
       this.context.arc(
         state.position.x,
         state.position.y,
-        theme.portHoverRingRadius,
+        portTheme.portHoverRingRadius,
         0,
         Math.PI * 2
       );
       this.context.stroke();
+      this.context.restore();
+    }
+
+    if (this.options.showPortArrows && port !== null && !isPreview) {
+      const arrowDir =
+        port.type === PortType.Output ? direction : vec2.mul(direction, -1);
+      const base = vec2.add(
+        state.position,
+        vec2.mul(arrowDir, portTheme.portArrowOffset)
+      );
+      this.context.save();
+      this.context.fillStyle = portTheme.portArrowColor;
+      triangle(this.context, base, arrowDir, portTheme.portArrowSize);
+      this.context.fill();
       this.context.restore();
     }
   }
@@ -1704,7 +1766,28 @@ export default class GraphBuilder<
 
     const { from, to, fromDirection, toDirection } =
       this.creatingEdge.getDrawData();
-    const { theme, callbacks } = this.options;
+    const sourceTheme = this.creatingEdge.theme ?? {};
+    const previewTheme: EdgeTheme = {
+      ...this.options.theme,
+      ...sourceTheme,
+      edgePreviewColor:
+        sourceTheme.edgePreviewColor ??
+        sourceTheme.edgeColor ??
+        this.options.theme.edgePreviewColor,
+      edgePreviewLineWidth:
+        sourceTheme.edgePreviewLineWidth ??
+        sourceTheme.edgeLineWidth ??
+        this.options.theme.edgePreviewLineWidth,
+      edgePreviewOutlineColor:
+        sourceTheme.edgePreviewOutlineColor ??
+        sourceTheme.edgeHoverOutlineColor ??
+        this.options.theme.edgePreviewOutlineColor,
+      edgePreviewOutlineLineWidth:
+        sourceTheme.edgePreviewOutlineLineWidth ??
+        sourceTheme.edgeHoverOutlineLineWidth ??
+        this.options.theme.edgePreviewOutlineLineWidth,
+    };
+    const { callbacks } = this.options;
 
     if (callbacks.drawEdgePreview) {
       callbacks.drawEdgePreview(this.context, {
@@ -1717,8 +1800,8 @@ export default class GraphBuilder<
     }
 
     this.context.save();
-    this.context.strokeStyle = theme.edgePreviewColor;
-    this.context.lineWidth = theme.edgePreviewLineWidth;
+    this.context.strokeStyle = previewTheme.edgePreviewColor;
+    this.context.lineWidth = previewTheme.edgePreviewLineWidth;
     curveFromTo(
       this.context,
       from,
@@ -1731,8 +1814,8 @@ export default class GraphBuilder<
     this.context.restore();
 
     this.context.save();
-    this.context.strokeStyle = theme.edgePreviewOutlineColor;
-    this.context.lineWidth = theme.edgePreviewOutlineLineWidth;
+    this.context.strokeStyle = previewTheme.edgePreviewOutlineColor;
+    this.context.lineWidth = previewTheme.edgePreviewOutlineLineWidth;
     curveFromTo(
       this.context,
       from,
@@ -1761,7 +1844,8 @@ export default class GraphBuilder<
       vec2.mul(bEndpoint.direction, EDGE_CURVE_ENDPOINT_OFFSET)
     );
     const hovered = this.ensureEdgeState(edge).hovered;
-    const { theme, callbacks } = this.options;
+    const edgeTheme = this.effectiveEdgeTheme(edge);
+    const { callbacks } = this.options;
 
     if (callbacks.drawEdge) {
       callbacks.drawEdge(this.context, {
@@ -1777,9 +1861,9 @@ export default class GraphBuilder<
 
     this.context.save();
     this.context.strokeStyle = hovered
-      ? theme.edgeHoveredColor
-      : theme.edgeColor;
-    this.context.lineWidth = theme.edgeLineWidth;
+      ? edgeTheme.edgeHoveredColor
+      : edgeTheme.edgeColor;
+    this.context.lineWidth = edgeTheme.edgeLineWidth;
     curveFromTo(
       this.context,
       a,
@@ -1793,8 +1877,8 @@ export default class GraphBuilder<
 
     if (hovered) {
       this.context.save();
-      this.context.strokeStyle = theme.edgeHoverOutlineColor;
-      this.context.lineWidth = theme.edgeHoverOutlineLineWidth;
+      this.context.strokeStyle = edgeTheme.edgeHoverOutlineColor;
+      this.context.lineWidth = edgeTheme.edgeHoverOutlineLineWidth;
       curveFromTo(
         this.context,
         a,
@@ -1804,6 +1888,29 @@ export default class GraphBuilder<
         this.options.gridSize
       );
       this.context.stroke();
+      this.context.restore();
+    }
+
+    if (this.options.showEdgeArrows) {
+      const { cp1, cp2, join } = getCurveGeometry(
+        a,
+        b,
+        aEndpoint.direction,
+        bEndpoint.direction,
+        this.options.gridSize
+      );
+      const { position: arrowPos, tangent: arrowDir } = sampleBezierChain(
+        a,
+        cp1,
+        join,
+        cp2,
+        b,
+        edgeTheme.edgeArrowOffset
+      );
+      this.context.save();
+      this.context.fillStyle = edgeTheme.edgeArrowColor;
+      triangle(this.context, arrowPos, arrowDir, edgeTheme.edgeArrowSize);
+      this.context.fill();
       this.context.restore();
     }
   }
@@ -2046,6 +2153,18 @@ export default class GraphBuilder<
 
   private portKey(nodeId: string, portId: string) {
     return `${nodeId}:${portId}`;
+  }
+
+  private effectiveNodeTheme(node: Node<TNodeData, TPortData>): NodeTheme {
+    return { ...this.options.theme, ...node.theme };
+  }
+
+  private effectivePortTheme(port: Port<TPortData> | null): PortTheme {
+    return { ...this.options.theme, ...(port?.theme ?? {}) };
+  }
+
+  private effectiveEdgeTheme(edge: Edge<TEdgeData>): EdgeTheme {
+    return { ...this.options.theme, ...edge.theme };
   }
 
   private createId(prefix: string) {

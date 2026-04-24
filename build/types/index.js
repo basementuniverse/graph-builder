@@ -23,5 +23,6 @@ __exportStar(require("./layout"), exports);
 __exportStar(require("./node"), exports);
 __exportStar(require("./port"), exports);
 __exportStar(require("./serialization"), exports);
+__exportStar(require("./theme"), exports);
 __exportStar(require("./traversal"), exports);
 //# sourceMappingURL=index.js.map

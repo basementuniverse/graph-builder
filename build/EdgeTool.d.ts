@@ -1,12 +1,13 @@
 import { vec2 } from '@basementuniverse/vec';
-import { EdgeToolEndpoint } from './types';
+import { EdgeTheme, EdgeToolEndpoint } from './types';
 export default class EdgeTool {
     a: EdgeToolEndpoint;
     private static readonly FINAL_DIRECTION_EASE;
+    theme: Partial<EdgeTheme> | undefined;
     pointer: vec2;
     pointerDirection: vec2 | null;
     smoothedFinalDirection: vec2;
-    constructor(a: EdgeToolEndpoint);
+    constructor(a: EdgeToolEndpoint, theme?: Partial<EdgeTheme>);
     update(pointer: vec2, pointerDirection?: vec2 | null): void;
     getDrawData(): {
         from: vec2;

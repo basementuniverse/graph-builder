@@ -1,7 +1,7 @@
 import { vec2 } from '@basementuniverse/vec';
 import { ToolMode, TraversalDirection } from './enums';
 import { layoutForceDirected, layoutLayered } from './layout';
-import type { Graph, GraphBuilderCapabilities, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, PortRef, VisitorControl } from './types';
+import type { EdgeTheme, Graph, GraphBuilderCapabilities, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, PortRef, VisitorControl } from './types';
 export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPortData = unknown> {
     static screen: vec2;
     private static inputInitialised;
@@ -53,7 +53,9 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     createNode(position: vec2, template?: NodeTemplate<TNodeData, TPortData>): Node<TNodeData, TPortData>;
     addNode(node: Node<TNodeData, TPortData>): boolean;
     removeNode(nodeId: string): boolean;
-    createEdge(a: PortRef, b: PortRef, data?: TEdgeData): boolean;
+    createEdge(a: PortRef, b: PortRef, data?: TEdgeData, options?: {
+        theme?: Partial<EdgeTheme>;
+    }): boolean;
     removeEdge(a: PortRef, b: PortRef): boolean;
     getNeighbors(nodeId: string, direction?: TraversalDirection): string[];
     traverseBFS<TResult = void>(startNodeId: string, visitor: (node: Node<TNodeData, TPortData>, depth: number) => TResult | VisitorControl, direction?: TraversalDirection): TResult[];
@@ -103,6 +105,9 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private portRefEq;
     private edgeKey;
     private portKey;
+    private effectiveNodeTheme;
+    private effectivePortTheme;
+    private effectiveEdgeTheme;
     private createId;
 }
 //# sourceMappingURL=GraphBuilder.d.ts.map
