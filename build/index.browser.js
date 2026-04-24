@@ -1818,6 +1818,7 @@ InputManager.DEFAULT_OPTIONS = {
         snapToGrid: options.snapToGrid ?? false,
         showGrid: options.showGrid ?? true,
         autoStart: options.autoStart ?? true,
+        allowSelfConnection: options.allowSelfConnection ?? false,
         canConnectPorts: options.canConnectPorts,
         camera: options.camera ?? {},
         theme: { ...DEFAULT_THEME, ...options.theme },
@@ -2142,6 +2143,15 @@ InputManager.DEFAULT_OPTIONS = {
     }
     createEdge(a, b, data) {
       if (!this.options.capabilities.createEdges) {
+        return false;
+      }
+      const aEndpoint = this.resolvePortEndpoint(a);
+      const bEndpoint = this.resolvePortEndpoint(b);
+      if (!aEndpoint || !bEndpoint) {
+        return false;
+      }
+      const validation = this.validateConnection(aEndpoint, bEndpoint);
+      if (!validation.allowed) {
         return false;
       }
       const normalized = this.normalizeEdgeEndpoints(a, b, data);
@@ -2712,7 +2722,7 @@ InputManager.DEFAULT_OPTIONS = {
       }
     }
     validateConnection(a, b) {
-      if (a.nodeId === b.nodeId) {
+      if (!this.options.allowSelfConnection && a.nodeId === b.nodeId) {
         return {
           allowed: false,
           reason: "Cannot connect a node to itself"

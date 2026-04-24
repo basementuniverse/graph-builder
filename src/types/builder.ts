@@ -31,6 +31,7 @@ export type GraphBuilderOptions<
   theme?: Partial<GraphBuilderTheme>;
   callbacks?: GraphBuilderCallbacks;
   capabilities?: GraphBuilderCapabilities;
+  allowSelfConnection?: boolean;
   canConnectPorts?: (params: {
     fromNode: Node<TNodeData, TPortData>;
     fromPort: Port<TPortData>;
@@ -45,6 +46,7 @@ export type RequiredGraphBuilderOptions<TNodeData, TEdgeData, TPortData> = {
   snapToGrid: boolean;
   showGrid: boolean;
   autoStart: boolean;
+  allowSelfConnection: boolean;
   canConnectPorts?: GraphBuilderOptions<
     TNodeData,
     TEdgeData,

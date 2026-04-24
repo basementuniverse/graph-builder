@@ -95,6 +95,9 @@ const builder = new GraphBuilder(canvas, {
     moveNodes: true,
   },
 
+  // Allow connections from an output to an input on the same node (default: false)
+  allowSelfConnection: false,
+
   // Validate a port connection before it is finalised (see Port connection validation)
   canConnectPorts: ({ fromNode, fromPort, toNode, toPort, edge }) => ({
     allowed: true,
@@ -251,7 +254,7 @@ type Edge<TEdgeData = unknown> = {
 
 #### Creating edges interactively
 
-Set the tool to `CreateEdge`, then drag from an output port to an input port. The `canConnectPorts` option (see below) is called before the edge is finalised.
+Set the tool to `CreateEdge`, then drag from an output port to an input port. By default, self-connections (an output connected to an input on the same node) are rejected; set `allowSelfConnection: true` to enable them. The `canConnectPorts` option (see below) is called before the edge is finalised.
 
 #### Creating edges programmatically
 
@@ -261,7 +264,8 @@ const created = builder.createEdge(
   { nodeId: 'node-2', portId: 'in'  },
   { weight: 1.0 } // optional edge data
 );
-// returns false if the edge already exists, connection is invalid, or was cancelled
+// returns false if the edge already exists, connection is invalid
+// (including disallowed self-connection), or was cancelled
 ```
 
 #### Removing edges
@@ -275,7 +279,7 @@ const removed = builder.removeEdge(
 
 #### Port connection validation
 
-Supply a `canConnectPorts` callback to impose custom rules:
+Supply a `canConnectPorts` callback to impose custom rules. This callback is used for both interactive edge creation and `createEdge()`:
 
 ```ts
 const builder = new GraphBuilder(canvas, {

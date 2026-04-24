@@ -21,6 +21,7 @@
   "author": "gordon",
   "license": "MIT",
   "dependencies": {
+    "@basementuniverse/animation": "^1.4.0",
     "@basementuniverse/camera": "^1.5.1",
     "@basementuniverse/debug": "^1.4.2",
     "@basementuniverse/frame-timer": "^1.0.1",

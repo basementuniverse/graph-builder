@@ -15,7 +15,7 @@ const layout_1 = require("./layout");
 const utils_1 = require("./utils");
 class GraphBuilder {
     constructor(canvas, options = {}) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g;
         this.frameHandle = 0;
         this.running = false;
         this.graph = {
@@ -54,10 +54,11 @@ class GraphBuilder {
             snapToGrid: (_b = options.snapToGrid) !== null && _b !== void 0 ? _b : false,
             showGrid: (_c = options.showGrid) !== null && _c !== void 0 ? _c : true,
             autoStart: (_d = options.autoStart) !== null && _d !== void 0 ? _d : true,
+            allowSelfConnection: (_e = options.allowSelfConnection) !== null && _e !== void 0 ? _e : false,
             canConnectPorts: options.canConnectPorts,
-            camera: (_e = options.camera) !== null && _e !== void 0 ? _e : {},
+            camera: (_f = options.camera) !== null && _f !== void 0 ? _f : {},
             theme: { ...constants_1.DEFAULT_THEME, ...options.theme },
-            callbacks: (_f = options.callbacks) !== null && _f !== void 0 ? _f : {},
+            callbacks: (_g = options.callbacks) !== null && _g !== void 0 ? _g : {},
             capabilities: { ...constants_1.DEFAULT_CAPABILITIES, ...options.capabilities },
         };
         this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
@@ -366,6 +367,15 @@ class GraphBuilder {
     }
     createEdge(a, b, data) {
         if (!this.options.capabilities.createEdges) {
+            return false;
+        }
+        const aEndpoint = this.resolvePortEndpoint(a);
+        const bEndpoint = this.resolvePortEndpoint(b);
+        if (!aEndpoint || !bEndpoint) {
+            return false;
+        }
+        const validation = this.validateConnection(aEndpoint, bEndpoint);
+        if (!validation.allowed) {
             return false;
         }
         const normalized = this.normalizeEdgeEndpoints(a, b, data);
@@ -926,7 +936,7 @@ class GraphBuilder {
         }
     }
     validateConnection(a, b) {
-        if (a.nodeId === b.nodeId) {
+        if (!this.options.allowSelfConnection && a.nodeId === b.nodeId) {
             return {
                 allowed: false,
                 reason: 'Cannot connect a node to itself',

@@ -135,6 +135,7 @@ export default class GraphBuilder<
       snapToGrid: options.snapToGrid ?? false,
       showGrid: options.showGrid ?? true,
       autoStart: options.autoStart ?? true,
+      allowSelfConnection: options.allowSelfConnection ?? false,
       canConnectPorts: options.canConnectPorts,
       camera: options.camera ?? {},
       theme: { ...DEFAULT_THEME, ...options.theme },
@@ -545,6 +546,17 @@ export default class GraphBuilder<
 
   public createEdge(a: PortRef, b: PortRef, data?: TEdgeData): boolean {
     if (!this.options.capabilities.createEdges) {
+      return false;
+    }
+
+    const aEndpoint = this.resolvePortEndpoint(a);
+    const bEndpoint = this.resolvePortEndpoint(b);
+    if (!aEndpoint || !bEndpoint) {
+      return false;
+    }
+
+    const validation = this.validateConnection(aEndpoint, bEndpoint);
+    if (!validation.allowed) {
       return false;
     }
 
@@ -1329,7 +1341,7 @@ export default class GraphBuilder<
     a: EdgeToolEndpoint,
     b: EdgeToolEndpoint
   ): EdgeConnectionValidationResult {
-    if (a.nodeId === b.nodeId) {
+    if (!this.options.allowSelfConnection && a.nodeId === b.nodeId) {
       return {
         allowed: false,
         reason: 'Cannot connect a node to itself',
