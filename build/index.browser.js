@@ -3130,7 +3130,7 @@ InputManager.DEFAULT_OPTIONS = {
 
   // src/constants.ts
   var import_vec = __toESM(require_vec());
-  var DEBUG = true;
+  var DEBUG = false;
   var FPS_MIN = 30;
   var GRID_SIZE = 32;
   var NODE_MIN_SIZE = 50;

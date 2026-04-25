@@ -1,6 +1,6 @@
 import { vec2 } from '@basementuniverse/vec';
 import { ForceDirectedLayoutOptions, GraphBuilderCapabilities, GraphBuilderEffectsOptions, GraphBuilderTheme, LayeredLayoutOptions } from './types';
-export declare const DEBUG = true;
+export declare const DEBUG = false;
 export declare const FPS_MIN = 30;
 export declare const GRID_SIZE = 32;
 export declare const NODE_MIN_SIZE = 50;
