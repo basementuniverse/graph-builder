@@ -1471,8 +1471,497 @@ function extrapolatePoint(p1, p2, factor) {
     }
   });
 
-  // node_modules/@basementuniverse/frame-timer/build/index.js
+  // node_modules/@basementuniverse/debug/build/index.js
   var require_build3 = __commonJS({
+    "node_modules/@basementuniverse/debug/build/index.js"(exports, module) {
+      (function webpackUniversalModuleDefinition(root, factory) {
+        if (typeof exports === "object" && typeof module === "object")
+          module.exports = factory();
+        else if (typeof define === "function" && define.amd)
+          define([], factory);
+        else {
+          var a = factory();
+          for (var i in a) (typeof exports === "object" ? exports : root)[i] = a[i];
+        }
+      })(self, () => {
+        return (
+          /******/
+          (() => {
+            var __webpack_modules__ = {
+              /***/
+              "./node_modules/@basementuniverse/vec/vec.js": (
+                /*!***************************************************!*\
+                  !*** ./node_modules/@basementuniverse/vec/vec.js ***!
+                  \***************************************************/
+                /***/
+                ((module) => {
+                  eval("/**\n * @overview A small vector and matrix library\n * @author Gordon Larrigan\n */\n\nconst _vec_times = (f, n) => Array(n).fill(0).map((_, i) => f(i));\nconst _vec_chunk = (a, n) => _vec_times(i => a.slice(i * n, i * n + n), Math.ceil(a.length / n));\nconst _vec_dot = (a, b) => a.reduce((n, v, i) => n + v * b[i], 0);\nconst _vec_is_vec2 = a => typeof a === 'object' && 'x' in a && 'y' in a;\nconst _vec_is_vec3 = a => typeof a === 'object' && 'x' in a && 'y' in a && 'z' in a;\n\n/**\n * A 2d vector\n * @typedef {Object} vec2\n * @property {number} x The x component of the vector\n * @property {number} y The y component of the vector\n */\n\n/**\n * Create a new 2d vector\n * @param {number|vec2} [x] The x component of the vector, or a vector to copy\n * @param {number} [y] The y component of the vector\n * @return {vec2} A new 2d vector\n * @example <caption>various ways to initialise a vector</caption>\n * let a = vec2(3, 2); // (3, 2)\n * let b = vec2(4);    // (4, 4)\n * let c = vec2(a);    // (3, 2)\n * let d = vec2();     // (0, 0)\n */\nconst vec2 = (x, y) => {\n  if (!x && !y) {\n    return { x: 0, y: 0 };\n  }\n  if (_vec_is_vec2(x)) {\n    return { x: x.x || 0, y: x.y || 0 };\n  }\n  return { x: x, y: y ?? x };\n};\n\n/**\n * Get the components of a vector as an array\n * @param {vec2} a The vector to get components from\n * @return {Array<number>} The vector components as an array\n */\nvec2.components = a => [a.x, a.y];\n\n/**\n * Create a vector from an array of components\n * @param {Array<number>} components The components of the vector\n * @return {vec2} A new vector\n */\nvec2.fromComponents = components => vec2(...components.slice(0, 2));\n\n/**\n * Return a unit vector (1, 0)\n * @return {vec2} A unit vector (1, 0)\n */\nvec2.ux = () => vec2(1, 0);\n\n/**\n * Return a unit vector (0, 1)\n * @return {vec2} A unit vector (0, 1)\n */\nvec2.uy = () => vec2(0, 1);\n\n/**\n * Add vectors\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a + b\n */\nvec2.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b) });\n\n/**\n * Subtract vectors\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a - b\n */\nvec2.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b) });\n\n/**\n * Scale a vector\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a * b\n */\nvec2.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b) });\n\n/**\n * Scale a vector by a scalar, alias for vec2.mul\n * @param {vec2} a Vector a\n * @param {number} b Scalar b\n * @return {vec2} a * b\n */\nvec2.scale = (a, b) => vec2.mul(a, b);\n\n/**\n * Divide a vector\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a / b\n */\nvec2.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b) });\n\n/**\n * Get the length of a vector\n * @param {vec2} a Vector a\n * @return {number} |a|\n */\nvec2.len = a => Math.sqrt(a.x * a.x + a.y * a.y);\n\n/**\n * Get the length of a vector using taxicab geometry\n * @param {vec2} a Vector a\n * @return {number} |a|\n */\nvec2.manhattan = a => Math.abs(a.x) + Math.abs(a.y);\n\n/**\n * Normalise a vector\n * @param {vec2} a The vector to normalise\n * @return {vec2} ^a\n */\nvec2.nor = a => {\n  let len = vec2.len(a);\n  return len ? { x: a.x / len, y: a.y / len } : vec2();\n};\n\n/**\n * Get a dot product of vectors\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {number} a \u2219 b\n */\nvec2.dot = (a, b) => a.x * b.x + a.y * b.y;\n\n/**\n * Rotate a vector by r radians\n * @param {vec2} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec2} A rotated vector\n */\nvec2.rot = (a, r) => {\n  let s = Math.sin(r),\n    c = Math.cos(r);\n  return { x: c * a.x - s * a.y, y: s * a.x + c * a.y };\n};\n\n/**\n * Fast method to rotate a vector by -90, 90 or 180 degrees\n * @param {vec2} a The vector to rotate\n * @param {number} r 1 for 90 degrees (cw), -1 for -90 degrees (ccw), 2 or -2 for 180 degrees\n * @return {vec2} A rotated vector\n */\nvec2.rotf = (a, r) => {\n  switch (r) {\n    case 1: return vec2(a.y, -a.x);\n    case -1: return vec2(-a.y, a.x);\n    case 2: case -2: return vec2(-a.x, -a.y);\n    default: return a;\n  }\n};\n\n/**\n * Scalar cross product of two vectors\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {number} a \xD7 b\n */\nvec2.cross = (a, b) => {\n  return a.x * b.y - a.y * b.x;\n};\n\n/**\n * Check if two vectors are equal\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {boolean} True if vectors a and b are equal, false otherwise\n */\nvec2.eq = (a, b) => a.x === b.x && a.y === b.y;\n\n/**\n * Get the angle of a vector\n * @param {vec2} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec2.rad = a => Math.atan2(a.y, a.x);\n\n/**\n * Copy a vector\n * @param {vec2} a The vector to copy\n * @return {vec2} A copy of vector a\n */\nvec2.cpy = a => vec2(a);\n\n/**\n * A function to call on each component of a 2d vector\n * @callback vec2MapCallback\n * @param {number} value The component value\n * @param {'x' | 'y'} label The component label (x or y)\n * @return {number} The mapped component\n */\n\n/**\n * Call a function on each component of a vector and build a new vector from the results\n * @param {vec2} a Vector a\n * @param {vec2MapCallback} f The function to call on each component of the vector\n * @return {vec2} Vector a mapped through f\n */\nvec2.map = (a, f) => ({ x: f(a.x, 'x'), y: f(a.y, 'y') });\n\n/**\n * Convert a vector into a string\n * @param {vec2} a The vector to convert\n * @param {string} [s=', '] The separator string\n * @return {string} A string representation of the vector\n */\nvec2.str = (a, s = ', ') => `${a.x}${s}${a.y}`;\n\n/**\n * Swizzle a vector with a string of component labels\n *\n * The string can contain:\n * - `x` or `y`\n * - `u` or `v` (aliases for `x` and `y`, respectively)\n * - `X`, `Y`, `U`, `V` (negated versions of the above)\n * - `0` or `1` (these will be passed through unchanged)\n * - `.` to return the component that would normally be at this position (or 0)\n *\n * Any other characters will default to 0\n * @param {vec2} a The vector to swizzle\n * @param {string} [s='..'] The swizzle string\n * @return {Array<number>} The swizzled components\n * @example <caption>swizzling a vector</caption>\n * let a = vec2(3, -2);\n * vec2.swiz(a, 'x');    // [3]\n * vec2.swiz(a, 'yx');   // [-2, 3]\n * vec2.swiz(a, 'xY');   // [3, 2]\n * vec2.swiz(a, 'Yy');   // [2, -2]\n * vec2.swiz(a, 'x.x');  // [3, -2, 3]\n * vec2.swiz(a, 'y01x'); // [-2, 0, 1, 3]\n */\nvec2.swiz = (a, s = '..') => {\n  const result = [];\n  s.split('').forEach((c, i) => {\n    switch (c) {\n      case 'x': case 'u': result.push(a.x); break;\n      case 'y': case 'v': result.push(a.y); break;\n      case 'X': case 'U': result.push(-a.x); break;\n      case 'Y': case 'V': result.push(-a.y); break;\n      case '0': result.push(0); break;\n      case '1': result.push(1); break;\n      case '.': result.push([a.x, a.y][i] ?? 0); break;\n      default: result.push(0);\n    }\n  });\n  return result;\n};\n\n/**\n * Polar coordinates for a 2d vector\n * @typedef {Object} polarCoordinates2d\n * @property {number} r The magnitude (radius) of the vector\n * @property {number} theta The angle of the vector\n */\n\n/**\n * Convert a vector into polar coordinates\n * @param {vec2} a The vector to convert\n * @return {polarCoordinates2d} The magnitude and angle of the vector\n */\nvec2.polar = a => ({ r: vec2.len(a), theta: Math.atan2(a.y, a.x) });\n\n/**\n * Convert polar coordinates into a vector\n * @param {number} r The magnitude (radius) of the vector\n * @param {number} theta The angle of the vector\n * @return {vec2} A vector with the given angle and magnitude\n */\nvec2.fromPolar = (r, theta) => vec2(r * Math.cos(theta), r * Math.sin(theta));\n\n/**\n * A 3d vector\n * @typedef {Object} vec3\n * @property {number} x The x component of the vector\n * @property {number} y The y component of the vector\n * @property {number} z The z component of the vector\n */\n\n/**\n * Create a new 3d vector\n * @param {number|vec3|vec2} [x] The x component of the vector, or a vector to copy\n * @param {number} [y] The y component of the vector, or the z component if x is a vec2\n * @param {number} [z] The z component of the vector\n * @return {vec3} A new 3d vector\n * @example <caption>various ways to initialise a vector</caption>\n * let a = vec3(3, 2, 1);       // (3, 2, 1)\n * let b = vec3(4, 5);          // (4, 5, 0)\n * let c = vec3(6);             // (6, 6, 6)\n * let d = vec3(a);             // (3, 2, 1)\n * let e = vec3();              // (0, 0, 0)\n * let f = vec3(vec2(1, 2), 3); // (1, 2, 3)\n * let g = vec3(vec2(4, 5));    // (4, 5, 0)\n */\nconst vec3 = (x, y, z) => {\n  if (!x && !y && !z) {\n    return { x: 0, y: 0, z: 0 };\n  }\n  if (_vec_is_vec3(x)) {\n    return { x: x.x || 0, y: x.y || 0, z: x.z || 0 };\n  }\n  if (_vec_is_vec2(x)) {\n    return { x: x.x || 0, y: x.y || 0, z: y || 0 };\n  }\n  return { x: x, y: y ?? x, z: z ?? x };\n};\n\n/**\n * Get the components of a vector as an array\n * @param {vec3} a The vector to get components from\n * @return {Array<number>} The vector components as an array\n */\nvec3.components = a => [a.x, a.y, a.z];\n\n/**\n * Create a vector from an array of components\n * @param {Array<number>} components The components of the vector\n * @return {vec3} A new vector\n */\nvec3.fromComponents = components => vec3(...components.slice(0, 3));\n\n/**\n * Return a unit vector (1, 0, 0)\n * @return {vec3} A unit vector (1, 0, 0)\n */\nvec3.ux = () => vec3(1, 0, 0);\n\n/**\n * Return a unit vector (0, 1, 0)\n * @return {vec3} A unit vector (0, 1, 0)\n */\nvec3.uy = () => vec3(0, 1, 0);\n\n/**\n * Return a unit vector (0, 0, 1)\n * @return {vec3} A unit vector (0, 0, 1)\n */\nvec3.uz = () => vec3(0, 0, 1);\n\n/**\n * Add vectors\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a + b\n */\nvec3.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b), z: a.z + (b.z ?? b) });\n\n/**\n * Subtract vectors\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a - b\n */\nvec3.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b), z: a.z - (b.z ?? b) });\n\n/**\n * Scale a vector\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a * b\n */\nvec3.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b), z: a.z * (b.z ?? b) });\n\n/**\n * Scale a vector by a scalar, alias for vec3.mul\n * @param {vec3} a Vector a\n * @param {number} b Scalar b\n * @return {vec3} a * b\n */\nvec3.scale = (a, b) => vec3.mul(a, b);\n\n/**\n * Divide a vector\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a / b\n */\nvec3.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b), z: a.z / (b.z ?? b) });\n\n/**\n * Get the length of a vector\n * @param {vec3} a Vector a\n * @return {number} |a|\n */\nvec3.len = a => Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);\n\n/**\n * Get the length of a vector using taxicab geometry\n * @param {vec3} a Vector a\n * @return {number} |a|\n */\nvec3.manhattan = a => Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);\n\n/**\n * Normalise a vector\n * @param {vec3} a The vector to normalise\n * @return {vec3} ^a\n */\nvec3.nor = a => {\n  let len = vec3.len(a);\n  return len ? { x: a.x / len, y: a.y / len, z: a.z / len } : vec3();\n};\n\n/**\n * Get a dot product of vectors\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {number} a \u2219 b\n */\nvec3.dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;\n\n/**\n * Rotate a vector using a rotation matrix\n * @param {vec3} a The vector to rotate\n * @param {mat} m The rotation matrix\n * @return {vec3} A rotated vector\n */\nvec3.rot = (a, m) => vec3(\n  vec3.dot(vec3.fromComponents(mat.row(m, 1)), a),\n  vec3.dot(vec3.fromComponents(mat.row(m, 2)), a),\n  vec3.dot(vec3.fromComponents(mat.row(m, 3)), a)\n);\n\n/**\n * Rotate a vector by r radians around the x axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.rotx = (a, r) => vec3(\n  a.x,\n  a.y * Math.cos(r) - a.z * Math.sin(r),\n  a.y * Math.sin(r) + a.z * Math.cos(r)\n);\n\n/**\n * Rotate a vector by r radians around the y axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.roty = (a, r) => vec3(\n  a.x * Math.cos(r) + a.z * Math.sin(r),\n  a.y,\n  -a.x * Math.sin(r) + a.z * Math.cos(r)\n);\n\n/**\n * Rotate a vector by r radians around the z axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.rotz = (a, r) => vec3(\n  a.x * Math.cos(r) - a.y * Math.sin(r),\n  a.x * Math.sin(r) + a.y * Math.cos(r),\n  a.z\n);\n\n/**\n * Rotate a vector using a quaternion\n * @param {vec3} a The vector to rotate\n * @param {Array<number>} q The quaternion to rotate by\n * @return {vec3} A rotated vector\n */\nvec3.rotq = (v, q) => {\n  if (q.length !== 4) {\n    return vec3();\n  }\n\n  const d = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);\n  if (d === 0) {\n    return vec3();\n  }\n\n  const uq = [q[0] / d, q[1] / d, q[2] / d, q[3] / d];\n  const u = vec3(...uq.slice(0, 3));\n  const s = uq[3];\n  return vec3.add(\n    vec3.add(\n      vec3.mul(u, 2 * vec3.dot(u, v)),\n      vec3.mul(v, s * s - vec3.dot(u, u))\n    ),\n    vec3.mul(vec3.cross(u, v), 2 * s)\n  );\n};\n\n/**\n * Rotate a vector using Euler angles\n * @param {vec3} a The vector to rotate\n * @param {vec3} e The Euler angles to rotate by\n * @return {vec3} A rotated vector\n */\nvec3.rota = (a, e) => vec3.rotz(vec3.roty(vec3.rotx(a, e.x), e.y), e.z);\n\n/**\n * Get the cross product of vectors\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {vec3} a \xD7 b\n */\nvec3.cross = (a, b) => vec3(\n  a.y * b.z - a.z * b.y,\n  a.z * b.x - a.x * b.z,\n  a.x * b.y - a.y * b.x\n);\n\n/**\n * Check if two vectors are equal\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {boolean} True if vectors a and b are equal, false otherwise\n */\nvec3.eq = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;\n\n/**\n * Get the angle of a vector from the x axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.radx = a => Math.atan2(a.z, a.y);\n\n/**\n * Get the angle of a vector from the y axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.rady = a => Math.atan2(a.x, a.y);\n\n/**\n * Get the angle of a vector from the z axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.radz = a => Math.atan2(a.y, a.z);\n\n/**\n * Copy a vector\n * @param {vec3} a The vector to copy\n * @return {vec3} A copy of vector a\n */\nvec3.cpy = a => vec3(a);\n\n/**\n * A function to call on each component of a 3d vector\n * @callback vec3MapCallback\n * @param {number} value The component value\n * @param {'x' | 'y' | 'z'} label The component label (x, y or z)\n * @return {number} The mapped component\n */\n\n/**\n * Call a function on each component of a vector and build a new vector from the results\n * @param {vec3} a Vector a\n * @param {vec3MapCallback} f The function to call on each component of the vector\n * @return {vec3} Vector a mapped through f\n */\nvec3.map = (a, f) => ({ x: f(a.x, 'x'), y: f(a.y, 'y'), z: f(a.z, 'z') });\n\n/**\n * Convert a vector into a string\n * @param {vec3} a The vector to convert\n * @param {string} [s=', '] The separator string\n * @return {string} A string representation of the vector\n */\nvec3.str = (a, s = ', ') => `${a.x}${s}${a.y}${s}${a.z}`;\n\n/**\n * Swizzle a vector with a string of component labels\n *\n * The string can contain:\n * - `x`, `y` or `z`\n * - `u`, `v` or `w` (aliases for `x`, `y` and `z`, respectively)\n * - `r`, `g` or `b` (aliases for `x`, `y` and `z`, respectively)\n * - `X`, `Y`, `Z`, `U`, `V`, `W`, `R`, `G`, `B` (negated versions of the above)\n * - `0` or `1` (these will be passed through unchanged)\n * - `.` to return the component that would normally be at this position (or 0)\n *\n * Any other characters will default to 0\n * @param {vec3} a The vector to swizzle\n * @param {string} [s='...'] The swizzle string\n * @return {Array<number>} The swizzled components\n * @example <caption>swizzling a vector</caption>\n * let a = vec3(3, -2, 1);\n * vec3.swiz(a, 'x');     // [3]\n * vec3.swiz(a, 'zyx');   // [1, -2, 3]\n * vec3.swiz(a, 'xYZ');   // [3, 2, -1]\n * vec3.swiz(a, 'Zzx');   // [-1, 1, 3]\n * vec3.swiz(a, 'x.x');   // [3, -2, 3]\n * vec3.swiz(a, 'y01zx'); // [-2, 0, 1, 1, 3]\n */\nvec3.swiz = (a, s = '...') => {\n  const result = [];\n  s.split('').forEach((c, i) => {\n    switch (c) {\n      case 'x': case 'u': case 'r': result.push(a.x); break;\n      case 'y': case 'v': case 'g': result.push(a.y); break;\n      case 'z': case 'w': case 'b': result.push(a.z); break;\n      case 'X': case 'U': case 'R': result.push(-a.x); break;\n      case 'Y': case 'V': case 'G': result.push(-a.y); break;\n      case 'Z': case 'W': case 'B': result.push(-a.z); break;\n      case '0': result.push(0); break;\n      case '1': result.push(1); break;\n      case '.': result.push([a.x, a.y, a.z][i] ?? 0); break;\n      default: result.push(0);\n    }\n  });\n  return result;\n};\n\n/**\n * Polar coordinates for a 3d vector\n * @typedef {Object} polarCoordinates3d\n * @property {number} r The magnitude (radius) of the vector\n * @property {number} theta The tilt angle of the vector\n * @property {number} phi The pan angle of the vector\n */\n\n/**\n * Convert a vector into polar coordinates\n * @param {vec3} a The vector to convert\n * @return {polarCoordinates3d} The magnitude, tilt and pan of the vector\n */\nvec3.polar = a => {\n  let r = vec3.len(a),\n    theta = Math.acos(a.y / r),\n    phi = Math.atan2(a.z, a.x);\n  return { r, theta, phi };\n};\n\n/**\n * Convert polar coordinates into a vector\n * @param {number} r The magnitude (radius) of the vector\n * @param {number} theta The tilt of the vector\n * @param {number} phi The pan of the vector\n * @return {vec3} A vector with the given angle and magnitude\n */\nvec3.fromPolar = (r, theta, phi) => {\n  const sinTheta = Math.sin(theta);\n  return vec3(\n    r * sinTheta * Math.cos(phi),\n    r * Math.cos(theta),\n    r * sinTheta * Math.sin(phi)\n  );\n};\n\n/**\n * A matrix\n * @typedef {Object} mat\n * @property {number} m The number of rows in the matrix\n * @property {number} n The number of columns in the matrix\n * @property {Array<number>} entries The matrix values\n */\n\n/**\n * Create a new matrix\n * @param {number} [m=4] The number of rows\n * @param {number} [n=4] The number of columns\n * @param {Array<number>} [entries=[]] Matrix values in reading order\n * @return {mat} A new matrix\n */\nconst mat = (m = 4, n = 4, entries = []) => ({\n  m, n,\n  entries: entries.concat(Array(m * n).fill(0)).slice(0, m * n)\n});\n\n/**\n * Get an identity matrix of size n\n * @param {number} n The size of the matrix\n * @return {mat} An identity matrix\n */\nmat.identity = n => mat(n, n, Array(n * n).fill(0).map((v, i) => +(Math.floor(i / n) === i % n)));\n\n/**\n * Get an entry from a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @return {number} The value at position (i, j) in matrix a\n */\nmat.get = (a, i, j) => a.entries[(j - 1) + (i - 1) * a.n];\n\n/**\n * Set an entry of a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @param {number} v The value to set in matrix a\n */\nmat.set = (a, i, j, v) => { a.entries[(j - 1) + (i - 1) * a.n] = v; };\n\n/**\n * Get a row from a matrix as an array\n * @param {mat} a Matrix a\n * @param {number} m The row offset\n * @return {Array<number>} Row m from matrix a\n */\nmat.row = (a, m) => {\n  const s = (m - 1) * a.n;\n  return a.entries.slice(s, s + a.n);\n};\n\n/**\n * Get a column from a matrix as an array\n * @param {mat} a Matrix a\n * @param {number} n The column offset\n * @return {Array<number>} Column n from matrix a\n */\nmat.col = (a, n) => _vec_times(i => mat.get(a, (i + 1), n), a.m);\n\n/**\n * Add matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat} a + b\n */\nmat.add = (a, b) => a.m === b.m && a.n === b.n && mat.map(a, (v, i) => v + b.entries[i]);\n\n/**\n * Subtract matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat} a - b\n */\nmat.sub = (a, b) => a.m === b.m && a.n === b.n && mat.map(a, (v, i) => v - b.entries[i]);\n\n/**\n * Multiply matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat|false} ab or false if the matrices cannot be multiplied\n */\nmat.mul = (a, b) => {\n  if (a.n !== b.m) { return false; }\n  const result = mat(a.m, b.n);\n  for (let i = 1; i <= a.m; i++) {\n    for (let j = 1; j <= b.n; j++) {\n      mat.set(result, i, j, _vec_dot(mat.row(a, i), mat.col(b, j)));\n    }\n  }\n  return result;\n};\n\n/**\n * Multiply a matrix by a vector\n * @param {mat} a Matrix a\n * @param {vec2|vec3|number[]} b Vector b\n * @return {vec2|vec3|number[]|false} ab or false if the matrix and vector cannot be multiplied\n */\nmat.mulv = (a, b) => {\n  let n, bb, rt;\n  if (_vec_is_vec3(b)) {\n    bb = vec3.components(b);\n    n = 3;\n    rt = vec3.fromComponents;\n  } else if (_vec_is_vec2(b)) {\n    bb = vec2.components(b);\n    n = 2;\n    rt = vec2.fromComponents;\n  } else {\n    bb = b;\n    n = b.length ?? 0;\n    rt = v => v;\n  }\n  if (a.n !== n) { return false; }\n  const result = [];\n  for (let i = 1; i <= a.m; i++) {\n    result.push(_vec_dot(mat.row(a, i), bb));\n  }\n  return rt(result);\n}\n\n/**\n * Scale a matrix\n * @param {mat} a Matrix a\n * @param {number} b Scalar b\n * @return {mat} a * b\n */\nmat.scale = (a, b) => mat.map(a, v => v * b);\n\n/**\n * Transpose a matrix\n * @param {mat} a The matrix to transpose\n * @return {mat} A transposed matrix\n */\nmat.trans = a => mat(a.n, a.m, _vec_times(i => mat.col(a, (i + 1)), a.n).flat());\n\n/**\n * Get the minor of a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @return {mat|false} The (i, j) minor of matrix a or false if the matrix is not square\n */\nmat.minor = (a, i, j) => {\n  if (a.m !== a.n) { return false; }\n  const entries = [];\n  for (let ii = 1; ii <= a.m; ii++) {\n    if (ii === i) { continue; }\n    for (let jj = 1; jj <= a.n; jj++) {\n      if (jj === j) { continue; }\n      entries.push(mat.get(a, ii, jj));\n    }\n  }\n  return mat(a.m - 1, a.n - 1, entries);\n};\n\n/**\n * Get the determinant of a matrix\n * @param {mat} a Matrix a\n * @return {number|false} |a| or false if the matrix is not square\n */\nmat.det = a => {\n  if (a.m !== a.n) { return false; }\n  if (a.m === 1) {\n    return a.entries[0];\n  }\n  if (a.m === 2) {\n    return a.entries[0] * a.entries[3] - a.entries[1] * a.entries[2];\n  }\n  let total = 0, sign = 1;\n  for (let j = 1; j <= a.n; j++) {\n    total += sign * a.entries[j - 1] * mat.det(mat.minor(a, 1, j));\n    sign *= -1;\n  }\n  return total;\n};\n\n/**\n * Normalise a matrix\n * @param {mat} a The matrix to normalise\n * @return {mat|false} ^a or false if the matrix is not square\n */\nmat.nor = a => {\n  if (a.m !== a.n) { return false; }\n  const d = mat.det(a);\n  return mat.map(a, i => i * d);\n};\n\n/**\n * Get the adjugate of a matrix\n * @param {mat} a The matrix from which to get the adjugate\n * @return {mat} The adjugate of a\n */\nmat.adj = a => {\n  const minors = mat(a.m, a.n);\n  for (let i = 1; i <= a.m; i++) {\n    for (let j = 1; j <= a.n; j++) {\n      mat.set(minors, i, j, mat.det(mat.minor(a, i, j)));\n    }\n  }\n  const cofactors = mat.map(minors, (v, i) => v * (i % 2 ? -1 : 1));\n  return mat.trans(cofactors);\n};\n\n/**\n * Get the inverse of a matrix\n * @param {mat} a The matrix to invert\n * @return {mat|false} a^-1 or false if the matrix has no inverse\n */\nmat.inv = a => {\n  if (a.m !== a.n) { return false; }\n  const d = mat.det(a);\n  if (d === 0) { return false; }\n  return mat.scale(mat.adj(a), 1 / d);\n};\n\n/**\n * Check if two matrices are equal\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {boolean} True if matrices a and b are identical, false otherwise\n */\nmat.eq = (a, b) => a.m === b.m && a.n === b.n && mat.str(a) === mat.str(b);\n\n/**\n * Copy a matrix\n * @param {mat} a The matrix to copy\n * @return {mat} A copy of matrix a\n */\nmat.cpy = a => mat(a.m, a.n, [...a.entries]);\n\n/**\n * A function to call on each entry of a matrix\n * @callback matrixMapCallback\n * @param {number} value The entry value\n * @param {number} index The entry index\n * @param {Array<number>} entries The array of matrix entries\n * @return {number} The mapped entry\n */\n\n/**\n * Call a function on each entry of a matrix and build a new matrix from the results\n * @param {mat} a Matrix a\n * @param {matrixMapCallback} f The function to call on each entry of the matrix\n * @return {mat} Matrix a mapped through f\n */\nmat.map = (a, f) => mat(a.m, a.n, a.entries.map(f));\n\n/**\n * Convert a matrix into a string\n * @param {mat} a The matrix to convert\n * @param {string} [ms=', '] The separator string for columns\n * @param {string} [ns='\\n'] The separator string for rows\n * @return {string} A string representation of the matrix\n */\nmat.str = (a, ms = ', ', ns = '\\n') => _vec_chunk(a.entries, a.n).map(r => r.join(ms)).join(ns);\n\nif (true) {\n  module.exports = { vec2, vec3, mat };\n}\n\n\n//# sourceURL=webpack://@basementuniverse/debug/./node_modules/@basementuniverse/vec/vec.js?");
+                })
+              ),
+              /***/
+              "./index.ts": (
+                /*!******************!*\
+                  !*** ./index.ts ***!
+                  \******************/
+                /***/
+                ((__unused_webpack_module, exports, __webpack_require__) => {
+                  "use strict";
+                  eval(`
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const vec_1 = __webpack_require__(/*! @basementuniverse/vec */ "./node_modules/@basementuniverse/vec/vec.js");
+class Debug {
+    constructor(options) {
+        if (options === null || options === void 0 ? void 0 : options.defaultValue) {
+            options.defaultValue = Object.assign({}, Debug.DEFAULT_OPTIONS.defaultValue, options.defaultValue);
+        }
+        if (options === null || options === void 0 ? void 0 : options.defaultChart) {
+            options.defaultChart = Object.assign({}, Debug.DEFAULT_OPTIONS.defaultChart, options.defaultChart);
+        }
+        if (options === null || options === void 0 ? void 0 : options.defaultMarker) {
+            options.defaultMarker = Object.assign({}, Debug.DEFAULT_OPTIONS.defaultMarker, options.defaultMarker);
+        }
+        if (options === null || options === void 0 ? void 0 : options.defaultBorder) {
+            options.defaultBorder = Object.assign({}, Debug.DEFAULT_OPTIONS.defaultBorder, options.defaultBorder);
+        }
+        this.options = Object.assign({}, Debug.DEFAULT_OPTIONS, options !== null && options !== void 0 ? options : {});
+        this.values = new Map();
+        this.charts = new Map();
+        this.markers = new Map();
+        this.borders = new Map();
+    }
+    /**
+     * Initialise the debug renderer for displaying values and markers
+     */
+    static initialise(options = {}) {
+        if (Debug.instance !== undefined) {
+            throw new Error('Debug has already been initialised');
+        }
+        Debug.instance = new Debug(options);
+    }
+    static getInstance() {
+        if (Debug.instance === undefined) {
+            throw new Error('Debug not properly initialised');
+        }
+        return Debug.instance;
+    }
+    /**
+     * Show a debug value
+     */
+    static value(label, value, options) {
+        var _a;
+        const instance = Debug.getInstance();
+        instance.values.set(label, Object.assign({}, instance.options.defaultValue, (_a = instance.values.get(label)) !== null && _a !== void 0 ? _a : {}, options !== null && options !== void 0 ? options : {}, { label, value }));
+    }
+    /**
+     * Show a debug chart
+     */
+    static chart(label, value, options) {
+        var _a, _b;
+        const instance = Debug.getInstance();
+        const currentChart = instance.charts.get(label);
+        instance.charts.set(label, Object.assign({}, instance.options.defaultChart, currentChart !== null && currentChart !== void 0 ? currentChart : {}, options !== null && options !== void 0 ? options : {}, {
+            label,
+            values: [...((_a = currentChart === null || currentChart === void 0 ? void 0 : currentChart.values) !== null && _a !== void 0 ? _a : []), value].slice(-((_b = options === null || options === void 0 ? void 0 : options.valueBufferSize) !== null && _b !== void 0 ? _b : instance.options.defaultChart.valueBufferSize)),
+        }));
+    }
+    /**
+     * Remove a debug chart
+     */
+    static removeChart(label) {
+        const instance = Debug.getInstance();
+        instance.charts.delete(label);
+    }
+    /**
+     * Show a marker in world or screen space
+     */
+    static marker(label, value, position, options) {
+        var _a;
+        const instance = Debug.getInstance();
+        instance.markers.set(label, Object.assign({}, instance.options.defaultMarker, (_a = instance.markers.get(label)) !== null && _a !== void 0 ? _a : {}, options !== null && options !== void 0 ? options : {}, { label, value, position }));
+    }
+    /**
+     * Show a border in world or screen space
+     */
+    static border(label, value, position, options) {
+        var _a;
+        if ((options === null || options === void 0 ? void 0 : options.borderShape) === 'circle' && (options === null || options === void 0 ? void 0 : options.radius) === undefined) {
+            // Don't add the border if it's circular but we don't have a radius
+            return;
+        }
+        if ((options === null || options === void 0 ? void 0 : options.borderShape) !== 'circle' && (options === null || options === void 0 ? void 0 : options.size) === undefined) {
+            // Don't add the border if it's rectangular (default is rectangular) but
+            // we don't have a size
+            return;
+        }
+        const instance = Debug.getInstance();
+        instance.borders.set(label, Object.assign({}, instance.options.defaultBorder, (_a = instance.borders.get(label)) !== null && _a !== void 0 ? _a : {}, options !== null && options !== void 0 ? options : {}, { label, value, position }));
+    }
+    /**
+     * Render the debug values and markers onto a canvas
+     */
+    static draw(context, tags, clear = true) {
+        const instance = Debug.getInstance();
+        // Draw world-space markers & borders
+        context.save();
+        instance.markers.forEach(marker => {
+            var _a;
+            if (tags && !((_a = marker.tags) === null || _a === void 0 ? void 0 : _a.some(tag => tags.includes(tag)))) {
+                return;
+            }
+            if (marker.space === 'world') {
+                instance.drawMarker(context, marker);
+            }
+        });
+        instance.borders.forEach(border => {
+            var _a;
+            if (tags && !((_a = border.tags) === null || _a === void 0 ? void 0 : _a.some(tag => tags.includes(tag)))) {
+                return;
+            }
+            if (border.space === 'world') {
+                instance.drawBorder(context, border);
+            }
+        });
+        context.restore();
+        // Draw values, charts and screen-space markers & borders
+        context.save();
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        let position;
+        let leftY = instance.options.margin;
+        let rightY = instance.options.margin;
+        const lineHeight = instance.options.lineHeight + instance.options.padding * 2;
+        instance.values.forEach(value => {
+            var _a, _b, _c, _d, _e, _f, _g;
+            if (tags && !((_a = value.tags) === null || _a === void 0 ? void 0 : _a.some(tag => tags.includes(tag)))) {
+                return;
+            }
+            switch (value.align) {
+                case 'left':
+                    position = (0, vec_1.vec2)(instance.options.margin, leftY);
+                    leftY += lineHeight + instance.options.lineMargin;
+                    break;
+                case 'right':
+                    position = (0, vec_1.vec2)(context.canvas.clientWidth - instance.options.margin, rightY);
+                    rightY += lineHeight + instance.options.lineMargin;
+                    break;
+            }
+            instance.drawLabel(context, Debug.prepareLabel((_b = value.label) !== null && _b !== void 0 ? _b : '', (_c = value.value) !== null && _c !== void 0 ? _c : '', value.showLabel, true), position, value.align, (_d = value.padding) !== null && _d !== void 0 ? _d : instance.options.padding, (_e = value.font) !== null && _e !== void 0 ? _e : instance.options.font, (_f = value.foregroundColour) !== null && _f !== void 0 ? _f : instance.options.foregroundColour, (_g = value.backgroundColour) !== null && _g !== void 0 ? _g : instance.options.backgroundColour);
+        });
+        instance.charts.forEach(chart => {
+            var _a, _b, _c, _d, _e, _f;
+            if (tags && !((_a = chart.tags) === null || _a === void 0 ? void 0 : _a.some(tag => tags.includes(tag)))) {
+                return;
+            }
+            switch (chart.align) {
+                case 'left':
+                    position = (0, vec_1.vec2)(instance.options.margin, leftY);
+                    leftY += lineHeight + instance.options.lineMargin;
+                    break;
+                case 'right':
+                    position = (0, vec_1.vec2)(context.canvas.clientWidth - instance.options.margin, rightY);
+                    rightY += lineHeight + instance.options.lineMargin;
+                    break;
+            }
+            instance.drawChart(context, Debug.prepareLabel((_b = chart.label) !== null && _b !== void 0 ? _b : '', '', chart.showLabel, false), position, chart.align, (_c = chart.padding) !== null && _c !== void 0 ? _c : instance.options.padding, (_d = chart.font) !== null && _d !== void 0 ? _d : instance.options.font, (_e = chart.foregroundColour) !== null && _e !== void 0 ? _e : instance.options.foregroundColour, (_f = chart.backgroundColour) !== null && _f !== void 0 ? _f : instance.options.backgroundColour, chart.chartBackgroundColour, chart.values, chart.valueBufferSize, chart.valueBufferStride, chart.minValue, chart.maxValue, chart.barWidth, chart.barColours);
+        });
+        instance.markers.forEach(marker => {
+            var _a;
+            if (tags && !((_a = marker.tags) === null || _a === void 0 ? void 0 : _a.some(tag => tags.includes(tag)))) {
+                return;
+            }
+            if (marker.space === 'screen') {
+                instance.drawMarker(context, marker);
+            }
+        });
+        instance.borders.forEach(border => {
+            var _a;
+            if (tags && !((_a = border.tags) === null || _a === void 0 ? void 0 : _a.some(tag => tags.includes(tag)))) {
+                return;
+            }
+            if (border.space === 'screen') {
+                instance.drawBorder(context, border);
+            }
+        });
+        context.restore();
+        // Clear values, markers & borders ready for next frame
+        if (clear) {
+            instance.values.clear();
+            instance.markers.clear();
+            instance.borders.clear();
+        }
+    }
+    static clear(clearCharts = false) {
+        const instance = Debug.getInstance();
+        instance.values.clear();
+        instance.markers.clear();
+        if (clearCharts) {
+            instance.charts.clear();
+        }
+        instance.borders.clear();
+    }
+    static prepareLabel(label, value, showLabel, showValue) {
+        const actualLabel = showLabel && label ? label : '';
+        const actualValue = !!showValue && value !== '' ? value.toString() : '';
+        const separator = actualLabel && actualValue ? ': ' : '';
+        return \`\${actualLabel}\${separator}\${actualValue}\`;
+    }
+    drawLabel(context, text, position, align, padding, font, foregroundColour, backgroundColour) {
+        context.save();
+        context.font = font;
+        context.textAlign = 'left';
+        context.textBaseline = 'top';
+        const backgroundSize = {
+            width: context.measureText(text).width + padding * 2,
+            height: this.options.lineHeight + padding * 2,
+        };
+        const x = align === 'right' ? position.x - backgroundSize.width : position.x;
+        // Draw background
+        context.fillStyle = backgroundColour;
+        context.fillRect(x - padding, position.y - padding, backgroundSize.width, backgroundSize.height);
+        // Draw text
+        context.fillStyle = foregroundColour;
+        context.fillText(text, x, position.y);
+        context.restore();
+    }
+    drawChart(context, label, position, align, padding, font, foregroundColour, backgroundColour, chartBackgroundColour, values, valueBufferSize, valueBufferStride, minValue, maxValue, barWidth, barColours) {
+        var _a, _b;
+        context.save();
+        context.font = font;
+        context.textBaseline = 'top';
+        const chartSize = {
+            width: barWidth * Math.ceil(valueBufferSize / Math.max(valueBufferStride, 1)),
+            height: this.options.lineHeight + padding * 2,
+        };
+        const labelSize = {
+            width: context.measureText(label).width,
+            height: this.options.lineHeight,
+        };
+        const backgroundSize = {
+            width: labelSize.width + padding + chartSize.width + padding * 2,
+            height: this.options.lineHeight + padding * 2,
+        };
+        const x = align === 'right' ? position.x - backgroundSize.width : position.x;
+        // Draw background
+        context.fillStyle = backgroundColour;
+        context.fillRect(x - padding, position.y - padding, backgroundSize.width, backgroundSize.height);
+        // Draw label
+        if (label) {
+            context.fillStyle = foregroundColour;
+            context.fillText(label, x, position.y);
+        }
+        // Draw chart
+        if (chartBackgroundColour) {
+            context.fillStyle = chartBackgroundColour;
+            context.fillRect(x + padding + labelSize.width + padding, position.y - padding, chartSize.width, chartSize.height);
+        }
+        const range = maxValue - minValue;
+        const barOffset = (0, vec_1.vec2)(x + padding + labelSize.width + padding, position.y - padding);
+        for (let i = 0; i < Math.ceil(values.length / Math.max(valueBufferStride, 1)); i++) {
+            let value;
+            if (valueBufferStride <= 1) {
+                value = values[i];
+            }
+            else {
+                value =
+                    values
+                        .slice(i * valueBufferStride, (i + 1) * valueBufferStride)
+                        .reduce((a, b) => a + b, 0) / valueBufferStride;
+            }
+            const barSize = (0, vec_1.vec2)(barWidth, Math.round((chartSize.height * (value - minValue)) / range));
+            const barPosition = vec_1.vec2.add(barOffset, (0, vec_1.vec2)((values.length < valueBufferSize
+                ? Math.ceil((valueBufferSize - values.length) / valueBufferStride) *
+                    barWidth
+                : 0) +
+                i * barWidth, chartSize.height - barSize.y));
+            const barColour = (_b = (barColours
+                ? (_a = [...barColours].reverse().find(c => values[i] >= c.offset)) === null || _a === void 0 ? void 0 : _a.colour
+                : undefined)) !== null && _b !== void 0 ? _b : foregroundColour;
+            context.fillStyle = barColour;
+            context.fillRect(barPosition.x, barPosition.y, barSize.x, barSize.y);
+        }
+        context.restore();
+    }
+    drawMarker(context, marker) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        context.save();
+        const position = (_a = marker.position) !== null && _a !== void 0 ? _a : (0, vec_1.vec2)();
+        if (marker.showLabel || marker.showValue) {
+            this.drawLabel(context, Debug.prepareLabel((_b = marker.label) !== null && _b !== void 0 ? _b : '', (_c = marker.value) !== null && _c !== void 0 ? _c : '', marker.showLabel, marker.showValue), vec_1.vec2.add(position !== null && position !== void 0 ? position : (0, vec_1.vec2)(), marker.labelOffset), 'left', (_d = marker.padding) !== null && _d !== void 0 ? _d : this.options.padding, (_e = marker.font) !== null && _e !== void 0 ? _e : this.options.font, (_f = marker.foregroundColour) !== null && _f !== void 0 ? _f : this.options.foregroundColour, (_g = marker.backgroundColour) !== null && _g !== void 0 ? _g : this.options.backgroundColour);
+        }
+        if (marker.showMarker) {
+            if (marker.markerImage) {
+                context.drawImage(marker.markerImage, position.x - marker.markerImage.width / 2, position.y - marker.markerImage.height / 2);
+            }
+            else {
+                context.lineWidth = marker.markerLineWidth;
+                context.strokeStyle = context.fillStyle = marker.markerColour;
+                switch (marker.markerStyle) {
+                    case 'x':
+                        this.drawCross(context, position, marker.markerSize);
+                        break;
+                    case '+':
+                        this.drawPlus(context, position, marker.markerSize);
+                        break;
+                    case '.':
+                        this.drawDot(context, position, marker.markerSize);
+                        break;
+                }
+            }
+        }
+        context.restore();
+    }
+    drawCross(context, position, size) {
+        context.beginPath();
+        const halfSize = size / 2;
+        context.moveTo(position.x - halfSize, position.y - halfSize);
+        context.lineTo(position.x + halfSize, position.y + halfSize);
+        context.moveTo(position.x - halfSize, position.y + halfSize);
+        context.lineTo(position.x + halfSize, position.y - halfSize);
+        context.stroke();
+    }
+    drawPlus(context, position, size) {
+        context.beginPath();
+        const halfSize = size / 2;
+        context.moveTo(position.x, position.y - halfSize);
+        context.lineTo(position.x, position.y + halfSize);
+        context.moveTo(position.x - halfSize, position.y);
+        context.lineTo(position.x + halfSize, position.y);
+        context.stroke();
+    }
+    drawDot(context, position, size) {
+        context.beginPath();
+        context.arc(position.x, position.y, size / 2, 0, Math.PI * 2);
+        context.fill();
+    }
+    drawBorder(context, border) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        context.save();
+        const position = (_a = border.position) !== null && _a !== void 0 ? _a : (0, vec_1.vec2)();
+        if (border.showLabel || border.showValue) {
+            this.drawLabel(context, Debug.prepareLabel((_b = border.label) !== null && _b !== void 0 ? _b : '', (_c = border.value) !== null && _c !== void 0 ? _c : '', border.showLabel, border.showValue), vec_1.vec2.add(position !== null && position !== void 0 ? position : (0, vec_1.vec2)(), border.labelOffset), 'left', (_d = border.padding) !== null && _d !== void 0 ? _d : this.options.padding, (_e = border.font) !== null && _e !== void 0 ? _e : this.options.font, (_f = border.foregroundColour) !== null && _f !== void 0 ? _f : this.options.foregroundColour, (_g = border.backgroundColour) !== null && _g !== void 0 ? _g : this.options.backgroundColour);
+        }
+        if (border.showBorder) {
+            context.lineWidth = border.borderWidth;
+            context.strokeStyle = context.fillStyle = border.borderColour;
+            switch (border.borderStyle) {
+                case 'solid':
+                    context.setLineDash([]);
+                    break;
+                case 'dashed':
+                    context.setLineDash([border.borderDashSize, border.borderDashSize]);
+                    break;
+                case 'dotted':
+                    context.setLineDash([border.borderWidth, border.borderWidth]);
+                    break;
+            }
+            switch (border.borderShape) {
+                case 'rectangle':
+                    if (border.size) {
+                        this.drawRectangle(context, position, border.size);
+                    }
+                    break;
+                case 'circle':
+                    if (border.radius) {
+                        this.drawCircle(context, position, border.radius);
+                    }
+                    break;
+            }
+        }
+        context.restore();
+    }
+    drawRectangle(context, position, size) {
+        context.beginPath();
+        context.rect(position.x, position.y, size.x, size.y);
+        context.stroke();
+    }
+    drawCircle(context, position, radius) {
+        context.beginPath();
+        context.arc(position.x, position.y, radius, 0, Math.PI * 2);
+        context.stroke();
+    }
+}
+exports["default"] = Debug;
+Debug.DEFAULT_OPTIONS = {
+    margin: 10,
+    padding: 4,
+    font: '10pt Lucida Console, monospace',
+    lineHeight: 12,
+    lineMargin: 0,
+    foregroundColour: '#fff',
+    backgroundColour: '#333',
+    defaultValue: {
+        align: 'left',
+        showLabel: true,
+    },
+    defaultChart: {
+        values: [],
+        valueBufferSize: 60,
+        valueBufferStride: 1,
+        minValue: 0,
+        maxValue: 100,
+        barWidth: 2,
+        align: 'left',
+        showLabel: true,
+        chartBackgroundColour: '#222',
+    },
+    defaultMarker: {
+        showLabel: true,
+        showValue: true,
+        showMarker: true,
+        markerSize: 6,
+        markerLineWidth: 2,
+        markerStyle: 'x',
+        markerColour: '#ccc',
+        space: 'world',
+        labelOffset: (0, vec_1.vec2)(10),
+    },
+    defaultBorder: {
+        showLabel: true,
+        showValue: true,
+        showBorder: true,
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderShape: 'rectangle',
+        borderColour: '#ccc',
+        borderDashSize: 5,
+        space: 'world',
+        labelOffset: (0, vec_1.vec2)(10),
+    },
+};
+
+
+//# sourceURL=webpack://@basementuniverse/debug/./index.ts?`);
+                })
+              )
+              /******/
+            };
+            var __webpack_module_cache__ = {};
+            function __webpack_require__(moduleId) {
+              var cachedModule = __webpack_module_cache__[moduleId];
+              if (cachedModule !== void 0) {
+                return cachedModule.exports;
+              }
+              var module2 = __webpack_module_cache__[moduleId] = {
+                /******/
+                // no module.id needed
+                /******/
+                // no module.loaded needed
+                /******/
+                exports: {}
+                /******/
+              };
+              __webpack_modules__[moduleId](module2, module2.exports, __webpack_require__);
+              return module2.exports;
+            }
+            var __webpack_exports__ = __webpack_require__("./index.ts");
+            return __webpack_exports__;
+          })()
+        );
+      });
+    }
+  });
+
+  // node_modules/@basementuniverse/frame-timer/build/index.js
+  var require_build4 = __commonJS({
     "node_modules/@basementuniverse/frame-timer/build/index.js"(exports, module) {
       (function webpackUniversalModuleDefinition(root, factory) {
         if (typeof exports === "object" && typeof module === "object")
@@ -1505,7 +1994,7 @@ function extrapolatePoint(p1, p2, factor) {
   });
 
   // node_modules/@basementuniverse/input-manager/build/index.js
-  var require_build4 = __commonJS({
+  var require_build5 = __commonJS({
     "node_modules/@basementuniverse/input-manager/build/index.js"(exports, module) {
       (function webpackUniversalModuleDefinition(root, factory) {
         if (typeof exports === "object" && typeof module === "object")
@@ -2212,6 +2701,66 @@ InputManager.DEFAULT_OPTIONS = {
     }
   });
 
+  // node_modules/@basementuniverse/view-port/build/index.js
+  var require_build6 = __commonJS({
+    "node_modules/@basementuniverse/view-port/build/index.js"(exports, module) {
+      (function webpackUniversalModuleDefinition(root, factory) {
+        if (typeof exports === "object" && typeof module === "object")
+          module.exports = factory();
+        else if (typeof define === "function" && define.amd)
+          define([], factory);
+        else {
+          var a = factory();
+          for (var i in a) (typeof exports === "object" ? exports : root)[i] = a[i];
+        }
+      })(self, () => {
+        return (
+          /******/
+          (() => {
+            var __webpack_modules__ = {
+              /***/
+              "./node_modules/@basementuniverse/vec/vec.js"(module) {
+                eval("{/**\n * @overview A small vector and matrix library\n * @author Gordon Larrigan\n */\n\nconst _vec_times = (f, n) => Array(n).fill(0).map((_, i) => f(i));\nconst _vec_chunk = (a, n) => _vec_times(i => a.slice(i * n, i * n + n), Math.ceil(a.length / n));\nconst _vec_dot = (a, b) => a.reduce((n, v, i) => n + v * b[i], 0);\nconst _vec_is_vec2 = a => typeof a === 'object' && 'x' in a && 'y' in a;\nconst _vec_is_vec3 = a => typeof a === 'object' && 'x' in a && 'y' in a && 'z' in a;\n\n/**\n * A 2d vector\n * @typedef {Object} vec2\n * @property {number} x The x component of the vector\n * @property {number} y The y component of the vector\n */\n\n/**\n * Check if a value is a 2d vector\n * @param {*} value The value to check\n * @returns {boolean} True if value is a 2d vector, false otherwise\n */\nfunction isVec2(value) {\n  return (\n    value &&\n    typeof value === 'object' &&\n    'x' in value &&\n    typeof value.x === 'number' &&\n    'y' in value &&\n    typeof value.y === 'number' &&\n    !('z' in value)\n  );\n}\n\n/**\n * Create a new 2d vector\n * @param {number|vec2} [x] The x component of the vector, or a vector to copy\n * @param {number} [y] The y component of the vector\n * @return {vec2} A new 2d vector\n * @example <caption>various ways to initialise a vector</caption>\n * let a = vec2(3, 2); // (3, 2)\n * let b = vec2(4);    // (4, 4)\n * let c = vec2(a);    // (3, 2)\n * let d = vec2();     // (0, 0)\n */\nconst vec2 = (x, y) => {\n  if (!x && !y) {\n    return { x: 0, y: 0 };\n  }\n  if (_vec_is_vec2(x)) {\n    return { x: x.x || 0, y: x.y || 0 };\n  }\n  return { x: x, y: y ?? x };\n};\n\n/**\n * Get the components of a vector as an array\n * @param {vec2} a The vector to get components from\n * @return {Array<number>} The vector components as an array\n */\nvec2.components = a => [a.x, a.y];\n\n/**\n * Create a vector from an array of components\n * @param {Array<number>} components The components of the vector\n * @return {vec2} A new vector\n */\nvec2.fromComponents = components => vec2(...components.slice(0, 2));\n\n/**\n * Return a unit vector (1, 0)\n * @return {vec2} A unit vector (1, 0)\n */\nvec2.ux = () => vec2(1, 0);\n\n/**\n * Return a unit vector (0, 1)\n * @return {vec2} A unit vector (0, 1)\n */\nvec2.uy = () => vec2(0, 1);\n\n/**\n * Add vectors\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a + b\n */\nvec2.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b) });\n\n/**\n * Add multiple vectors\n * @param  {...any} v Vectors to add\n * @returns {vec2} The sum of the vectors\n */\nvec2.addm = (...v) => v.reduce((a, b) => vec2.add(a, b), vec2());\n\n/**\n * Subtract vectors\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a - b\n */\nvec2.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b) });\n\n/**\n * Subtract multiple vectors\n * @param  {...any} v Vectors to subtract\n * @returns {vec2} The result of subtracting the vectors\n */\nvec2.subm = (...v) => v.reduce((a, b) => vec2.sub(a, b));\n\n/**\n * Scale a vector\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a * b\n */\nvec2.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b) });\n\n/**\n * Scale a vector by a scalar, alias for vec2.mul\n * @param {vec2} a Vector a\n * @param {number} b Scalar b\n * @return {vec2} a * b\n */\nvec2.scale = (a, b) => vec2.mul(a, b);\n\n/**\n * Divide a vector\n * @param {vec2} a Vector a\n * @param {vec2|number} b Vector or scalar b\n * @return {vec2} a / b\n */\nvec2.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b) });\n\n/**\n * Get the length of a vector\n * @param {vec2} a Vector a\n * @return {number} |a|\n */\nvec2.len = a => Math.sqrt(a.x * a.x + a.y * a.y);\n\n/**\n * Get the length of a vector using taxicab geometry\n * @param {vec2} a Vector a\n * @return {number} |a|\n */\nvec2.manhattan = a => Math.abs(a.x) + Math.abs(a.y);\n\n/**\n * Normalise a vector\n * @param {vec2} a The vector to normalise\n * @return {vec2} ^a\n */\nvec2.nor = a => {\n  let len = vec2.len(a);\n  return len ? { x: a.x / len, y: a.y / len } : vec2();\n};\n\n/**\n * Get a dot product of vectors\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {number} a \u2219 b\n */\nvec2.dot = (a, b) => a.x * b.x + a.y * b.y;\n\n/**\n * Rotate a vector by r radians\n * @param {vec2} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec2} A rotated vector\n */\nvec2.rot = (a, r) => {\n  let s = Math.sin(r),\n    c = Math.cos(r);\n  return { x: c * a.x - s * a.y, y: s * a.x + c * a.y };\n};\n\n/**\n * Fast method to rotate a vector by -90, 90 or 180 degrees\n * @param {vec2} a The vector to rotate\n * @param {number} r 1 for 90 degrees (cw), -1 for -90 degrees (ccw), 2 or -2 for 180 degrees\n * @return {vec2} A rotated vector\n */\nvec2.rotf = (a, r) => {\n  switch (r) {\n    case 1: return vec2(a.y, -a.x);\n    case -1: return vec2(-a.y, a.x);\n    case 2: case -2: return vec2(-a.x, -a.y);\n    default: return a;\n  }\n};\n\n/**\n * Scalar cross product of two vectors\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {number} a \xD7 b\n */\nvec2.cross = (a, b) => {\n  return a.x * b.y - a.y * b.x;\n};\n\n/**\n * Check if two vectors are equal\n * @param {vec2} a Vector a\n * @param {vec2} b Vector b\n * @return {boolean} True if vectors a and b are equal, false otherwise\n */\nvec2.eq = (a, b) => a.x === b.x && a.y === b.y;\n\n/**\n * Get the angle of a vector\n * @param {vec2} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec2.rad = a => Math.atan2(a.y, a.x);\n\n/**\n * Copy a vector\n * @param {vec2} a The vector to copy\n * @return {vec2} A copy of vector a\n */\nvec2.cpy = a => vec2(a);\n\n/**\n * A function to call on each component of a 2d vector\n * @callback vec2MapCallback\n * @param {number} value The component value\n * @param {'x' | 'y'} label The component label (x or y)\n * @return {number} The mapped component\n */\n\n/**\n * Call a function on each component of a vector and build a new vector from the results\n * @param {vec2} a Vector a\n * @param {vec2MapCallback} f The function to call on each component of the vector\n * @return {vec2} Vector a mapped through f\n */\nvec2.map = (a, f) => ({ x: f(a.x, 'x'), y: f(a.y, 'y') });\n\n/**\n * Convert a vector into a string\n * @param {vec2} a The vector to convert\n * @param {string} [s=', '] The separator string\n * @return {string} A string representation of the vector\n */\nvec2.str = (a, s = ', ') => `${a.x}${s}${a.y}`;\n\n/**\n * Swizzle a vector with a string of component labels\n *\n * The string can contain:\n * - `x` or `y`\n * - `u` or `v` (aliases for `x` and `y`, respectively)\n * - `X`, `Y`, `U`, `V` (negated versions of the above)\n * - `0` or `1` (these will be passed through unchanged)\n * - `.` to return the component that would normally be at this position (or 0)\n *\n * Any other characters will default to 0\n * @param {vec2} a The vector to swizzle\n * @param {string} [s='..'] The swizzle string\n * @return {Array<number>} The swizzled components\n * @example <caption>swizzling a vector</caption>\n * let a = vec2(3, -2);\n * vec2.swiz(a, 'x');    // [3]\n * vec2.swiz(a, 'yx');   // [-2, 3]\n * vec2.swiz(a, 'xY');   // [3, 2]\n * vec2.swiz(a, 'Yy');   // [2, -2]\n * vec2.swiz(a, 'x.x');  // [3, -2, 3]\n * vec2.swiz(a, 'y01x'); // [-2, 0, 1, 3]\n */\nvec2.swiz = (a, s = '..') => {\n  const result = [];\n  s.split('').forEach((c, i) => {\n    switch (c) {\n      case 'x': case 'u': result.push(a.x); break;\n      case 'y': case 'v': result.push(a.y); break;\n      case 'X': case 'U': result.push(-a.x); break;\n      case 'Y': case 'V': result.push(-a.y); break;\n      case '0': result.push(0); break;\n      case '1': result.push(1); break;\n      case '.': result.push([a.x, a.y][i] ?? 0); break;\n      default: result.push(0);\n    }\n  });\n  return result;\n};\n\n/**\n * Polar coordinates for a 2d vector\n * @typedef {Object} polarCoordinates2d\n * @property {number} r The magnitude (radius) of the vector\n * @property {number} theta The angle of the vector\n */\n\n/**\n * Convert a vector into polar coordinates\n * @param {vec2} a The vector to convert\n * @return {polarCoordinates2d} The magnitude and angle of the vector\n */\nvec2.polar = a => ({ r: vec2.len(a), theta: Math.atan2(a.y, a.x) });\n\n/**\n * Convert polar coordinates into a vector\n * @param {number} r The magnitude (radius) of the vector\n * @param {number} theta The angle of the vector\n * @return {vec2} A vector with the given angle and magnitude\n */\nvec2.fromPolar = (r, theta) => vec2(r * Math.cos(theta), r * Math.sin(theta));\n\n/**\n * A 3d vector\n * @typedef {Object} vec3\n * @property {number} x The x component of the vector\n * @property {number} y The y component of the vector\n * @property {number} z The z component of the vector\n */\n\n/**\n * Check if a value is a 3d vector\n * @param {*} value The value to check\n * @returns {boolean} True if value is a 3d vector, false otherwise\n */\nfunction isVec3(value) {\n  return (\n    value &&\n    typeof value === 'object' &&\n    'x' in value &&\n    typeof value.x === 'number' &&\n    'y' in value &&\n    typeof value.y === 'number' &&\n    'z' in value &&\n    typeof value.z === 'number'\n  );\n}\n\n/**\n * Create a new 3d vector\n * @param {number|vec3|vec2} [x] The x component of the vector, or a vector to copy\n * @param {number} [y] The y component of the vector, or the z component if x is a vec2\n * @param {number} [z] The z component of the vector\n * @return {vec3} A new 3d vector\n * @example <caption>various ways to initialise a vector</caption>\n * let a = vec3(3, 2, 1);       // (3, 2, 1)\n * let b = vec3(4, 5);          // (4, 5, 0)\n * let c = vec3(6);             // (6, 6, 6)\n * let d = vec3(a);             // (3, 2, 1)\n * let e = vec3();              // (0, 0, 0)\n * let f = vec3(vec2(1, 2), 3); // (1, 2, 3)\n * let g = vec3(vec2(4, 5));    // (4, 5, 0)\n */\nconst vec3 = (x, y, z) => {\n  if (!x && !y && !z) {\n    return { x: 0, y: 0, z: 0 };\n  }\n  if (_vec_is_vec3(x)) {\n    return { x: x.x || 0, y: x.y || 0, z: x.z || 0 };\n  }\n  if (_vec_is_vec2(x)) {\n    return { x: x.x || 0, y: x.y || 0, z: y || 0 };\n  }\n  return { x: x, y: y ?? x, z: z ?? x };\n};\n\n/**\n * Get the components of a vector as an array\n * @param {vec3} a The vector to get components from\n * @return {Array<number>} The vector components as an array\n */\nvec3.components = a => [a.x, a.y, a.z];\n\n/**\n * Create a vector from an array of components\n * @param {Array<number>} components The components of the vector\n * @return {vec3} A new vector\n */\nvec3.fromComponents = components => vec3(...components.slice(0, 3));\n\n/**\n * Return a unit vector (1, 0, 0)\n * @return {vec3} A unit vector (1, 0, 0)\n */\nvec3.ux = () => vec3(1, 0, 0);\n\n/**\n * Return a unit vector (0, 1, 0)\n * @return {vec3} A unit vector (0, 1, 0)\n */\nvec3.uy = () => vec3(0, 1, 0);\n\n/**\n * Return a unit vector (0, 0, 1)\n * @return {vec3} A unit vector (0, 0, 1)\n */\nvec3.uz = () => vec3(0, 0, 1);\n\n/**\n * Add vectors\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a + b\n */\nvec3.add = (a, b) => ({ x: a.x + (b.x ?? b), y: a.y + (b.y ?? b), z: a.z + (b.z ?? b) });\n\n/**\n * Add multiple vectors\n * @param  {...any} v Vectors to add\n * @returns {vec3} The sum of the vectors\n */\nvec3.addm = (...v) => v.reduce((a, b) => vec3.add(a, b), vec3());\n\n/**\n * Subtract vectors\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a - b\n */\nvec3.sub = (a, b) => ({ x: a.x - (b.x ?? b), y: a.y - (b.y ?? b), z: a.z - (b.z ?? b) });\n\n/**\n * Subtract multiple vectors\n * @param  {...any} v Vectors to subtract\n * @returns {vec3} The result of subtracting the vectors\n */\nvec3.subm = (...v) => v.reduce((a, b) => vec3.sub(a, b));\n\n/**\n * Scale a vector\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a * b\n */\nvec3.mul = (a, b) => ({ x: a.x * (b.x ?? b), y: a.y * (b.y ?? b), z: a.z * (b.z ?? b) });\n\n/**\n * Scale a vector by a scalar, alias for vec3.mul\n * @param {vec3} a Vector a\n * @param {number} b Scalar b\n * @return {vec3} a * b\n */\nvec3.scale = (a, b) => vec3.mul(a, b);\n\n/**\n * Divide a vector\n * @param {vec3} a Vector a\n * @param {vec3|number} b Vector or scalar b\n * @return {vec3} a / b\n */\nvec3.div = (a, b) => ({ x: a.x / (b.x ?? b), y: a.y / (b.y ?? b), z: a.z / (b.z ?? b) });\n\n/**\n * Get the length of a vector\n * @param {vec3} a Vector a\n * @return {number} |a|\n */\nvec3.len = a => Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);\n\n/**\n * Get the length of a vector using taxicab geometry\n * @param {vec3} a Vector a\n * @return {number} |a|\n */\nvec3.manhattan = a => Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);\n\n/**\n * Normalise a vector\n * @param {vec3} a The vector to normalise\n * @return {vec3} ^a\n */\nvec3.nor = a => {\n  let len = vec3.len(a);\n  return len ? { x: a.x / len, y: a.y / len, z: a.z / len } : vec3();\n};\n\n/**\n * Get a dot product of vectors\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {number} a \u2219 b\n */\nvec3.dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;\n\n/**\n * Rotate a vector using a rotation matrix\n * @param {vec3} a The vector to rotate\n * @param {mat} m The rotation matrix\n * @return {vec3} A rotated vector\n */\nvec3.rot = (a, m) => vec3(\n  vec3.dot(vec3.fromComponents(mat.row(m, 1)), a),\n  vec3.dot(vec3.fromComponents(mat.row(m, 2)), a),\n  vec3.dot(vec3.fromComponents(mat.row(m, 3)), a)\n);\n\n/**\n * Rotate a vector by r radians around the x axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.rotx = (a, r) => vec3(\n  a.x,\n  a.y * Math.cos(r) - a.z * Math.sin(r),\n  a.y * Math.sin(r) + a.z * Math.cos(r)\n);\n\n/**\n * Rotate a vector by r radians around the y axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.roty = (a, r) => vec3(\n  a.x * Math.cos(r) + a.z * Math.sin(r),\n  a.y,\n  -a.x * Math.sin(r) + a.z * Math.cos(r)\n);\n\n/**\n * Rotate a vector by r radians around the z axis\n * @param {vec3} a The vector to rotate\n * @param {number} r The angle to rotate by, measured in radians\n * @return {vec3} A rotated vector\n */\nvec3.rotz = (a, r) => vec3(\n  a.x * Math.cos(r) - a.y * Math.sin(r),\n  a.x * Math.sin(r) + a.y * Math.cos(r),\n  a.z\n);\n\n/**\n * Rotate a vector using a quaternion\n * @param {vec3} a The vector to rotate\n * @param {Array<number>} q The quaternion to rotate by\n * @return {vec3} A rotated vector\n */\nvec3.rotq = (v, q) => {\n  if (q.length !== 4) {\n    return vec3();\n  }\n\n  const d = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);\n  if (d === 0) {\n    return vec3();\n  }\n\n  const uq = [q[0] / d, q[1] / d, q[2] / d, q[3] / d];\n  const u = vec3(...uq.slice(0, 3));\n  const s = uq[3];\n  return vec3.add(\n    vec3.add(\n      vec3.mul(u, 2 * vec3.dot(u, v)),\n      vec3.mul(v, s * s - vec3.dot(u, u))\n    ),\n    vec3.mul(vec3.cross(u, v), 2 * s)\n  );\n};\n\n/**\n * Rotate a vector using Euler angles\n * @param {vec3} a The vector to rotate\n * @param {vec3} e The Euler angles to rotate by\n * @return {vec3} A rotated vector\n */\nvec3.rota = (a, e) => vec3.rotz(vec3.roty(vec3.rotx(a, e.x), e.y), e.z);\n\n/**\n * Get the cross product of vectors\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {vec3} a \xD7 b\n */\nvec3.cross = (a, b) => vec3(\n  a.y * b.z - a.z * b.y,\n  a.z * b.x - a.x * b.z,\n  a.x * b.y - a.y * b.x\n);\n\n/**\n * Check if two vectors are equal\n * @param {vec3} a Vector a\n * @param {vec3} b Vector b\n * @return {boolean} True if vectors a and b are equal, false otherwise\n */\nvec3.eq = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;\n\n/**\n * Get the angle of a vector from the x axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.radx = a => Math.atan2(a.z, a.y);\n\n/**\n * Get the angle of a vector from the y axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.rady = a => Math.atan2(a.x, a.y);\n\n/**\n * Get the angle of a vector from the z axis\n * @param {vec3} a Vector a\n * @return {number} The angle of vector a in radians\n */\nvec3.radz = a => Math.atan2(a.y, a.z);\n\n/**\n * Copy a vector\n * @param {vec3} a The vector to copy\n * @return {vec3} A copy of vector a\n */\nvec3.cpy = a => vec3(a);\n\n/**\n * A function to call on each component of a 3d vector\n * @callback vec3MapCallback\n * @param {number} value The component value\n * @param {'x' | 'y' | 'z'} label The component label (x, y or z)\n * @return {number} The mapped component\n */\n\n/**\n * Call a function on each component of a vector and build a new vector from the results\n * @param {vec3} a Vector a\n * @param {vec3MapCallback} f The function to call on each component of the vector\n * @return {vec3} Vector a mapped through f\n */\nvec3.map = (a, f) => ({ x: f(a.x, 'x'), y: f(a.y, 'y'), z: f(a.z, 'z') });\n\n/**\n * Convert a vector into a string\n * @param {vec3} a The vector to convert\n * @param {string} [s=', '] The separator string\n * @return {string} A string representation of the vector\n */\nvec3.str = (a, s = ', ') => `${a.x}${s}${a.y}${s}${a.z}`;\n\n/**\n * Swizzle a vector with a string of component labels\n *\n * The string can contain:\n * - `x`, `y` or `z`\n * - `u`, `v` or `w` (aliases for `x`, `y` and `z`, respectively)\n * - `r`, `g` or `b` (aliases for `x`, `y` and `z`, respectively)\n * - `X`, `Y`, `Z`, `U`, `V`, `W`, `R`, `G`, `B` (negated versions of the above)\n * - `0` or `1` (these will be passed through unchanged)\n * - `.` to return the component that would normally be at this position (or 0)\n *\n * Any other characters will default to 0\n * @param {vec3} a The vector to swizzle\n * @param {string} [s='...'] The swizzle string\n * @return {Array<number>} The swizzled components\n * @example <caption>swizzling a vector</caption>\n * let a = vec3(3, -2, 1);\n * vec3.swiz(a, 'x');     // [3]\n * vec3.swiz(a, 'zyx');   // [1, -2, 3]\n * vec3.swiz(a, 'xYZ');   // [3, 2, -1]\n * vec3.swiz(a, 'Zzx');   // [-1, 1, 3]\n * vec3.swiz(a, 'x.x');   // [3, -2, 3]\n * vec3.swiz(a, 'y01zx'); // [-2, 0, 1, 1, 3]\n */\nvec3.swiz = (a, s = '...') => {\n  const result = [];\n  s.split('').forEach((c, i) => {\n    switch (c) {\n      case 'x': case 'u': case 'r': result.push(a.x); break;\n      case 'y': case 'v': case 'g': result.push(a.y); break;\n      case 'z': case 'w': case 'b': result.push(a.z); break;\n      case 'X': case 'U': case 'R': result.push(-a.x); break;\n      case 'Y': case 'V': case 'G': result.push(-a.y); break;\n      case 'Z': case 'W': case 'B': result.push(-a.z); break;\n      case '0': result.push(0); break;\n      case '1': result.push(1); break;\n      case '.': result.push([a.x, a.y, a.z][i] ?? 0); break;\n      default: result.push(0);\n    }\n  });\n  return result;\n};\n\n/**\n * Polar coordinates for a 3d vector\n * @typedef {Object} polarCoordinates3d\n * @property {number} r The magnitude (radius) of the vector\n * @property {number} theta The tilt angle of the vector\n * @property {number} phi The pan angle of the vector\n */\n\n/**\n * Convert a vector into polar coordinates\n * @param {vec3} a The vector to convert\n * @return {polarCoordinates3d} The magnitude, tilt and pan of the vector\n */\nvec3.polar = a => {\n  let r = vec3.len(a),\n    theta = Math.acos(a.y / r),\n    phi = Math.atan2(a.z, a.x);\n  return { r, theta, phi };\n};\n\n/**\n * Convert polar coordinates into a vector\n * @param {number} r The magnitude (radius) of the vector\n * @param {number} theta The tilt of the vector\n * @param {number} phi The pan of the vector\n * @return {vec3} A vector with the given angle and magnitude\n */\nvec3.fromPolar = (r, theta, phi) => {\n  const sinTheta = Math.sin(theta);\n  return vec3(\n    r * sinTheta * Math.cos(phi),\n    r * Math.cos(theta),\n    r * sinTheta * Math.sin(phi)\n  );\n};\n\n/**\n * A matrix\n * @typedef {Object} mat\n * @property {number} m The number of rows in the matrix\n * @property {number} n The number of columns in the matrix\n * @property {Array<number>} entries The matrix values\n */\n\n/**\n * Check if a value is a matrix\n * @param {*} value The value to check\n * @returns {boolean} True if value is a matrix, false otherwise\n */\nfunction isMat(value) {\n  return (\n    value &&\n    typeof value === 'object' &&\n    'm' in value &&\n    typeof value.m === 'number' &&\n    'n' in value &&\n    typeof value.n === 'number' &&\n    'entries' in value &&\n    Array.isArray(value.entries)\n  );\n}\n\n/**\n * Create a new matrix\n * @param {number} [m=4] The number of rows\n * @param {number} [n=4] The number of columns\n * @param {Array<number>} [entries=[]] Matrix values in reading order\n * @return {mat} A new matrix\n */\nconst mat = (m = 4, n = 4, entries = []) => ({\n  m, n,\n  entries: entries.concat(Array(m * n).fill(0)).slice(0, m * n)\n});\n\n/**\n * Get an identity matrix of size n\n * @param {number} n The size of the matrix\n * @return {mat} An identity matrix\n */\nmat.identity = n => mat(n, n, Array(n * n).fill(0).map((v, i) => +(Math.floor(i / n) === i % n)));\n\n/**\n * Get an entry from a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @return {number} The value at position (i, j) in matrix a\n */\nmat.get = (a, i, j) => a.entries[(j - 1) + (i - 1) * a.n];\n\n/**\n * Set an entry of a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @param {number} v The value to set in matrix a\n */\nmat.set = (a, i, j, v) => { a.entries[(j - 1) + (i - 1) * a.n] = v; };\n\n/**\n * Get a row from a matrix as an array\n * @param {mat} a Matrix a\n * @param {number} m The row offset\n * @return {Array<number>} Row m from matrix a\n */\nmat.row = (a, m) => {\n  const s = (m - 1) * a.n;\n  return a.entries.slice(s, s + a.n);\n};\n\n/**\n * Get a column from a matrix as an array\n * @param {mat} a Matrix a\n * @param {number} n The column offset\n * @return {Array<number>} Column n from matrix a\n */\nmat.col = (a, n) => _vec_times(i => mat.get(a, (i + 1), n), a.m);\n\n/**\n * Add matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat} a + b\n */\nmat.add = (a, b) => a.m === b.m && a.n === b.n && mat.map(a, (v, i) => v + b.entries[i]);\n\n/**\n * Subtract matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat} a - b\n */\nmat.sub = (a, b) => a.m === b.m && a.n === b.n && mat.map(a, (v, i) => v - b.entries[i]);\n\n/**\n * Multiply matrices\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {mat|false} ab or false if the matrices cannot be multiplied\n */\nmat.mul = (a, b) => {\n  if (a.n !== b.m) { return false; }\n  const result = mat(a.m, b.n);\n  for (let i = 1; i <= a.m; i++) {\n    for (let j = 1; j <= b.n; j++) {\n      mat.set(result, i, j, _vec_dot(mat.row(a, i), mat.col(b, j)));\n    }\n  }\n  return result;\n};\n\n/**\n * Multiply a matrix by a vector\n * @param {mat} a Matrix a\n * @param {vec2|vec3|number[]} b Vector b\n * @return {vec2|vec3|number[]|false} ab or false if the matrix and vector cannot be multiplied\n */\nmat.mulv = (a, b) => {\n  let n, bb, rt;\n  if (_vec_is_vec3(b)) {\n    bb = vec3.components(b);\n    n = 3;\n    rt = vec3.fromComponents;\n  } else if (_vec_is_vec2(b)) {\n    bb = vec2.components(b);\n    n = 2;\n    rt = vec2.fromComponents;\n  } else {\n    bb = b;\n    n = b.length ?? 0;\n    rt = v => v;\n  }\n  if (a.n !== n) { return false; }\n  const result = [];\n  for (let i = 1; i <= a.m; i++) {\n    result.push(_vec_dot(mat.row(a, i), bb));\n  }\n  return rt(result);\n}\n\n/**\n * Scale a matrix\n * @param {mat} a Matrix a\n * @param {number} b Scalar b\n * @return {mat} a * b\n */\nmat.scale = (a, b) => mat.map(a, v => v * b);\n\n/**\n * Transpose a matrix\n * @param {mat} a The matrix to transpose\n * @return {mat} A transposed matrix\n */\nmat.trans = a => mat(a.n, a.m, _vec_times(i => mat.col(a, (i + 1)), a.n).flat());\n\n/**\n * Get the minor of a matrix\n * @param {mat} a Matrix a\n * @param {number} i The row offset\n * @param {number} j The column offset\n * @return {mat|false} The (i, j) minor of matrix a or false if the matrix is not square\n */\nmat.minor = (a, i, j) => {\n  if (a.m !== a.n) { return false; }\n  const entries = [];\n  for (let ii = 1; ii <= a.m; ii++) {\n    if (ii === i) { continue; }\n    for (let jj = 1; jj <= a.n; jj++) {\n      if (jj === j) { continue; }\n      entries.push(mat.get(a, ii, jj));\n    }\n  }\n  return mat(a.m - 1, a.n - 1, entries);\n};\n\n/**\n * Get the determinant of a matrix\n * @param {mat} a Matrix a\n * @return {number|false} |a| or false if the matrix is not square\n */\nmat.det = a => {\n  if (a.m !== a.n) { return false; }\n  if (a.m === 1) {\n    return a.entries[0];\n  }\n  if (a.m === 2) {\n    return a.entries[0] * a.entries[3] - a.entries[1] * a.entries[2];\n  }\n  let total = 0, sign = 1;\n  for (let j = 1; j <= a.n; j++) {\n    total += sign * a.entries[j - 1] * mat.det(mat.minor(a, 1, j));\n    sign *= -1;\n  }\n  return total;\n};\n\n/**\n * Normalise a matrix\n * @param {mat} a The matrix to normalise\n * @return {mat|false} ^a or false if the matrix is not square\n */\nmat.nor = a => {\n  if (a.m !== a.n) { return false; }\n  const d = mat.det(a);\n  return mat.map(a, i => i * d);\n};\n\n/**\n * Get the adjugate of a matrix\n * @param {mat} a The matrix from which to get the adjugate\n * @return {mat} The adjugate of a\n */\nmat.adj = a => {\n  const minors = mat(a.m, a.n);\n  for (let i = 1; i <= a.m; i++) {\n    for (let j = 1; j <= a.n; j++) {\n      mat.set(minors, i, j, mat.det(mat.minor(a, i, j)));\n    }\n  }\n  const cofactors = mat.map(minors, (v, i) => v * (i % 2 ? -1 : 1));\n  return mat.trans(cofactors);\n};\n\n/**\n * Get the inverse of a matrix\n * @param {mat} a The matrix to invert\n * @return {mat|false} a^-1 or false if the matrix has no inverse\n */\nmat.inv = a => {\n  if (a.m !== a.n) { return false; }\n  const d = mat.det(a);\n  if (d === 0) { return false; }\n  return mat.scale(mat.adj(a), 1 / d);\n};\n\n/**\n * Check if two matrices are equal\n * @param {mat} a Matrix a\n * @param {mat} b Matrix b\n * @return {boolean} True if matrices a and b are identical, false otherwise\n */\nmat.eq = (a, b) => a.m === b.m && a.n === b.n && mat.str(a) === mat.str(b);\n\n/**\n * Copy a matrix\n * @param {mat} a The matrix to copy\n * @return {mat} A copy of matrix a\n */\nmat.cpy = a => mat(a.m, a.n, [...a.entries]);\n\n/**\n * A function to call on each entry of a matrix\n * @callback matrixMapCallback\n * @param {number} value The entry value\n * @param {number} index The entry index\n * @param {Array<number>} entries The array of matrix entries\n * @return {number} The mapped entry\n */\n\n/**\n * Call a function on each entry of a matrix and build a new matrix from the results\n * @param {mat} a Matrix a\n * @param {matrixMapCallback} f The function to call on each entry of the matrix\n * @return {mat} Matrix a mapped through f\n */\nmat.map = (a, f) => mat(a.m, a.n, a.entries.map(f));\n\n/**\n * Convert a matrix into a string\n * @param {mat} a The matrix to convert\n * @param {string} [ms=', '] The separator string for columns\n * @param {string} [ns='\\n'] The separator string for rows\n * @return {string} A string representation of the matrix\n */\nmat.str = (a, ms = ', ', ns = '\\n') => _vec_chunk(a.entries, a.n).map(r => r.join(ms)).join(ns);\n\nif (true) {\n  module.exports = { vec2, vec3, mat, isVec2, isVec3, isMat };\n}\n\n\n//# sourceURL=webpack://@basementuniverse/view-port/./node_modules/@basementuniverse/vec/vec.js?\n}");
+              },
+              /***/
+              "./index.ts"(__unused_webpack_module, exports, __webpack_require__) {
+                "use strict";
+                eval("{\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nexports.ViewPort = void 0;\nconst vec_1 = __webpack_require__(/*! @basementuniverse/vec */ \"./node_modules/@basementuniverse/vec/vec.js\");\nfunction hashVec(v) {\n    return vec_1.vec2.str(v);\n}\nfunction drawLine(context, start, end, colour, lineWidth) {\n    context.save();\n    context.lineWidth = lineWidth;\n    context.strokeStyle = colour;\n    context.beginPath();\n    context.moveTo(start.x, start.y);\n    context.lineTo(end.x, end.y);\n    context.stroke();\n    context.restore();\n}\nfunction drawCross(context, position, colour, lineWidth, size) {\n    context.save();\n    context.lineWidth = lineWidth;\n    const halfSize = Math.ceil(size / 2);\n    context.strokeStyle = colour;\n    context.beginPath();\n    context.moveTo(position.x - halfSize, position.y - halfSize);\n    context.lineTo(position.x + halfSize, position.y + halfSize);\n    context.moveTo(position.x - halfSize, position.y + halfSize);\n    context.lineTo(position.x + halfSize, position.y - halfSize);\n    context.stroke();\n    context.restore();\n}\nfunction pointInRectangle(point, topLeft, bottomRight) {\n    return (point.x >= topLeft.x &&\n        point.y >= topLeft.y &&\n        point.x < bottomRight.x &&\n        point.y < bottomRight.y);\n}\nclass ViewPort {\n    constructor(options) {\n        const actualOptions = Object.assign({}, ViewPort.DEFAULT_OPTIONS, options !== null && options !== void 0 ? options : {});\n        if (!actualOptions.debug || actualOptions.debug === true) {\n            actualOptions.debug = {\n                showOrigin: !!actualOptions.debug,\n                showChunkBorders: !!actualOptions.debug,\n                showChunkLabels: !!actualOptions.debug,\n            };\n        }\n        this.options = actualOptions;\n        this.spatialHash = new SpatialHash(this.options.spatialHashMaxElements, this.options.spatialHashMaxElementsToRemove);\n    }\n    get countChunks() {\n        return this.spatialHash.count;\n    }\n    update(dt, screen, camera, ...args) {\n        const bounds = camera.bounds;\n        const topLeft = vec_1.vec2.sub(vec_1.vec2.map(vec_1.vec2.div((0, vec_1.vec2)(bounds.left, bounds.top), this.options.gridSize), Math.floor), this.options.border);\n        const bottomRight = vec_1.vec2.add(vec_1.vec2.map(vec_1.vec2.div((0, vec_1.vec2)(bounds.right, bounds.bottom), this.options.gridSize), Math.ceil), this.options.border);\n        const size = vec_1.vec2.sub(bottomRight, topLeft);\n        const perimeter = 2 * size.x + 2 * size.y;\n        const visibleGridCells = size.x * size.y + perimeter + this.options.bufferAmount;\n        if (this.spatialHash.maxElements < visibleGridCells) {\n            this.spatialHash.maxElements = visibleGridCells;\n        }\n        this.addChunks(topLeft, bottomRight);\n        this.spatialHash.fetch(topLeft, bottomRight).forEach(chunk => {\n            var _a;\n            (_a = chunk.update) === null || _a === void 0 ? void 0 : _a.call(chunk, dt, screen, camera, ...args);\n        });\n    }\n    addChunks(topLeft, bottomRight) {\n        let i = 0;\n        for (let x = topLeft.x; x < bottomRight.x; x++) {\n            for (let y = topLeft.y; y < bottomRight.y; y++) {\n                const v = (0, vec_1.vec2)(x, y);\n                if (!this.spatialHash.has(v)) {\n                    this.spatialHash.add(v, this.options.generator(v));\n                    if (i++ > this.options.maxElementsToGenerate) {\n                        return;\n                    }\n                }\n            }\n        }\n    }\n    getVisibleChunks(camera) {\n        const bounds = camera.bounds;\n        const topLeft = vec_1.vec2.sub(vec_1.vec2.map(vec_1.vec2.div((0, vec_1.vec2)(bounds.left, bounds.top), this.options.gridSize), Math.floor), this.options.border);\n        const bottomRight = vec_1.vec2.add(vec_1.vec2.map(vec_1.vec2.div((0, vec_1.vec2)(bounds.right, bounds.bottom), this.options.gridSize), Math.ceil), this.options.border);\n        return this.spatialHash.fetch(topLeft, bottomRight);\n    }\n    draw(context, screen, camera, ...args) {\n        const bounds = camera.bounds;\n        const topLeft = vec_1.vec2.sub(vec_1.vec2.map(vec_1.vec2.div((0, vec_1.vec2)(bounds.left, bounds.top), this.options.gridSize), Math.floor), this.options.border);\n        const bottomRight = vec_1.vec2.add(vec_1.vec2.map(vec_1.vec2.div((0, vec_1.vec2)(bounds.right, bounds.bottom), this.options.gridSize), Math.ceil), this.options.border);\n        this.spatialHash.fetch(topLeft, bottomRight).forEach(chunk => {\n            var _a;\n            (_a = chunk.draw) === null || _a === void 0 ? void 0 : _a.call(chunk, context, screen, camera, ...args);\n        });\n        // Render debug helpers\n        if (this.options.debug.showChunkBorders) {\n            for (let y = topLeft.y; y < bottomRight.y; y++) {\n                drawLine(context, (0, vec_1.vec2)(topLeft.x * this.options.gridSize.x, y * this.options.gridSize.y), (0, vec_1.vec2)(bottomRight.x * this.options.gridSize.x, y * this.options.gridSize.y), ViewPort.DEBUG_CHUNK_BORDER_COLOUR, ViewPort.DEBUG_CHUNK_BORDER_LINE_WIDTH);\n            }\n            for (let x = topLeft.x; x < bottomRight.x; x++) {\n                drawLine(context, (0, vec_1.vec2)(x * this.options.gridSize.x, topLeft.y * this.options.gridSize.y), (0, vec_1.vec2)(x * this.options.gridSize.x, bottomRight.y * this.options.gridSize.y), ViewPort.DEBUG_CHUNK_BORDER_COLOUR, ViewPort.DEBUG_CHUNK_BORDER_LINE_WIDTH);\n            }\n        }\n        if (this.options.debug.showChunkLabels) {\n            context.save();\n            context.fillStyle = ViewPort.DEBUG_CHUNK_LABEL_COLOUR;\n            context.font = ViewPort.DEBUG_CHUNK_LABEL_FONT;\n            context.textBaseline = 'middle';\n            context.textAlign = 'center';\n            for (let y = topLeft.y; y < bottomRight.y; y++) {\n                for (let x = topLeft.x; x < bottomRight.x; x++) {\n                    context.fillText(`${x}, ${y}`, x * this.options.gridSize.x + this.options.gridSize.x / 2, y * this.options.gridSize.y + this.options.gridSize.y / 2);\n                }\n            }\n            context.restore();\n        }\n        if (this.options.debug.showOrigin &&\n            pointInRectangle((0, vec_1.vec2)(0, 0), topLeft, bottomRight)) {\n            drawCross(context, (0, vec_1.vec2)(0, 0), ViewPort.DEBUG_ORIGIN_COLOUR, ViewPort.DEBUG_ORIGIN_LINE_WIDTH, ViewPort.DEBUG_ORIGIN_SIZE);\n        }\n    }\n}\nexports.ViewPort = ViewPort;\nViewPort.DEFAULT_OPTIONS = {\n    gridSize: (0, vec_1.vec2)(100, 100),\n    generator: () => ({}),\n    border: 1,\n    bufferAmount: 100,\n    maxElementsToGenerate: 10,\n    spatialHashMaxElements: 1000,\n    spatialHashMaxElementsToRemove: 100,\n};\nViewPort.DEBUG_ORIGIN_COLOUR = 'cyan';\nViewPort.DEBUG_ORIGIN_LINE_WIDTH = 2;\nViewPort.DEBUG_ORIGIN_SIZE = 10;\nViewPort.DEBUG_CHUNK_BORDER_COLOUR = 'yellow';\nViewPort.DEBUG_CHUNK_BORDER_LINE_WIDTH = 2;\nViewPort.DEBUG_CHUNK_LABEL_COLOUR = 'white';\nViewPort.DEBUG_CHUNK_LABEL_FONT = '12px monospace';\nclass SpatialHash {\n    constructor(maxElements, maxElementsToRemove) {\n        this.maxElements = maxElements;\n        this.maxElementsToRemove = maxElementsToRemove;\n        this.elements = [];\n        this.grid = new Map();\n    }\n    get count() {\n        return this.elements.length;\n    }\n    add(v, element) {\n        this.elements.push([v, element]);\n        this.grid.set(hashVec(v), element);\n        let i = 0;\n        while (this.elements.length > this.maxElements &&\n            i++ < this.maxElementsToRemove) {\n            const [oldV] = this.elements.shift();\n            this.grid.delete(hashVec(oldV));\n        }\n    }\n    remove(v) {\n        this.elements = this.elements.filter(([v2]) => !vec_1.vec2.eq(v, v2));\n        this.grid.delete(hashVec(v));\n    }\n    has(v) {\n        return this.grid.has(hashVec(v));\n    }\n    get(v) {\n        return this.grid.get(hashVec(v));\n    }\n    fetch(tl, br) {\n        if (tl === undefined && br === undefined) {\n            return this.elements.map(([_, element]) => element);\n        }\n        return this.elements\n            .filter(([v]) => {\n            if (tl && (v.x < tl.x || v.y < tl.y)) {\n                return false;\n            }\n            if (br && (v.x >= br.x || v.y >= br.y)) {\n                return false;\n            }\n            return true;\n        })\n            .map(([_, element]) => element);\n    }\n}\n\n\n//# sourceURL=webpack://@basementuniverse/view-port/./index.ts?\n}");
+              }
+              /******/
+            };
+            var __webpack_module_cache__ = {};
+            function __webpack_require__(moduleId) {
+              var cachedModule = __webpack_module_cache__[moduleId];
+              if (cachedModule !== void 0) {
+                return cachedModule.exports;
+              }
+              var module2 = __webpack_module_cache__[moduleId] = {
+                /******/
+                // no module.id needed
+                /******/
+                // no module.loaded needed
+                /******/
+                exports: {}
+                /******/
+              };
+              if (!(moduleId in __webpack_modules__)) {
+                delete __webpack_module_cache__[moduleId];
+                var e = new Error("Cannot find module '" + moduleId + "'");
+                e.code = "MODULE_NOT_FOUND";
+                throw e;
+              }
+              __webpack_modules__[moduleId](module2, module2.exports, __webpack_require__);
+              return module2.exports;
+            }
+            var __webpack_exports__ = __webpack_require__("./index.ts");
+            return __webpack_exports__;
+          })()
+        );
+      });
+    }
+  });
+
   // node_modules/@basementuniverse/utils/utils.js
   var require_utils = __commonJS({
     "node_modules/@basementuniverse/utils/utils.js"(exports2, module2) {
@@ -2573,12 +3122,15 @@ InputManager.DEFAULT_OPTIONS = {
   // src/GraphBuilder.ts
   var import_animation = __toESM(require_build());
   var import_camera = __toESM(require_build2());
-  var import_frame_timer = __toESM(require_build3());
-  var import_input_manager = __toESM(require_build4());
+  var import_debug = __toESM(require_build3());
+  var import_frame_timer = __toESM(require_build4());
+  var import_input_manager = __toESM(require_build5());
   var import_vec9 = __toESM(require_vec());
+  var import_view_port = __toESM(require_build6());
 
   // src/constants.ts
   var import_vec = __toESM(require_vec());
+  var DEBUG = true;
   var FPS_MIN = 30;
   var GRID_SIZE = 32;
   var NODE_MIN_SIZE = 50;
@@ -3258,10 +3810,16 @@ InputManager.DEFAULT_OPTIONS = {
   }
 
   // src/GraphBuilder.ts
+  var GRID_CHUNK_CELLS = 16;
+  var GRID_DOT_SIZE = 8;
+  var GRID_CHUNK_PADDING = GRID_DOT_SIZE;
   var GraphBuilder = class _GraphBuilder {
     constructor(canvas, options = {}) {
       this.frameHandle = 0;
       this.running = false;
+      this.gridViewPort = null;
+      this.gridRenderRevision = 0;
+      this.gridRenderConfig = null;
       this.graph = {
         nodes: [],
         edges: []
@@ -3383,6 +3941,7 @@ InputManager.DEFAULT_OPTIONS = {
         ...this.options.camera
       });
       this.frameTimer = new import_frame_timer.default({ minFPS: FPS_MIN });
+      import_debug.default.initialise();
       if (!_GraphBuilder.inputInitialised) {
         import_input_manager.default.initialise({
           element: this.canvas,
@@ -3428,6 +3987,7 @@ InputManager.DEFAULT_OPTIONS = {
     dispose() {
       this.stop();
       this.clearAllEffects();
+      this.resetGridViewPort();
       this.graph.nodes = [];
       this.graph.edges = [];
       this.nodeState.clear();
@@ -3471,7 +4031,12 @@ InputManager.DEFAULT_OPTIONS = {
       this.options.snapToGrid = enabled;
     }
     setGridSize(size) {
-      this.options.gridSize = Math.max(1, size);
+      const next = Math.max(1, size);
+      if (this.options.gridSize === next) {
+        return;
+      }
+      this.options.gridSize = next;
+      this.resetGridViewPort();
     }
     getGraph() {
       return this.serialize();
@@ -3543,15 +4108,15 @@ InputManager.DEFAULT_OPTIONS = {
         graph: this.serialize()
       });
     }
-    loadFromDocument(document) {
-      if (document.type !== "graph-document") {
+    loadFromDocument(document2) {
+      if (document2.type !== "graph-document") {
         throw new Error("Invalid graph document type");
       }
-      this.load(document.graph);
-      if (document.layout) {
-        this.camera.positionImmediate = (0, import_vec9.vec2)(document.layout.cameraPosition);
-        this.camera.scale = document.layout.cameraScale;
-        this.selectNode(document.layout.selectedNodeId);
+      this.load(document2.graph);
+      if (document2.layout) {
+        this.camera.positionImmediate = (0, import_vec9.vec2)(document2.layout.cameraPosition);
+        this.camera.scale = document2.layout.cameraScale;
+        this.selectNode(document2.layout.selectedNodeId);
       }
     }
     loadFromDomain(domain, options = {}) {
@@ -3712,8 +4277,21 @@ InputManager.DEFAULT_OPTIONS = {
       if (!normalized) {
         return false;
       }
-      if (options?.theme) {
-        normalized.theme = options.theme;
+      const fromNodeAndPort = this.resolveNodeAndPort(normalized.a);
+      const toNodeAndPort = this.resolveNodeAndPort(normalized.b);
+      const resolvedTheme = {
+        ...fromNodeAndPort?.port.edgeTheme ?? {},
+        ...fromNodeAndPort && toNodeAndPort ? this.options.resolveEdgeTheme?.({
+          fromNode: fromNodeAndPort.node,
+          fromPort: fromNodeAndPort.port,
+          toNode: toNodeAndPort.node,
+          toPort: toNodeAndPort.port,
+          data
+        }) : void 0,
+        ...options?.theme ?? {}
+      };
+      if (Object.keys(resolvedTheme).length > 0) {
+        normalized.theme = resolvedTheme;
       }
       const edgeCreatingPayload = {
         edge: {
@@ -3884,6 +4462,7 @@ InputManager.DEFAULT_OPTIONS = {
         this.drawEdgePreviewPort();
         this.drawEdgePreview();
       }
+      import_debug.default.draw(this.context);
       this.context.restore();
     }
     update(dt) {
@@ -3909,6 +4488,11 @@ InputManager.DEFAULT_OPTIONS = {
       this.frameTimer.update();
       this.update(this.frameTimer.elapsedTime);
       this.draw();
+      if (DEBUG) {
+        import_debug.default.value("FPS", this.frameTimer.frameRate, {
+          align: "right"
+        });
+      }
       if (this.running) {
         this.frameHandle = window.requestAnimationFrame(this.loop.bind(this));
       }
@@ -4268,28 +4852,11 @@ InputManager.DEFAULT_OPTIONS = {
       if (hovered) {
         const validation = this.validateConnection(start, hovered);
         if (validation.allowed) {
-          const fromNodeAndPort = this.resolveNodeAndPort({
-            nodeId: start.nodeId,
-            portId: start.portId
-          });
-          const toNodeAndPort = this.resolveNodeAndPort({
-            nodeId: hovered.nodeId,
-            portId: hovered.portId
-          });
-          const resolvedTheme = {
-            ...this.creatingEdge.theme,
-            ...fromNodeAndPort && toNodeAndPort ? this.options.resolveEdgeTheme?.({
-              fromNode: fromNodeAndPort.node,
-              fromPort: fromNodeAndPort.port,
-              toNode: toNodeAndPort.node,
-              toPort: toNodeAndPort.port
-            }) : void 0
-          };
           this.createEdge(
             { nodeId: start.nodeId, portId: start.portId },
             { nodeId: hovered.nodeId, portId: hovered.portId },
             void 0,
-            Object.keys(resolvedTheme).length > 0 ? { theme: resolvedTheme } : void 0
+            this.creatingEdge.theme ? { theme: this.creatingEdge.theme } : void 0
           );
         } else {
           this.eventBus.emit("edgeConnectionRejected", {
@@ -4380,29 +4947,132 @@ InputManager.DEFAULT_OPTIONS = {
       }
     }
     drawGrid() {
-      const bounds = this.camera.bounds;
-      let { left: l, top: t, right: r, bottom: b } = bounds;
-      [l, t, r, b] = [l, t, r, b].map(
-        (v) => Math.floor(v / this.options.gridSize) * this.options.gridSize
-      );
       const { theme, callbacks } = this.options;
+      const nextConfig = {
+        gridSize: this.options.gridSize,
+        gridDotLineWidth: theme.gridDotLineWidth,
+        gridDotColor: theme.gridDotColor,
+        drawGridDot: callbacks.drawGridDot
+      };
+      const previousConfig = this.gridRenderConfig;
+      if (previousConfig && previousConfig.gridSize !== nextConfig.gridSize) {
+        this.resetGridViewPort();
+      }
+      if (!previousConfig || previousConfig.gridDotLineWidth !== nextConfig.gridDotLineWidth || previousConfig.gridDotColor !== nextConfig.gridDotColor || previousConfig.drawGridDot !== nextConfig.drawGridDot) {
+        this.gridRenderRevision += 1;
+      }
+      this.gridRenderConfig = nextConfig;
+      this.ensureGridViewPort();
+      if (!this.gridViewPort) {
+        return;
+      }
+      const screen = (0, import_vec9.vec2)(this.canvas.width, this.canvas.height);
       this.context.save();
       this.context.lineWidth = theme.gridDotLineWidth;
       this.context.strokeStyle = theme.gridDotColor;
-      for (let y = t - this.options.gridSize; y < b + this.options.gridSize; y += this.options.gridSize) {
-        for (let x = l - this.options.gridSize; x < r + this.options.gridSize; x += this.options.gridSize) {
-          const position = (0, import_vec9.vec2)(x, y);
-          if (callbacks.drawGridDot) {
-            callbacks.drawGridDot(this.context, {
-              position,
-              gridSize: this.options.gridSize
-            });
-          } else {
-            plus(this.context, position, 8);
-          }
+      this.gridViewPort.update(0, screen, this.camera);
+      this.gridViewPort.draw(this.context, screen, this.camera);
+      this.context.restore();
+    }
+    ensureGridViewPort() {
+      if (this.gridViewPort) {
+        return;
+      }
+      const chunkSize = this.gridChunkWorldSize();
+      this.gridViewPort = new import_view_port.ViewPort({
+        gridSize: (0, import_vec9.vec2)(chunkSize, chunkSize),
+        generator: (cell) => this.createGridChunk(cell, chunkSize),
+        border: 1,
+        bufferAmount: 32,
+        maxElementsToGenerate: 64,
+        spatialHashMaxElements: 2e3,
+        spatialHashMaxElementsToRemove: 200
+      });
+    }
+    resetGridViewPort() {
+      this.gridViewPort = null;
+      this.gridRenderRevision = 0;
+      this.gridRenderConfig = null;
+    }
+    createGridChunk(cell, chunkSize) {
+      const origin = (0, import_vec9.vec2)(cell.x * chunkSize, cell.y * chunkSize);
+      const chunk = {
+        cell: (0, import_vec9.vec2)(cell),
+        origin,
+        canvas: null,
+        renderRevision: -1,
+        draw: (context) => {
+          this.drawGridChunk(context, chunk);
+        }
+      };
+      return chunk;
+    }
+    drawGridChunk(context, chunk) {
+      const drawGridDot = this.options.callbacks.drawGridDot;
+      if (drawGridDot) {
+        this.drawGridChunkDynamic(context, chunk, drawGridDot);
+        return;
+      }
+      this.drawGridChunkCached(context, chunk);
+    }
+    drawGridChunkDynamic(context, chunk, drawGridDot) {
+      const gridSize = this.options.gridSize;
+      for (let y = 0; y < GRID_CHUNK_CELLS; y++) {
+        for (let x = 0; x < GRID_CHUNK_CELLS; x++) {
+          const position = (0, import_vec9.vec2)(
+            chunk.origin.x + x * gridSize,
+            chunk.origin.y + y * gridSize
+          );
+          drawGridDot(context, {
+            position,
+            gridSize
+          });
         }
       }
-      this.context.restore();
+    }
+    drawGridChunkCached(context, chunk) {
+      const chunkCanvasSize = this.gridChunkWorldSize() + GRID_CHUNK_PADDING * 2;
+      if (!chunk.canvas || chunk.canvas.width !== chunkCanvasSize || chunk.canvas.height !== chunkCanvasSize || chunk.renderRevision !== this.gridRenderRevision) {
+        this.renderGridChunkToCanvas(chunk, chunkCanvasSize);
+      }
+      if (!chunk.canvas) {
+        return;
+      }
+      context.drawImage(
+        chunk.canvas,
+        chunk.origin.x - GRID_CHUNK_PADDING,
+        chunk.origin.y - GRID_CHUNK_PADDING
+      );
+    }
+    renderGridChunkToCanvas(chunk, chunkCanvasSize) {
+      const canvas = chunk.canvas ?? document.createElement("canvas");
+      canvas.width = chunkCanvasSize;
+      canvas.height = chunkCanvasSize;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return;
+      }
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.lineWidth = this.options.theme.gridDotLineWidth;
+      context.strokeStyle = this.options.theme.gridDotColor;
+      const gridSize = this.options.gridSize;
+      for (let y = 0; y < GRID_CHUNK_CELLS; y++) {
+        for (let x = 0; x < GRID_CHUNK_CELLS; x++) {
+          plus(
+            context,
+            (0, import_vec9.vec2)(
+              GRID_CHUNK_PADDING + x * gridSize,
+              GRID_CHUNK_PADDING + y * gridSize
+            ),
+            GRID_DOT_SIZE
+          );
+        }
+      }
+      chunk.canvas = canvas;
+      chunk.renderRevision = this.gridRenderRevision;
+    }
+    gridChunkWorldSize() {
+      return this.options.gridSize * GRID_CHUNK_CELLS;
     }
     drawNode(node) {
       const state = this.ensureNodeState(node);

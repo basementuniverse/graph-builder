@@ -11,6 +11,9 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private camera;
     private frameHandle;
     private running;
+    private gridViewPort;
+    private gridRenderRevision;
+    private gridRenderConfig;
     private options;
     private graph;
     private nodeState;
@@ -89,6 +92,14 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private canConnectEndpoints;
     private easeNodes;
     private drawGrid;
+    private ensureGridViewPort;
+    private resetGridViewPort;
+    private createGridChunk;
+    private drawGridChunk;
+    private drawGridChunkDynamic;
+    private drawGridChunkCached;
+    private renderGridChunkToCanvas;
+    private gridChunkWorldSize;
     private drawNode;
     private drawPort;
     private drawEdgePreviewPort;

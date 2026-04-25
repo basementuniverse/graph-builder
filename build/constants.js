@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEFAULT_LAYERED_LAYOUT_OPTIONS = exports.DEFAULT_FORCE_DIRECTED_LAYOUT_OPTIONS = exports.DEFAULT_EFFECTS = exports.DEFAULT_THEME = exports.DEFAULT_CAPABILITIES = exports.GRAPH_SERIALIZATION_VERSION = exports.RESIZE_HANDLE_SIZE = exports.DELETE_BUTTON_SIZE = exports.EDGE_HOVER_THRESHOLD = exports.EDGE_CURVE_SAMPLE_DISTANCE = exports.EDGE_CURVE_ENDPOINT_OFFSET = exports.PORT_CONNECT_MARGIN = exports.PORT_HOVER_MARGIN = exports.DEFAULT_NODE_SIZE = exports.CAMERA_ZOOM_STEP = exports.CAMERA_KEYBOARD_PAN_SPEED = exports.NODE_EASE_AMOUNT = exports.NODE_MAX_SIZE = exports.NODE_MIN_SIZE = exports.GRID_SIZE = exports.FPS_MIN = exports.DEBUG = void 0;
 const vec_1 = require("@basementuniverse/vec");
 const enums_1 = require("./enums");
-exports.DEBUG = false;
+exports.DEBUG = true;
 exports.FPS_MIN = 30;
 exports.GRID_SIZE = 32;
 exports.NODE_MIN_SIZE = 50;

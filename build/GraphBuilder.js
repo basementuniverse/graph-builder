@@ -5,20 +5,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const animation_1 = require("@basementuniverse/animation");
 const camera_1 = __importDefault(require("@basementuniverse/camera"));
+const debug_1 = __importDefault(require("@basementuniverse/debug"));
 const frame_timer_1 = __importDefault(require("@basementuniverse/frame-timer"));
 const input_manager_1 = __importDefault(require("@basementuniverse/input-manager"));
 const vec_1 = require("@basementuniverse/vec");
+const view_port_1 = require("@basementuniverse/view-port");
 const constants_1 = require("./constants");
 const EdgeTool_1 = __importDefault(require("./EdgeTool"));
 const enums_1 = require("./enums");
 const EventBus_1 = __importDefault(require("./events/EventBus"));
 const layout_1 = require("./layout");
 const utils_1 = require("./utils");
+const GRID_CHUNK_CELLS = 16;
+const GRID_DOT_SIZE = 8;
+const GRID_CHUNK_PADDING = GRID_DOT_SIZE;
 class GraphBuilder {
     constructor(canvas, options = {}) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
         this.frameHandle = 0;
         this.running = false;
+        this.gridViewPort = null;
+        this.gridRenderRevision = 0;
+        this.gridRenderConfig = null;
         this.graph = {
             nodes: [],
             edges: [],
@@ -140,6 +148,7 @@ class GraphBuilder {
             ...this.options.camera,
         });
         this.frameTimer = new frame_timer_1.default({ minFPS: constants_1.FPS_MIN });
+        debug_1.default.initialise();
         if (!GraphBuilder.inputInitialised) {
             input_manager_1.default.initialise({
                 element: this.canvas,
@@ -179,6 +188,7 @@ class GraphBuilder {
     dispose() {
         this.stop();
         this.clearAllEffects();
+        this.resetGridViewPort();
         this.graph.nodes = [];
         this.graph.edges = [];
         this.nodeState.clear();
@@ -222,7 +232,12 @@ class GraphBuilder {
         this.options.snapToGrid = enabled;
     }
     setGridSize(size) {
-        this.options.gridSize = Math.max(1, size);
+        const next = Math.max(1, size);
+        if (this.options.gridSize === next) {
+            return;
+        }
+        this.options.gridSize = next;
+        this.resetGridViewPort();
     }
     getGraph() {
         return this.serialize();
@@ -441,6 +456,7 @@ class GraphBuilder {
         return true;
     }
     createEdge(a, b, data, options) {
+        var _a, _b, _c, _d;
         if (!this.options.capabilities.createEdges) {
             return false;
         }
@@ -457,8 +473,23 @@ class GraphBuilder {
         if (!normalized) {
             return false;
         }
-        if (options === null || options === void 0 ? void 0 : options.theme) {
-            normalized.theme = options.theme;
+        const fromNodeAndPort = this.resolveNodeAndPort(normalized.a);
+        const toNodeAndPort = this.resolveNodeAndPort(normalized.b);
+        const resolvedTheme = {
+            ...((_a = fromNodeAndPort === null || fromNodeAndPort === void 0 ? void 0 : fromNodeAndPort.port.edgeTheme) !== null && _a !== void 0 ? _a : {}),
+            ...(fromNodeAndPort && toNodeAndPort
+                ? (_c = (_b = this.options).resolveEdgeTheme) === null || _c === void 0 ? void 0 : _c.call(_b, {
+                    fromNode: fromNodeAndPort.node,
+                    fromPort: fromNodeAndPort.port,
+                    toNode: toNodeAndPort.node,
+                    toPort: toNodeAndPort.port,
+                    data,
+                })
+                : undefined),
+            ...((_d = options === null || options === void 0 ? void 0 : options.theme) !== null && _d !== void 0 ? _d : {}),
+        };
+        if (Object.keys(resolvedTheme).length > 0) {
+            normalized.theme = resolvedTheme;
         }
         const edgeCreatingPayload = {
             edge: {
@@ -619,6 +650,7 @@ class GraphBuilder {
             this.drawEdgePreviewPort();
             this.drawEdgePreview();
         }
+        debug_1.default.draw(this.context);
         this.context.restore();
     }
     update(dt) {
@@ -644,6 +676,11 @@ class GraphBuilder {
         this.frameTimer.update();
         this.update(this.frameTimer.elapsedTime);
         this.draw();
+        if (constants_1.DEBUG) {
+            debug_1.default.value('FPS', this.frameTimer.frameRate, {
+                align: 'right',
+            });
+        }
         if (this.running) {
             this.frameHandle = window.requestAnimationFrame(this.loop.bind(this));
         }
@@ -993,7 +1030,7 @@ class GraphBuilder {
         this.creatingEdge = new EdgeTool_1.default(endpoint, sourcePort === null || sourcePort === void 0 ? void 0 : sourcePort.edgeTheme);
     }
     stopCreatingEdge() {
-        var _a, _b, _c;
+        var _a;
         if (!this.creatingEdge) {
             return;
         }
@@ -1004,34 +1041,15 @@ class GraphBuilder {
         if (hovered) {
             const validation = this.validateConnection(start, hovered);
             if (validation.allowed) {
-                const fromNodeAndPort = this.resolveNodeAndPort({
-                    nodeId: start.nodeId,
-                    portId: start.portId,
-                });
-                const toNodeAndPort = this.resolveNodeAndPort({
-                    nodeId: hovered.nodeId,
-                    portId: hovered.portId,
-                });
-                const resolvedTheme = {
-                    ...this.creatingEdge.theme,
-                    ...(fromNodeAndPort && toNodeAndPort
-                        ? (_b = (_a = this.options).resolveEdgeTheme) === null || _b === void 0 ? void 0 : _b.call(_a, {
-                            fromNode: fromNodeAndPort.node,
-                            fromPort: fromNodeAndPort.port,
-                            toNode: toNodeAndPort.node,
-                            toPort: toNodeAndPort.port,
-                        })
-                        : undefined),
-                };
-                this.createEdge({ nodeId: start.nodeId, portId: start.portId }, { nodeId: hovered.nodeId, portId: hovered.portId }, undefined, Object.keys(resolvedTheme).length > 0
-                    ? { theme: resolvedTheme }
+                this.createEdge({ nodeId: start.nodeId, portId: start.portId }, { nodeId: hovered.nodeId, portId: hovered.portId }, undefined, this.creatingEdge.theme
+                    ? { theme: this.creatingEdge.theme }
                     : undefined);
             }
             else {
                 this.eventBus.emit('edgeConnectionRejected', {
                     from: { nodeId: start.nodeId, portId: start.portId },
                     to: { nodeId: hovered.nodeId, portId: hovered.portId },
-                    reason: (_c = validation.reason) !== null && _c !== void 0 ? _c : 'Connection is not allowed',
+                    reason: (_a = validation.reason) !== null && _a !== void 0 ? _a : 'Connection is not allowed',
                 });
             }
         }
@@ -1104,28 +1122,125 @@ class GraphBuilder {
         }
     }
     drawGrid() {
-        const bounds = this.camera.bounds;
-        let { left: l, top: t, right: r, bottom: b } = bounds;
-        [l, t, r, b] = [l, t, r, b].map(v => Math.floor(v / this.options.gridSize) * this.options.gridSize);
         const { theme, callbacks } = this.options;
+        const nextConfig = {
+            gridSize: this.options.gridSize,
+            gridDotLineWidth: theme.gridDotLineWidth,
+            gridDotColor: theme.gridDotColor,
+            drawGridDot: callbacks.drawGridDot,
+        };
+        const previousConfig = this.gridRenderConfig;
+        if (previousConfig && previousConfig.gridSize !== nextConfig.gridSize) {
+            this.resetGridViewPort();
+        }
+        if (!previousConfig ||
+            previousConfig.gridDotLineWidth !== nextConfig.gridDotLineWidth ||
+            previousConfig.gridDotColor !== nextConfig.gridDotColor ||
+            previousConfig.drawGridDot !== nextConfig.drawGridDot) {
+            this.gridRenderRevision += 1;
+        }
+        this.gridRenderConfig = nextConfig;
+        this.ensureGridViewPort();
+        if (!this.gridViewPort) {
+            return;
+        }
+        const screen = (0, vec_1.vec2)(this.canvas.width, this.canvas.height);
         this.context.save();
         this.context.lineWidth = theme.gridDotLineWidth;
         this.context.strokeStyle = theme.gridDotColor;
-        for (let y = t - this.options.gridSize; y < b + this.options.gridSize; y += this.options.gridSize) {
-            for (let x = l - this.options.gridSize; x < r + this.options.gridSize; x += this.options.gridSize) {
-                const position = (0, vec_1.vec2)(x, y);
-                if (callbacks.drawGridDot) {
-                    callbacks.drawGridDot(this.context, {
-                        position,
-                        gridSize: this.options.gridSize,
-                    });
-                }
-                else {
-                    (0, utils_1.plus)(this.context, position, 8);
-                }
+        this.gridViewPort.update(0, screen, this.camera);
+        this.gridViewPort.draw(this.context, screen, this.camera);
+        this.context.restore();
+    }
+    ensureGridViewPort() {
+        if (this.gridViewPort) {
+            return;
+        }
+        const chunkSize = this.gridChunkWorldSize();
+        this.gridViewPort = new view_port_1.ViewPort({
+            gridSize: (0, vec_1.vec2)(chunkSize, chunkSize),
+            generator: cell => this.createGridChunk(cell, chunkSize),
+            border: 1,
+            bufferAmount: 32,
+            maxElementsToGenerate: 64,
+            spatialHashMaxElements: 2000,
+            spatialHashMaxElementsToRemove: 200,
+        });
+    }
+    resetGridViewPort() {
+        this.gridViewPort = null;
+        this.gridRenderRevision = 0;
+        this.gridRenderConfig = null;
+    }
+    createGridChunk(cell, chunkSize) {
+        const origin = (0, vec_1.vec2)(cell.x * chunkSize, cell.y * chunkSize);
+        const chunk = {
+            cell: (0, vec_1.vec2)(cell),
+            origin,
+            canvas: null,
+            renderRevision: -1,
+            draw: context => {
+                this.drawGridChunk(context, chunk);
+            },
+        };
+        return chunk;
+    }
+    drawGridChunk(context, chunk) {
+        const drawGridDot = this.options.callbacks.drawGridDot;
+        if (drawGridDot) {
+            this.drawGridChunkDynamic(context, chunk, drawGridDot);
+            return;
+        }
+        this.drawGridChunkCached(context, chunk);
+    }
+    drawGridChunkDynamic(context, chunk, drawGridDot) {
+        const gridSize = this.options.gridSize;
+        for (let y = 0; y < GRID_CHUNK_CELLS; y++) {
+            for (let x = 0; x < GRID_CHUNK_CELLS; x++) {
+                const position = (0, vec_1.vec2)(chunk.origin.x + x * gridSize, chunk.origin.y + y * gridSize);
+                drawGridDot(context, {
+                    position,
+                    gridSize,
+                });
             }
         }
-        this.context.restore();
+    }
+    drawGridChunkCached(context, chunk) {
+        const chunkCanvasSize = this.gridChunkWorldSize() + GRID_CHUNK_PADDING * 2;
+        if (!chunk.canvas ||
+            chunk.canvas.width !== chunkCanvasSize ||
+            chunk.canvas.height !== chunkCanvasSize ||
+            chunk.renderRevision !== this.gridRenderRevision) {
+            this.renderGridChunkToCanvas(chunk, chunkCanvasSize);
+        }
+        if (!chunk.canvas) {
+            return;
+        }
+        context.drawImage(chunk.canvas, chunk.origin.x - GRID_CHUNK_PADDING, chunk.origin.y - GRID_CHUNK_PADDING);
+    }
+    renderGridChunkToCanvas(chunk, chunkCanvasSize) {
+        var _a;
+        const canvas = (_a = chunk.canvas) !== null && _a !== void 0 ? _a : document.createElement('canvas');
+        canvas.width = chunkCanvasSize;
+        canvas.height = chunkCanvasSize;
+        const context = canvas.getContext('2d');
+        if (!context) {
+            return;
+        }
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.lineWidth = this.options.theme.gridDotLineWidth;
+        context.strokeStyle = this.options.theme.gridDotColor;
+        const gridSize = this.options.gridSize;
+        for (let y = 0; y < GRID_CHUNK_CELLS; y++) {
+            for (let x = 0; x < GRID_CHUNK_CELLS; x++) {
+                (0, utils_1.plus)(context, (0, vec_1.vec2)(GRID_CHUNK_PADDING + x * gridSize, GRID_CHUNK_PADDING + y * gridSize), GRID_DOT_SIZE);
+            }
+        }
+        chunk.canvas = canvas;
+        chunk.renderRevision = this.gridRenderRevision;
+    }
+    gridChunkWorldSize() {
+        return this.options.gridSize * GRID_CHUNK_CELLS;
     }
     drawNode(node) {
         var _a, _b;

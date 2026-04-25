@@ -29,6 +29,7 @@
     "@basementuniverse/interaction": "^1.0.0",
     "@basementuniverse/utils": "^1.8.1",
     "@basementuniverse/vec": "^2.5.0",
+    "@basementuniverse/view-port": "^1.1.0",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
