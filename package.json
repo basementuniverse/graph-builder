@@ -1,6 +1,6 @@
 {
   "name": "@basementuniverse/graph-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A graph builder component.",
   "main": "build/index.js",
   "module": "build/index.esm.js",
