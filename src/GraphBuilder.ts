@@ -727,6 +727,105 @@ export default class GraphBuilder<
     return true;
   }
 
+  public setNodeData(nodeId: string, data: TNodeData | undefined): boolean {
+    const node = this.graph.nodes.find(n => n.id === nodeId);
+    if (!node) {
+      return false;
+    }
+
+    const from = node.data;
+    node.data = data;
+
+    this.eventBus.emit('nodeDataUpdated', {
+      nodeId,
+      from,
+      to: node.data,
+      node: {
+        ...node,
+        position: vec2(node.position),
+        size: vec2(node.size),
+        ports: node.ports.map(port => ({ ...port })),
+      },
+    });
+
+    return true;
+  }
+
+  public updateNodeData(
+    nodeId: string,
+    updater: (
+      current: TNodeData | undefined,
+      node: Node<TNodeData, TPortData>
+    ) => TNodeData | undefined
+  ): boolean {
+    const node = this.graph.nodes.find(n => n.id === nodeId);
+    if (!node) {
+      return false;
+    }
+
+    const next = updater(node.data, {
+      ...node,
+      position: vec2(node.position),
+      size: vec2(node.size),
+      ports: node.ports.map(port => ({ ...port })),
+    });
+    return this.setNodeData(nodeId, next);
+  }
+
+  public setPortData(target: PortRef, data: TPortData | undefined): boolean {
+    const resolved = this.resolveNodeAndPort(target);
+    if (!resolved) {
+      return false;
+    }
+
+    const { node, port } = resolved;
+    const from = port.data;
+    port.data = data;
+
+    this.eventBus.emit('portDataUpdated', {
+      nodeId: node.id,
+      portId: port.id,
+      from,
+      to: port.data,
+      node: {
+        ...node,
+        position: vec2(node.position),
+        size: vec2(node.size),
+        ports: node.ports.map(existingPort => ({ ...existingPort })),
+      },
+      port: { ...port },
+    });
+
+    return true;
+  }
+
+  public updatePortData(
+    target: PortRef,
+    updater: (
+      current: TPortData | undefined,
+      port: Port<TPortData>,
+      node: Node<TNodeData, TPortData>
+    ) => TPortData | undefined
+  ): boolean {
+    const resolved = this.resolveNodeAndPort(target);
+    if (!resolved) {
+      return false;
+    }
+
+    const { node, port } = resolved;
+    const next = updater(
+      port.data,
+      { ...port },
+      {
+        ...node,
+        position: vec2(node.position),
+        size: vec2(node.size),
+        ports: node.ports.map(existingPort => ({ ...existingPort })),
+      }
+    );
+    return this.setPortData(target, next);
+  }
+
   public createEdge(
     a: PortRef,
     b: PortRef,
@@ -861,6 +960,53 @@ export default class GraphBuilder<
     });
 
     return true;
+  }
+
+  public setEdgeData(
+    a: PortRef,
+    b: PortRef,
+    data: TEdgeData | undefined
+  ): boolean {
+    const edge = this.findEdge(a, b);
+    if (!edge) {
+      return false;
+    }
+
+    const from = edge.data;
+    edge.data = data;
+
+    this.eventBus.emit('edgeDataUpdated', {
+      from,
+      to: edge.data,
+      edge: {
+        ...edge,
+        a: { ...edge.a },
+        b: { ...edge.b },
+      },
+    });
+
+    return true;
+  }
+
+  public updateEdgeData(
+    a: PortRef,
+    b: PortRef,
+    updater: (
+      current: TEdgeData | undefined,
+      edge: Edge<TEdgeData>
+    ) => TEdgeData | undefined
+  ): boolean {
+    const edge = this.findEdge(a, b);
+    if (!edge) {
+      return false;
+    }
+
+    const next = updater(edge.data, {
+      ...edge,
+      a: { ...edge.a },
+      b: { ...edge.b },
+    });
+    return this.setEdgeData(a, b, next);
   }
 
   public getNeighbors(

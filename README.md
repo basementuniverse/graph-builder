@@ -18,9 +18,11 @@ npm install @basementuniverse/graph-builder
   - [Creating nodes interactively](#creating-nodes-interactively)
   - [Creating nodes programmatically](#creating-nodes-programmatically)
   - [Removing nodes](#removing-nodes)
+  - [Updating node and port data](#updating-node-and-port-data)
 - [Edges](#edges)
   - [Creating edges programmatically](#creating-edges-programmatically)
   - [Removing edges](#removing-edges)
+  - [Updating edge data](#updating-edge-data)
   - [Port connection validation](#port-connection-validation)
 - [Serialization and deserialization](#serialization-and-deserialization)
   - [serialize / load](#serialize--load)
@@ -292,6 +294,38 @@ const removed = builder.removeNode('node-1');
 
 Removing a node also removes all edges connected to it. The `deleteNodes` capability must be enabled (it is by default).
 
+#### Updating node and port data
+
+You can replace data directly with `set*Data()` or derive new data from the current value using `update*Data()`.
+
+```ts
+// Replace node data
+builder.setNodeData('node-1', { title: 'Updated title', color: '#00aaff' });
+
+// Derive node data from existing value
+builder.updateNodeData('node-1', current => ({
+  ...(current ?? { title: 'Untitled', color: '#999999' }),
+  title: 'Processed',
+}));
+
+// Replace port data
+builder.setPortData(
+  { nodeId: 'node-1', portId: 'in' },
+  { schema: 'number' }
+);
+
+// Derive port data from existing value
+builder.updatePortData(
+  { nodeId: 'node-1', portId: 'in' },
+  current => ({
+    ...(current ?? { schema: 'unknown' }),
+    schema: 'string',
+  })
+);
+```
+
+All four methods return `false` when the target node/port cannot be found.
+
 ---
 
 ### Edges
@@ -331,6 +365,29 @@ const removed = builder.removeEdge(
   { nodeId: 'node-2', portId: 'in'  }
 );
 ```
+
+#### Updating edge data
+
+```ts
+// Replace edge data
+builder.setEdgeData(
+  { nodeId: 'node-1', portId: 'out' },
+  { nodeId: 'node-2', portId: 'in' },
+  { weight: 2.5 }
+);
+
+// Derive edge data from existing value
+builder.updateEdgeData(
+  { nodeId: 'node-1', portId: 'out' },
+  { nodeId: 'node-2', portId: 'in' },
+  current => ({
+    ...(current ?? { weight: 0 }),
+    weight: (current?.weight ?? 0) + 1,
+  })
+);
+```
+
+Both methods return `false` when the edge cannot be found.
 
 #### Port connection validation
 
@@ -772,11 +829,14 @@ builder.on('edgeRemoving', ({ edge }) => {
 | `nodeRemoved` | `{ nodeId, node }` | No |
 | `nodeMoved` | `{ nodeId, from, to }` | No |
 | `nodeResized` | `{ nodeId, from, to }` | No |
+| `nodeDataUpdated` | `{ nodeId, from, to, node }` | No |
 | `nodeSelected` | `{ nodeId }` | No |
+| `portDataUpdated` | `{ nodeId, portId, from, to, node, port }` | No |
 | `edgeCreating` | `{ edge }` | Yes |
 | `edgeCreated` | `{ edge }` | No |
 | `edgeRemoving` | `{ edge }` | Yes |
 | `edgeRemoved` | `{ edge }` | No |
+| `edgeDataUpdated` | `{ from, to, edge }` | No |
 | `edgeConnectionRejected` | `{ from, to, reason }` | No |
 | `graphLoaded` | `{ graph }` | No |
 | `graphCleared` | `{}` | No |

@@ -4284,6 +4284,80 @@ InputManager.DEFAULT_OPTIONS = {
       });
       return true;
     }
+    setNodeData(nodeId, data) {
+      const node = this.graph.nodes.find((n) => n.id === nodeId);
+      if (!node) {
+        return false;
+      }
+      const from = node.data;
+      node.data = data;
+      this.eventBus.emit("nodeDataUpdated", {
+        nodeId,
+        from,
+        to: node.data,
+        node: {
+          ...node,
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
+          ports: node.ports.map((port) => ({ ...port }))
+        }
+      });
+      return true;
+    }
+    updateNodeData(nodeId, updater) {
+      const node = this.graph.nodes.find((n) => n.id === nodeId);
+      if (!node) {
+        return false;
+      }
+      const next = updater(node.data, {
+        ...node,
+        position: (0, import_vec9.vec2)(node.position),
+        size: (0, import_vec9.vec2)(node.size),
+        ports: node.ports.map((port) => ({ ...port }))
+      });
+      return this.setNodeData(nodeId, next);
+    }
+    setPortData(target, data) {
+      const resolved = this.resolveNodeAndPort(target);
+      if (!resolved) {
+        return false;
+      }
+      const { node, port } = resolved;
+      const from = port.data;
+      port.data = data;
+      this.eventBus.emit("portDataUpdated", {
+        nodeId: node.id,
+        portId: port.id,
+        from,
+        to: port.data,
+        node: {
+          ...node,
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
+          ports: node.ports.map((existingPort) => ({ ...existingPort }))
+        },
+        port: { ...port }
+      });
+      return true;
+    }
+    updatePortData(target, updater) {
+      const resolved = this.resolveNodeAndPort(target);
+      if (!resolved) {
+        return false;
+      }
+      const { node, port } = resolved;
+      const next = updater(
+        port.data,
+        { ...port },
+        {
+          ...node,
+          position: (0, import_vec9.vec2)(node.position),
+          size: (0, import_vec9.vec2)(node.size),
+          ports: node.ports.map((existingPort) => ({ ...existingPort }))
+        }
+      );
+      return this.setPortData(target, next);
+    }
     createEdge(a, b, data, options) {
       if (!this.options.capabilities.createEdges) {
         return false;
@@ -4381,6 +4455,36 @@ InputManager.DEFAULT_OPTIONS = {
         }
       });
       return true;
+    }
+    setEdgeData(a, b, data) {
+      const edge = this.findEdge(a, b);
+      if (!edge) {
+        return false;
+      }
+      const from = edge.data;
+      edge.data = data;
+      this.eventBus.emit("edgeDataUpdated", {
+        from,
+        to: edge.data,
+        edge: {
+          ...edge,
+          a: { ...edge.a },
+          b: { ...edge.b }
+        }
+      });
+      return true;
+    }
+    updateEdgeData(a, b, updater) {
+      const edge = this.findEdge(a, b);
+      if (!edge) {
+        return false;
+      }
+      const next = updater(edge.data, {
+        ...edge,
+        a: { ...edge.a },
+        b: { ...edge.b }
+      });
+      return this.setEdgeData(a, b, next);
     }
     getNeighbors(nodeId, direction = "both" /* Both */) {
       return getNeighbors(this.graph, nodeId, direction);

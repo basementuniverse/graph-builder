@@ -1,6 +1,6 @@
 import type { vec2 } from '@basementuniverse/vec';
 import type { ToolMode } from '../enums';
-import type { Edge, Graph, Node, NodeTemplate, PortRef } from '../types';
+import type { Edge, Graph, Node, NodeTemplate, Port, PortRef } from '../types';
 import type { GraphEffectEventPayload } from './effects';
 
 export type GraphBuilderEventMap<
@@ -33,8 +33,22 @@ export type GraphBuilderEventMap<
     from: vec2;
     to: vec2;
   };
+  nodeDataUpdated: {
+    nodeId: string;
+    from: TNodeData | undefined;
+    to: TNodeData | undefined;
+    node: Node<TNodeData, TPortData>;
+  };
   nodeSelected: {
     nodeId: string | null;
+  };
+  portDataUpdated: {
+    nodeId: string;
+    portId: string;
+    from: TPortData | undefined;
+    to: TPortData | undefined;
+    node: Node<TNodeData, TPortData>;
+    port: Port<TPortData>;
   };
   edgeCreating: {
     edge: Edge<TEdgeData>;
@@ -46,6 +60,11 @@ export type GraphBuilderEventMap<
     edge: Edge<TEdgeData>;
   };
   edgeRemoved: {
+    edge: Edge<TEdgeData>;
+  };
+  edgeDataUpdated: {
+    from: TEdgeData | undefined;
+    to: TEdgeData | undefined;
     edge: Edge<TEdgeData>;
   };
   edgeConnectionRejected: {

@@ -1,7 +1,7 @@
 import { vec2 } from '@basementuniverse/vec';
 import { ToolMode, TraversalDirection } from './enums';
 import { layoutForceDirected, layoutLayered } from './layout';
-import type { EdgeTheme, Graph, GraphBuilderCapabilities, GraphBuilderEffectsController, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, PortRef, VisitorControl } from './types';
+import type { Edge, EdgeTheme, Graph, GraphBuilderCapabilities, GraphBuilderEffectsController, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, Port, PortRef, VisitorControl } from './types';
 export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPortData = unknown> {
     static screen: vec2;
     private static inputInitialised;
@@ -67,10 +67,16 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     createNode(position: vec2, template?: NodeTemplate<TNodeData, TPortData>): Node<TNodeData, TPortData>;
     addNode(node: Node<TNodeData, TPortData>): boolean;
     removeNode(nodeId: string): boolean;
+    setNodeData(nodeId: string, data: TNodeData | undefined): boolean;
+    updateNodeData(nodeId: string, updater: (current: TNodeData | undefined, node: Node<TNodeData, TPortData>) => TNodeData | undefined): boolean;
+    setPortData(target: PortRef, data: TPortData | undefined): boolean;
+    updatePortData(target: PortRef, updater: (current: TPortData | undefined, port: Port<TPortData>, node: Node<TNodeData, TPortData>) => TPortData | undefined): boolean;
     createEdge(a: PortRef, b: PortRef, data?: TEdgeData, options?: {
         theme?: Partial<EdgeTheme>;
     }): boolean;
     removeEdge(a: PortRef, b: PortRef): boolean;
+    setEdgeData(a: PortRef, b: PortRef, data: TEdgeData | undefined): boolean;
+    updateEdgeData(a: PortRef, b: PortRef, updater: (current: TEdgeData | undefined, edge: Edge<TEdgeData>) => TEdgeData | undefined): boolean;
     getNeighbors(nodeId: string, direction?: TraversalDirection): string[];
     traverseBFS<TResult = void>(startNodeId: string, visitor: (node: Node<TNodeData, TPortData>, depth: number) => TResult | VisitorControl, direction?: TraversalDirection): TResult[];
     traverseDFS<TResult = void>(startNodeId: string, visitor: (node: Node<TNodeData, TPortData>, depth: number) => TResult | VisitorControl, direction?: TraversalDirection): TResult[];
