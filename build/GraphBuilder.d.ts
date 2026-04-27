@@ -51,6 +51,12 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     setCreateNodeTemplate(template: NodeTemplate<TNodeData, TPortData> | null): void;
     setSnapToGrid(enabled: boolean): void;
     setGridSize(size: number): void;
+    getCameraPosition(): vec2;
+    setCameraPosition(position: vec2): void;
+    panCamera(offset: vec2): void;
+    getCameraZoom(): number;
+    setCameraZoom(zoom: number): void;
+    zoomCamera(delta: number): void;
     getGraph(): Graph<TNodeData, TEdgeData, TPortData>;
     serialize(): Graph<TNodeData, TEdgeData, TPortData>;
     serializeFull(): GraphDocument<TNodeData, TEdgeData, TPortData>;

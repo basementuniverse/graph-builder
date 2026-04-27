@@ -239,6 +239,30 @@ class GraphBuilder {
         this.options.gridSize = next;
         this.resetGridViewPort();
     }
+    getCameraPosition() {
+        return (0, vec_1.vec2)(this.camera.position);
+    }
+    setCameraPosition(position) {
+        this.camera.positionImmediate = (0, vec_1.vec2)(position);
+    }
+    panCamera(offset) {
+        this.camera.positionImmediate = vec_1.vec2.add(this.camera.position, offset);
+    }
+    getCameraZoom() {
+        return this.camera.scale;
+    }
+    setCameraZoom(zoom) {
+        if (!Number.isFinite(zoom)) {
+            throw new Error('Camera zoom must be a finite number');
+        }
+        this.camera.scale = zoom;
+    }
+    zoomCamera(delta) {
+        if (!Number.isFinite(delta)) {
+            throw new Error('Camera zoom delta must be a finite number');
+        }
+        this.camera.scale += delta;
+    }
     getGraph() {
         return this.serialize();
     }

@@ -419,6 +419,38 @@ export default class GraphBuilder<
     this.resetGridViewPort();
   }
 
+  public getCameraPosition() {
+    return vec2(this.camera.position);
+  }
+
+  public setCameraPosition(position: vec2) {
+    this.camera.positionImmediate = vec2(position);
+  }
+
+  public panCamera(offset: vec2) {
+    this.camera.positionImmediate = vec2.add(this.camera.position, offset);
+  }
+
+  public getCameraZoom() {
+    return this.camera.scale;
+  }
+
+  public setCameraZoom(zoom: number) {
+    if (!Number.isFinite(zoom)) {
+      throw new Error('Camera zoom must be a finite number');
+    }
+
+    this.camera.scale = zoom;
+  }
+
+  public zoomCamera(delta: number) {
+    if (!Number.isFinite(delta)) {
+      throw new Error('Camera zoom delta must be a finite number');
+    }
+
+    this.camera.scale += delta;
+  }
+
   public getGraph(): Graph<TNodeData, TEdgeData, TPortData> {
     return this.serialize();
   }

@@ -13,6 +13,7 @@ npm install @basementuniverse/graph-builder
 - [Initialisation](#initialisation)
 - [Options reference](#options-reference)
 - [Tool modes](#tool-modes)
+- [Camera controls](#camera-controls)
 - [Nodes](#nodes)
   - [Creating nodes interactively](#creating-nodes-interactively)
   - [Creating nodes programmatically](#creating-nodes-programmatically)
@@ -164,6 +165,31 @@ builder.resetTool(); // returns to the tool that was active before
 ```
 
 The camera can also be panned by holding `Space` (which temporarily switches to `Pan` mode and restores the previous tool on release), using `W/A/S/D` or the arrow keys, and zoomed with the scroll wheel.
+
+---
+
+### Camera controls
+
+You can read or change the camera position and zoom level at runtime:
+
+```ts
+import { vec2 } from '@basementuniverse/vec';
+
+// Read current camera state
+const position = builder.getCameraPosition(); // vec2
+const zoom = builder.getCameraZoom();         // number
+
+// Set absolute camera state
+builder.setCameraPosition(vec2(400, 200));
+builder.setCameraZoom(1.25);
+
+// Apply relative movement
+builder.panCamera(vec2(120, -40));
+builder.zoomCamera(0.2);  // zoom in
+builder.zoomCamera(-0.1); // zoom out
+```
+
+`setCameraZoom()` and `zoomCamera()` require finite numbers. Zoom still respects your configured camera limits (`minScale` / `maxScale`).
 
 ---
 
