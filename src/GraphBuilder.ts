@@ -2022,8 +2022,13 @@ export default class GraphBuilder<
         this.context.lineWidth =
           nodeTheme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
         this.context.translate(
-          state.actualPosition.x + state.actualSize.x - DELETE_BUTTON_SIZE / 2,
-          state.actualPosition.y + DELETE_BUTTON_SIZE / 2
+          state.actualPosition.x +
+            state.actualSize.x -
+            DELETE_BUTTON_SIZE / 2 -
+            nodeTheme.nodePadding,
+          state.actualPosition.y +
+            DELETE_BUTTON_SIZE / 2 +
+            nodeTheme.nodePadding
         );
         this.context.scale(DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE);
         cross(this.context, vec2(), 0.4);
@@ -2047,8 +2052,14 @@ export default class GraphBuilder<
         this.context.lineWidth =
           nodeTheme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
         this.context.translate(
-          state.actualPosition.x + state.actualSize.x - RESIZE_HANDLE_SIZE,
-          state.actualPosition.y + state.actualSize.y - RESIZE_HANDLE_SIZE
+          state.actualPosition.x +
+            state.actualSize.x -
+            RESIZE_HANDLE_SIZE -
+            nodeTheme.nodePadding,
+          state.actualPosition.y +
+            state.actualSize.y -
+            RESIZE_HANDLE_SIZE -
+            nodeTheme.nodePadding
         );
         this.context.scale(RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
         line(this.context, vec2(0, 0.8), vec2(0.8, 0));
@@ -2072,7 +2083,7 @@ export default class GraphBuilder<
         hovered: state.hovered,
         selected: state.selected,
       });
-    } else if (node.label) {
+    } else if (nodeTheme.showNodeLabel && node.label) {
       this.context.save();
       this.context.fillStyle = nodeTheme.nodeLabelColor;
       this.context.font = nodeTheme.nodeLabelFont;
@@ -2080,8 +2091,8 @@ export default class GraphBuilder<
       this.context.textBaseline = 'top';
       this.context.fillText(
         node.label,
-        state.actualPosition.x + 5,
-        state.actualPosition.y + 5
+        state.actualPosition.x + nodeTheme.nodePadding,
+        state.actualPosition.y + nodeTheme.nodePadding
       );
       this.context.restore();
     }
@@ -2200,6 +2211,45 @@ export default class GraphBuilder<
       this.context.fillStyle = portTheme.portArrowColor;
       triangle(this.context, base, arrowDir, portTheme.portArrowSize);
       this.context.fill();
+      this.context.restore();
+    }
+
+    if (
+      port !== null &&
+      !isPreview &&
+      portTheme.showPortLabel &&
+      typeof port.label === 'string' &&
+      port.label.length > 0
+    ) {
+      const horizontal = Math.abs(direction.x) > Math.abs(direction.y);
+      const distance = portTheme.portRadius + portTheme.portLabelOffset;
+      const labelPosition = vec2(state.position);
+
+      this.context.save();
+      this.context.fillStyle = portTheme.portLabelColor;
+      this.context.font = portTheme.portLabelFont;
+
+      if (horizontal) {
+        if (direction.x < 0) {
+          labelPosition.x += distance;
+          this.context.textAlign = 'left';
+        } else {
+          labelPosition.x -= distance;
+          this.context.textAlign = 'right';
+        }
+        this.context.textBaseline = 'middle';
+      } else {
+        if (direction.y < 0) {
+          labelPosition.y += distance;
+          this.context.textBaseline = 'top';
+        } else {
+          labelPosition.y -= distance;
+          this.context.textBaseline = 'bottom';
+        }
+        this.context.textAlign = 'center';
+      }
+
+      this.context.fillText(port.label, labelPosition.x, labelPosition.y);
       this.context.restore();
     }
   }

@@ -222,7 +222,7 @@ import { PortSide, PortType } from '@basementuniverse/graph-builder';
 
 type Port<TPortData = unknown> = {
   id: string;
-  label?: string;
+  label?: string;                   // rendered by default near the port
   type: PortType;                  // PortType.Input | PortType.Output
   side: PortSide;                  // PortSide.Top | .Right | .Bottom | .Left
   theme?: Partial<PortTheme>;      // per-port visual overrides (see Per-element theming)
@@ -230,6 +230,8 @@ type Port<TPortData = unknown> = {
   data?: TPortData;
 };
 ```
+
+Port labels are positioned automatically from port direction: top ports render labels below, bottom ports above, left ports to the right, and right ports to the left.
 
 #### Creating nodes interactively
 
@@ -873,8 +875,10 @@ const builder = new GraphBuilder(canvas, {
     nodeHoveredBorderColor: 'rgba(255,255,255,0.6)',
     nodeBorderWidth: 2,
     nodeBorderRadius: 10,
+    nodePadding: 5,
 
     // Node label
+    showNodeLabel: true,
     nodeLabelColor: 'rgba(255,255,255,0.8)',
     nodeLabelFont: 'bold 13px Inter, sans-serif',
 
@@ -905,6 +909,12 @@ const builder = new GraphBuilder(canvas, {
     portPulseFromRadius: 10,
     portPulseToRadius: 30,
     portPulseMaxOpacity: 0.8,
+
+    // Port label
+    showPortLabel: true,
+    portLabelOffset: 8,
+    portLabelColor: 'rgba(255,255,255,0.8)',
+    portLabelFont: '12px sans-serif',
 
     // Edges
     edgeColor: 'rgba(255,255,255,0.2)',

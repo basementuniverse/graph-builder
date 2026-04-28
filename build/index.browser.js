@@ -3168,7 +3168,9 @@ InputManager.DEFAULT_OPTIONS = {
     nodeHoveredBorderColor: "#fff8",
     nodeBorderWidth: 2,
     nodeBorderRadius: 10,
+    nodePadding: 5,
     // Node label
+    showNodeLabel: true,
     nodeLabelColor: "#fffb",
     nodeLabelFont: "bold 12px sans-serif",
     // Delete button
@@ -3201,6 +3203,11 @@ InputManager.DEFAULT_OPTIONS = {
     portPulseFromRadius: 10,
     portPulseToRadius: 30,
     portPulseMaxOpacity: 0.8,
+    // Port label
+    showPortLabel: true,
+    portLabelOffset: 8,
+    portLabelColor: "#fffb",
+    portLabelFont: "12px sans-serif",
     // Edge
     edgeColor: "#fff2",
     edgeHoveredColor: "#fff4",
@@ -5248,8 +5255,8 @@ InputManager.DEFAULT_OPTIONS = {
           this.context.strokeStyle = state.deleteHovered ? nodeTheme.deleteButtonHoveredColor : nodeTheme.deleteButtonColor;
           this.context.lineWidth = nodeTheme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
           this.context.translate(
-            state.actualPosition.x + state.actualSize.x - DELETE_BUTTON_SIZE / 2,
-            state.actualPosition.y + DELETE_BUTTON_SIZE / 2
+            state.actualPosition.x + state.actualSize.x - DELETE_BUTTON_SIZE / 2 - nodeTheme.nodePadding,
+            state.actualPosition.y + DELETE_BUTTON_SIZE / 2 + nodeTheme.nodePadding
           );
           this.context.scale(DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE);
           cross(this.context, (0, import_vec9.vec2)(), 0.4);
@@ -5269,8 +5276,8 @@ InputManager.DEFAULT_OPTIONS = {
           this.context.strokeStyle = state.resizeHovered ? nodeTheme.resizeHandleHoveredColor : nodeTheme.resizeHandleColor;
           this.context.lineWidth = nodeTheme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
           this.context.translate(
-            state.actualPosition.x + state.actualSize.x - RESIZE_HANDLE_SIZE,
-            state.actualPosition.y + state.actualSize.y - RESIZE_HANDLE_SIZE
+            state.actualPosition.x + state.actualSize.x - RESIZE_HANDLE_SIZE - nodeTheme.nodePadding,
+            state.actualPosition.y + state.actualSize.y - RESIZE_HANDLE_SIZE - nodeTheme.nodePadding
           );
           this.context.scale(RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
           line(this.context, (0, import_vec9.vec2)(0, 0.8), (0, import_vec9.vec2)(0.8, 0));
@@ -5292,7 +5299,7 @@ InputManager.DEFAULT_OPTIONS = {
           hovered: state.hovered,
           selected: state.selected
         });
-      } else if (node.label) {
+      } else if (nodeTheme.showNodeLabel && node.label) {
         this.context.save();
         this.context.fillStyle = nodeTheme.nodeLabelColor;
         this.context.font = nodeTheme.nodeLabelFont;
@@ -5300,8 +5307,8 @@ InputManager.DEFAULT_OPTIONS = {
         this.context.textBaseline = "top";
         this.context.fillText(
           node.label,
-          state.actualPosition.x + 5,
-          state.actualPosition.y + 5
+          state.actualPosition.x + nodeTheme.nodePadding,
+          state.actualPosition.y + nodeTheme.nodePadding
         );
         this.context.restore();
       }
@@ -5387,6 +5394,35 @@ InputManager.DEFAULT_OPTIONS = {
         this.context.fillStyle = portTheme.portArrowColor;
         triangle(this.context, base, arrowDir, portTheme.portArrowSize);
         this.context.fill();
+        this.context.restore();
+      }
+      if (port !== null && !isPreview && portTheme.showPortLabel && typeof port.label === "string" && port.label.length > 0) {
+        const horizontal = Math.abs(direction.x) > Math.abs(direction.y);
+        const distance = portTheme.portRadius + portTheme.portLabelOffset;
+        const labelPosition = (0, import_vec9.vec2)(state.position);
+        this.context.save();
+        this.context.fillStyle = portTheme.portLabelColor;
+        this.context.font = portTheme.portLabelFont;
+        if (horizontal) {
+          if (direction.x < 0) {
+            labelPosition.x += distance;
+            this.context.textAlign = "left";
+          } else {
+            labelPosition.x -= distance;
+            this.context.textAlign = "right";
+          }
+          this.context.textBaseline = "middle";
+        } else {
+          if (direction.y < 0) {
+            labelPosition.y += distance;
+            this.context.textBaseline = "top";
+          } else {
+            labelPosition.y -= distance;
+            this.context.textBaseline = "bottom";
+          }
+          this.context.textAlign = "center";
+        }
+        this.context.fillText(port.label, labelPosition.x, labelPosition.y);
         this.context.restore();
       }
     }

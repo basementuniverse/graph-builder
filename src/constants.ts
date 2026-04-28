@@ -57,8 +57,10 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   nodeHoveredBorderColor: '#fff8',
   nodeBorderWidth: 2,
   nodeBorderRadius: 10,
+  nodePadding: 5,
 
   // Node label
+  showNodeLabel: true,
   nodeLabelColor: '#fffb',
   nodeLabelFont: 'bold 12px sans-serif',
 
@@ -94,6 +96,12 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   portPulseFromRadius: 10,
   portPulseToRadius: 30,
   portPulseMaxOpacity: 0.8,
+
+  // Port label
+  showPortLabel: true,
+  portLabelOffset: 8,
+  portLabelColor: '#fffb',
+  portLabelFont: '12px sans-serif',
 
   // Edge
   edgeColor: '#fff2',

@@ -1411,7 +1411,12 @@ class GraphBuilder {
                     : nodeTheme.deleteButtonColor;
                 this.context.lineWidth =
                     nodeTheme.deleteButtonLineWidth / constants_1.DELETE_BUTTON_SIZE;
-                this.context.translate(state.actualPosition.x + state.actualSize.x - constants_1.DELETE_BUTTON_SIZE / 2, state.actualPosition.y + constants_1.DELETE_BUTTON_SIZE / 2);
+                this.context.translate(state.actualPosition.x +
+                    state.actualSize.x -
+                    constants_1.DELETE_BUTTON_SIZE / 2 -
+                    nodeTheme.nodePadding, state.actualPosition.y +
+                    constants_1.DELETE_BUTTON_SIZE / 2 +
+                    nodeTheme.nodePadding);
                 this.context.scale(constants_1.DELETE_BUTTON_SIZE, constants_1.DELETE_BUTTON_SIZE);
                 (0, utils_1.cross)(this.context, (0, vec_1.vec2)(), 0.4);
                 this.context.restore();
@@ -1433,7 +1438,13 @@ class GraphBuilder {
                     : nodeTheme.resizeHandleColor;
                 this.context.lineWidth =
                     nodeTheme.resizeHandleLineWidth / constants_1.RESIZE_HANDLE_SIZE;
-                this.context.translate(state.actualPosition.x + state.actualSize.x - constants_1.RESIZE_HANDLE_SIZE, state.actualPosition.y + state.actualSize.y - constants_1.RESIZE_HANDLE_SIZE);
+                this.context.translate(state.actualPosition.x +
+                    state.actualSize.x -
+                    constants_1.RESIZE_HANDLE_SIZE -
+                    nodeTheme.nodePadding, state.actualPosition.y +
+                    state.actualSize.y -
+                    constants_1.RESIZE_HANDLE_SIZE -
+                    nodeTheme.nodePadding);
                 this.context.scale(constants_1.RESIZE_HANDLE_SIZE, constants_1.RESIZE_HANDLE_SIZE);
                 (0, utils_1.line)(this.context, (0, vec_1.vec2)(0, 0.8), (0, vec_1.vec2)(0.8, 0));
                 (0, utils_1.line)(this.context, (0, vec_1.vec2)(0.3, 0.8), (0, vec_1.vec2)(0.8, 0.3));
@@ -1455,13 +1466,13 @@ class GraphBuilder {
                 selected: state.selected,
             });
         }
-        else if (node.label) {
+        else if (nodeTheme.showNodeLabel && node.label) {
             this.context.save();
             this.context.fillStyle = nodeTheme.nodeLabelColor;
             this.context.font = nodeTheme.nodeLabelFont;
             this.context.textAlign = 'left';
             this.context.textBaseline = 'top';
-            this.context.fillText(node.label, state.actualPosition.x + 5, state.actualPosition.y + 5);
+            this.context.fillText(node.label, state.actualPosition.x + nodeTheme.nodePadding, state.actualPosition.y + nodeTheme.nodePadding);
             this.context.restore();
         }
     }
@@ -1535,6 +1546,42 @@ class GraphBuilder {
             this.context.fillStyle = portTheme.portArrowColor;
             (0, utils_1.triangle)(this.context, base, arrowDir, portTheme.portArrowSize);
             this.context.fill();
+            this.context.restore();
+        }
+        if (port !== null &&
+            !isPreview &&
+            portTheme.showPortLabel &&
+            typeof port.label === 'string' &&
+            port.label.length > 0) {
+            const horizontal = Math.abs(direction.x) > Math.abs(direction.y);
+            const distance = portTheme.portRadius + portTheme.portLabelOffset;
+            const labelPosition = (0, vec_1.vec2)(state.position);
+            this.context.save();
+            this.context.fillStyle = portTheme.portLabelColor;
+            this.context.font = portTheme.portLabelFont;
+            if (horizontal) {
+                if (direction.x < 0) {
+                    labelPosition.x += distance;
+                    this.context.textAlign = 'left';
+                }
+                else {
+                    labelPosition.x -= distance;
+                    this.context.textAlign = 'right';
+                }
+                this.context.textBaseline = 'middle';
+            }
+            else {
+                if (direction.y < 0) {
+                    labelPosition.y += distance;
+                    this.context.textBaseline = 'top';
+                }
+                else {
+                    labelPosition.y -= distance;
+                    this.context.textBaseline = 'bottom';
+                }
+                this.context.textAlign = 'center';
+            }
+            this.context.fillText(port.label, labelPosition.x, labelPosition.y);
             this.context.restore();
         }
     }

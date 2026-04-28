@@ -6,8 +6,10 @@ export type NodeTheme = {
   nodeHoveredBorderColor: string;
   nodeBorderWidth: number;
   nodeBorderRadius: number;
+  nodePadding: number;
 
   // Node label
+  showNodeLabel: boolean;
   nodeLabelColor: string;
   nodeLabelFont: string;
 
@@ -36,6 +38,12 @@ export type PortTheme = {
   portInvalidRingColor: string;
   portHoverRingLineWidth: number;
   portHoverRingRadius: number;
+
+  // Port label
+  showPortLabel: boolean;
+  portLabelOffset: number;
+  portLabelColor: string;
+  portLabelFont: string;
 
   // Direction arrow
   portArrowSize: number;
