@@ -145,17 +145,22 @@ export type PortPulseEffectDrawContext = {
     opacity: number;
     config: PortPulseEffectConfig;
 };
+export type GraphBuilderCallbackRenderMode = 'replace' | 'overlay';
+export type GraphBuilderRenderCallbackName = 'drawGridDot' | 'drawNodeFrame' | 'drawNodeContent' | 'drawDeleteButton' | 'drawResizeHandle' | 'drawPort' | 'drawEdge' | 'drawEdgePreview' | 'drawEdgeDashEffect' | 'drawEdgeDotEffect' | 'drawPortPulseEffect';
+export type GraphBuilderCallbackRenderModes = Partial<Record<GraphBuilderRenderCallbackName, GraphBuilderCallbackRenderMode>>;
+export type GraphBuilderRenderCallback<TDrawContext> = (context: CanvasRenderingContext2D, drawContext: TDrawContext, drawDefault: () => void) => void | boolean;
 export type GraphBuilderCallbacks = {
-    drawGridDot?: (context: CanvasRenderingContext2D, drawContext: GridDrawContext) => void;
-    drawNodeFrame?: (context: CanvasRenderingContext2D, drawContext: NodeFrameDrawContext) => void;
-    drawNodeContent?: (context: CanvasRenderingContext2D, drawContext: NodeContentDrawContext) => void;
-    drawDeleteButton?: (context: CanvasRenderingContext2D, drawContext: DeleteButtonDrawContext) => void;
-    drawResizeHandle?: (context: CanvasRenderingContext2D, drawContext: ResizeHandleDrawContext) => void;
-    drawPort?: (context: CanvasRenderingContext2D, drawContext: PortDrawContext) => void;
-    drawEdge?: (context: CanvasRenderingContext2D, drawContext: EdgeDrawContext) => void;
-    drawEdgePreview?: (context: CanvasRenderingContext2D, drawContext: EdgePreviewDrawContext) => void;
-    drawEdgeDashEffect?: (context: CanvasRenderingContext2D, drawContext: EdgeDashEffectDrawContext) => void;
-    drawEdgeDotEffect?: (context: CanvasRenderingContext2D, drawContext: EdgeDotEffectDrawContext) => void;
-    drawPortPulseEffect?: (context: CanvasRenderingContext2D, drawContext: PortPulseEffectDrawContext) => void;
+    renderModes?: GraphBuilderCallbackRenderModes;
+    drawGridDot?: GraphBuilderRenderCallback<GridDrawContext>;
+    drawNodeFrame?: GraphBuilderRenderCallback<NodeFrameDrawContext>;
+    drawNodeContent?: GraphBuilderRenderCallback<NodeContentDrawContext>;
+    drawDeleteButton?: GraphBuilderRenderCallback<DeleteButtonDrawContext>;
+    drawResizeHandle?: GraphBuilderRenderCallback<ResizeHandleDrawContext>;
+    drawPort?: GraphBuilderRenderCallback<PortDrawContext>;
+    drawEdge?: GraphBuilderRenderCallback<EdgeDrawContext>;
+    drawEdgePreview?: GraphBuilderRenderCallback<EdgePreviewDrawContext>;
+    drawEdgeDashEffect?: GraphBuilderRenderCallback<EdgeDashEffectDrawContext>;
+    drawEdgeDotEffect?: GraphBuilderRenderCallback<EdgeDotEffectDrawContext>;
+    drawPortPulseEffect?: GraphBuilderRenderCallback<PortPulseEffectDrawContext>;
 };
 //# sourceMappingURL=builder.d.ts.map

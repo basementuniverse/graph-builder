@@ -49,12 +49,14 @@ import type {
   EdgeToolEndpoint,
   EffectTriggerHandle,
   Graph,
+  GraphBuilderCallbackRenderMode,
   GraphBuilderCallbacks,
   GraphBuilderCapabilities,
   GraphBuilderEffectsController,
   GraphBuilderEventHandler,
   GraphBuilderEventMap,
   GraphBuilderOptions,
+  GraphBuilderRenderCallbackName,
   GraphDocument,
   GraphDomain,
   GraphEffectChannel,
@@ -115,6 +117,7 @@ type GridRenderConfig = {
   gridDotLineWidth: number;
   gridDotColor: string;
   drawGridDot: GraphBuilderCallbacks['drawGridDot'];
+  drawGridDotMode: GraphBuilderCallbackRenderMode;
 };
 
 export default class GraphBuilder<
@@ -1806,6 +1809,7 @@ export default class GraphBuilder<
       gridDotLineWidth: theme.gridDotLineWidth,
       gridDotColor: theme.gridDotColor,
       drawGridDot: callbacks.drawGridDot,
+      drawGridDotMode: this.callbackRenderMode('drawGridDot'),
     };
     const previousConfig = this.gridRenderConfig;
 
@@ -1817,7 +1821,8 @@ export default class GraphBuilder<
       !previousConfig ||
       previousConfig.gridDotLineWidth !== nextConfig.gridDotLineWidth ||
       previousConfig.gridDotColor !== nextConfig.gridDotColor ||
-      previousConfig.drawGridDot !== nextConfig.drawGridDot
+      previousConfig.drawGridDot !== nextConfig.drawGridDot ||
+      previousConfig.drawGridDotMode !== nextConfig.drawGridDotMode
     ) {
       this.gridRenderRevision += 1;
     }
@@ -1877,12 +1882,23 @@ export default class GraphBuilder<
 
   private drawGridChunk(context: CanvasRenderingContext2D, chunk: GridChunk) {
     const drawGridDot = this.options.callbacks.drawGridDot;
-    if (drawGridDot) {
+    if (drawGridDot && this.callbackRenderMode('drawGridDot') === 'replace') {
       this.drawGridChunkDynamic(context, chunk, drawGridDot);
       return;
     }
 
     this.drawGridChunkCached(context, chunk);
+
+    if (drawGridDot && this.callbackRenderMode('drawGridDot') === 'overlay') {
+      this.drawGridChunkDynamic(context, chunk, drawGridDot);
+    }
+  }
+
+  private drawDefaultGridDot(
+    context: CanvasRenderingContext2D,
+    position: vec2
+  ) {
+    plus(context, position, GRID_DOT_SIZE);
   }
 
   private drawGridChunkDynamic(
@@ -1890,6 +1906,7 @@ export default class GraphBuilder<
     chunk: GridChunk,
     drawGridDot: NonNullable<GraphBuilderCallbacks['drawGridDot']>
   ) {
+    const mode = this.callbackRenderMode('drawGridDot');
     const gridSize = this.options.gridSize;
     for (let y = 0; y < GRID_CHUNK_CELLS; y++) {
       for (let x = 0; x < GRID_CHUNK_CELLS; x++) {
@@ -1897,10 +1914,30 @@ export default class GraphBuilder<
           chunk.origin.x + x * gridSize,
           chunk.origin.y + y * gridSize
         );
-        drawGridDot(context, {
-          position,
-          gridSize,
-        });
+        if (mode === 'overlay') {
+          drawGridDot(
+            context,
+            {
+              position,
+              gridSize,
+            },
+            () => {}
+          );
+          continue;
+        }
+
+        this.invokeDrawCallback(
+          context,
+          'drawGridDot',
+          drawGridDot,
+          {
+            position,
+            gridSize,
+          },
+          () => {
+            this.drawDefaultGridDot(context, position);
+          }
+        );
       }
     }
   }
@@ -1972,101 +2009,113 @@ export default class GraphBuilder<
     const nodeTheme = this.effectiveNodeTheme(node);
     const { callbacks } = this.options;
 
-    if (callbacks.drawNodeFrame) {
-      callbacks.drawNodeFrame(this.context, {
+    this.invokeDrawCallback(
+      this.context,
+      'drawNodeFrame',
+      callbacks.drawNodeFrame,
+      {
         node,
         position: vec2(state.actualPosition),
         size: vec2(state.actualSize),
         hovered: state.hovered,
         selected: state.selected,
-      });
-    } else {
-      this.context.save();
-      this.context.strokeStyle = state.hovered
-        ? nodeTheme.nodeHoveredBorderColor
-        : nodeTheme.nodeBorderColor;
-      this.context.fillStyle = state.selected
-        ? nodeTheme.nodeSelectedFillColor
-        : nodeTheme.nodeFillColor;
-      this.context.lineWidth = nodeTheme.nodeBorderWidth;
-      roundedRect(
-        this.context,
-        state.actualPosition,
-        state.actualSize,
-        nodeTheme.nodeBorderRadius
-      );
-      this.context.fill();
-      roundedRect(
-        this.context,
-        vec2.add(state.actualPosition, 1),
-        vec2.sub(state.actualSize, 2),
-        nodeTheme.nodeBorderRadius
-      );
-      this.context.stroke();
-      this.context.restore();
-    }
+      },
+      () => {
+        this.context.save();
+        this.context.strokeStyle = state.hovered
+          ? nodeTheme.nodeHoveredBorderColor
+          : nodeTheme.nodeBorderColor;
+        this.context.fillStyle = state.selected
+          ? nodeTheme.nodeSelectedFillColor
+          : nodeTheme.nodeFillColor;
+        this.context.lineWidth = nodeTheme.nodeBorderWidth;
+        roundedRect(
+          this.context,
+          state.actualPosition,
+          state.actualSize,
+          nodeTheme.nodeBorderRadius
+        );
+        this.context.fill();
+        roundedRect(
+          this.context,
+          vec2.add(state.actualPosition, 1),
+          vec2.sub(state.actualSize, 2),
+          nodeTheme.nodeBorderRadius
+        );
+        this.context.stroke();
+        this.context.restore();
+      }
+    );
 
     if (node.deletable ?? true) {
-      if (callbacks.drawDeleteButton) {
-        callbacks.drawDeleteButton(this.context, {
+      this.invokeDrawCallback(
+        this.context,
+        'drawDeleteButton',
+        callbacks.drawDeleteButton,
+        {
           node,
           position: vec2(state.actualPosition),
           size: vec2(state.actualSize),
           hovered: state.deleteHovered,
-        });
-      } else {
-        this.context.save();
-        this.context.strokeStyle = state.deleteHovered
-          ? nodeTheme.deleteButtonHoveredColor
-          : nodeTheme.deleteButtonColor;
-        this.context.lineWidth =
-          nodeTheme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
-        this.context.translate(
-          state.actualPosition.x +
-            state.actualSize.x -
-            DELETE_BUTTON_SIZE / 2 -
-            nodeTheme.nodePadding,
-          state.actualPosition.y +
-            DELETE_BUTTON_SIZE / 2 +
-            nodeTheme.nodePadding
-        );
-        this.context.scale(DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE);
-        cross(this.context, vec2(), 0.4);
-        this.context.restore();
-      }
+        },
+        () => {
+          this.context.save();
+          this.context.strokeStyle = state.deleteHovered
+            ? nodeTheme.deleteButtonHoveredColor
+            : nodeTheme.deleteButtonColor;
+          this.context.lineWidth =
+            nodeTheme.deleteButtonLineWidth / DELETE_BUTTON_SIZE;
+          this.context.translate(
+            state.actualPosition.x +
+              state.actualSize.x -
+              DELETE_BUTTON_SIZE / 2 -
+              nodeTheme.nodePadding,
+            state.actualPosition.y +
+              DELETE_BUTTON_SIZE / 2 +
+              nodeTheme.nodePadding
+          );
+          this.context.scale(DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE);
+          cross(this.context, vec2(), 0.4);
+          this.context.restore();
+        }
+      );
     }
 
     if (node.resizable ?? true) {
-      if (callbacks.drawResizeHandle) {
-        callbacks.drawResizeHandle(this.context, {
+      this.invokeDrawCallback(
+        this.context,
+        'drawResizeHandle',
+        callbacks.drawResizeHandle,
+        {
           node,
           position: vec2(state.actualPosition),
           size: vec2(state.actualSize),
           hovered: state.resizeHovered,
-        });
-      } else {
-        this.context.save();
-        this.context.strokeStyle = state.resizeHovered
-          ? nodeTheme.resizeHandleHoveredColor
-          : nodeTheme.resizeHandleColor;
-        this.context.lineWidth =
-          nodeTheme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
-        this.context.translate(
-          state.actualPosition.x +
-            state.actualSize.x -
-            RESIZE_HANDLE_SIZE -
-            nodeTheme.nodePadding,
-          state.actualPosition.y +
-            state.actualSize.y -
-            RESIZE_HANDLE_SIZE -
-            nodeTheme.nodePadding
-        );
-        this.context.scale(RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
-        line(this.context, vec2(0, 0.8), vec2(0.8, 0));
-        line(this.context, vec2(0.3, 0.8), vec2(0.8, 0.3));
-        line(this.context, vec2(0.6, 0.8), vec2(0.8, 0.6));
-        this.context.restore();
-      }
+        },
+        () => {
+          this.context.save();
+          this.context.strokeStyle = state.resizeHovered
+            ? nodeTheme.resizeHandleHoveredColor
+            : nodeTheme.resizeHandleColor;
+          this.context.lineWidth =
+            nodeTheme.resizeHandleLineWidth / RESIZE_HANDLE_SIZE;
+          this.context.translate(
+            state.actualPosition.x +
+              state.actualSize.x -
+              RESIZE_HANDLE_SIZE -
+              nodeTheme.nodePadding,
+            state.actualPosition.y +
+              state.actualSize.y -
+              RESIZE_HANDLE_SIZE -
+              nodeTheme.nodePadding
+          );
+          this.context.scale(RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
+          line(this.context, vec2(0, 0.8), vec2(0.8, 0));
+          line(this.context, vec2(0.3, 0.8), vec2(0.8, 0.3));
+          line(this.context, vec2(0.6, 0.8), vec2(0.8, 0.6));
+          this.context.restore();
+        }
+      );
     }
 
     for (const port of node.ports) {
@@ -2075,27 +2124,35 @@ export default class GraphBuilder<
       this.drawPort(node, port, portState);
     }
 
-    if (callbacks.drawNodeContent) {
-      callbacks.drawNodeContent(this.context, {
+    this.invokeDrawCallback(
+      this.context,
+      'drawNodeContent',
+      callbacks.drawNodeContent,
+      {
         node,
         position: vec2(state.actualPosition),
         size: vec2(state.actualSize),
         hovered: state.hovered,
         selected: state.selected,
-      });
-    } else if (nodeTheme.showNodeLabel && node.label) {
-      this.context.save();
-      this.context.fillStyle = nodeTheme.nodeLabelColor;
-      this.context.font = nodeTheme.nodeLabelFont;
-      this.context.textAlign = 'left';
-      this.context.textBaseline = 'top';
-      this.context.fillText(
-        node.label,
-        state.actualPosition.x + nodeTheme.nodePadding,
-        state.actualPosition.y + nodeTheme.nodePadding
-      );
-      this.context.restore();
-    }
+      },
+      () => {
+        if (!nodeTheme.showNodeLabel || !node.label) {
+          return;
+        }
+
+        this.context.save();
+        this.context.fillStyle = nodeTheme.nodeLabelColor;
+        this.context.font = nodeTheme.nodeLabelFont;
+        this.context.textAlign = 'left';
+        this.context.textBaseline = 'top';
+        this.context.fillText(
+          node.label,
+          state.actualPosition.x + nodeTheme.nodePadding,
+          state.actualPosition.y + nodeTheme.nodePadding
+        );
+        this.context.restore();
+      }
+    );
   }
 
   private drawPort(
@@ -2126,8 +2183,11 @@ export default class GraphBuilder<
     const portTheme = this.effectivePortTheme(port);
     const { callbacks } = this.options;
 
-    if (callbacks.drawPort) {
-      callbacks.drawPort(this.context, {
+    this.invokeDrawCallback(
+      this.context,
+      'drawPort',
+      callbacks.drawPort,
+      {
         node,
         port,
         position: vec2(state.position),
@@ -2136,122 +2196,122 @@ export default class GraphBuilder<
         connectable: state.connectable,
         invalidReason: state.invalidReason,
         isPreview,
-      });
-      return;
-    }
+      },
+      () => {
+        this.context.globalCompositeOperation = 'source-over';
 
-    this.context.globalCompositeOperation = 'source-over';
+        this.context.save();
+        this.context.globalCompositeOperation = 'destination-out';
+        this.context.fillStyle = 'black';
+        this.context.beginPath();
+        this.context.arc(
+          state.position.x,
+          state.position.y,
+          portTheme.portCutoutRadius,
+          0,
+          Math.PI * 2
+        );
+        this.context.fill();
+        this.context.restore();
 
-    this.context.save();
-    this.context.globalCompositeOperation = 'destination-out';
-    this.context.fillStyle = 'black';
-    this.context.beginPath();
-    this.context.arc(
-      state.position.x,
-      state.position.y,
-      portTheme.portCutoutRadius,
-      0,
-      Math.PI * 2
-    );
-    this.context.fill();
-    this.context.restore();
+        const isInvalid = !state.connectable;
 
-    const isInvalid = !state.connectable;
+        this.context.save();
+        this.context.strokeStyle = isInvalid
+          ? portTheme.portInvalidBorderColor
+          : state.hovered
+            ? portTheme.portHoveredBorderColor
+            : portTheme.portBorderColor;
+        this.context.fillStyle = isInvalid
+          ? portTheme.portInvalidFillColor
+          : state.hovered
+            ? portTheme.portHoveredFillColor
+            : portTheme.portFillColor;
+        this.context.lineWidth = portTheme.portBorderWidth;
+        this.context.beginPath();
+        this.context.arc(
+          state.position.x,
+          state.position.y,
+          portTheme.portRadius,
+          0,
+          Math.PI * 2
+        );
+        this.context.fill();
+        this.context.stroke();
+        this.context.restore();
 
-    this.context.save();
-    this.context.strokeStyle = isInvalid
-      ? portTheme.portInvalidBorderColor
-      : state.hovered
-        ? portTheme.portHoveredBorderColor
-        : portTheme.portBorderColor;
-    this.context.fillStyle = isInvalid
-      ? portTheme.portInvalidFillColor
-      : state.hovered
-        ? portTheme.portHoveredFillColor
-        : portTheme.portFillColor;
-    this.context.lineWidth = portTheme.portBorderWidth;
-    this.context.beginPath();
-    this.context.arc(
-      state.position.x,
-      state.position.y,
-      portTheme.portRadius,
-      0,
-      Math.PI * 2
-    );
-    this.context.fill();
-    this.context.stroke();
-    this.context.restore();
-
-    if (state.hovered) {
-      this.context.save();
-      this.context.strokeStyle = isInvalid
-        ? portTheme.portInvalidRingColor
-        : portTheme.portHoverRingColor;
-      this.context.lineWidth = portTheme.portHoverRingLineWidth;
-      this.context.beginPath();
-      this.context.arc(
-        state.position.x,
-        state.position.y,
-        portTheme.portHoverRingRadius,
-        0,
-        Math.PI * 2
-      );
-      this.context.stroke();
-      this.context.restore();
-    }
-
-    if (this.options.showPortArrows && port !== null && !isPreview) {
-      const arrowDir =
-        port.type === PortType.Output ? direction : vec2.mul(direction, -1);
-      const base = vec2.add(
-        state.position,
-        vec2.mul(arrowDir, portTheme.portArrowOffset)
-      );
-      this.context.save();
-      this.context.fillStyle = portTheme.portArrowColor;
-      triangle(this.context, base, arrowDir, portTheme.portArrowSize);
-      this.context.fill();
-      this.context.restore();
-    }
-
-    if (
-      port !== null &&
-      !isPreview &&
-      portTheme.showPortLabel &&
-      typeof port.label === 'string' &&
-      port.label.length > 0
-    ) {
-      const horizontal = Math.abs(direction.x) > Math.abs(direction.y);
-      const distance = portTheme.portRadius + portTheme.portLabelOffset;
-      const labelPosition = vec2(state.position);
-
-      this.context.save();
-      this.context.fillStyle = portTheme.portLabelColor;
-      this.context.font = portTheme.portLabelFont;
-
-      if (horizontal) {
-        if (direction.x < 0) {
-          labelPosition.x += distance;
-          this.context.textAlign = 'left';
-        } else {
-          labelPosition.x -= distance;
-          this.context.textAlign = 'right';
+        if (state.hovered) {
+          this.context.save();
+          this.context.strokeStyle = isInvalid
+            ? portTheme.portInvalidRingColor
+            : portTheme.portHoverRingColor;
+          this.context.lineWidth = portTheme.portHoverRingLineWidth;
+          this.context.beginPath();
+          this.context.arc(
+            state.position.x,
+            state.position.y,
+            portTheme.portHoverRingRadius,
+            0,
+            Math.PI * 2
+          );
+          this.context.stroke();
+          this.context.restore();
         }
-        this.context.textBaseline = 'middle';
-      } else {
-        if (direction.y < 0) {
-          labelPosition.y += distance;
-          this.context.textBaseline = 'top';
-        } else {
-          labelPosition.y -= distance;
-          this.context.textBaseline = 'bottom';
+
+        if (this.options.showPortArrows && port !== null && !isPreview) {
+          const arrowDir =
+            port.type === PortType.Output ? direction : vec2.mul(direction, -1);
+          const base = vec2.add(
+            state.position,
+            vec2.mul(arrowDir, portTheme.portArrowOffset)
+          );
+          this.context.save();
+          this.context.fillStyle = portTheme.portArrowColor;
+          triangle(this.context, base, arrowDir, portTheme.portArrowSize);
+          this.context.fill();
+          this.context.restore();
         }
-        this.context.textAlign = 'center';
+
+        if (
+          port !== null &&
+          !isPreview &&
+          portTheme.showPortLabel &&
+          typeof port.label === 'string' &&
+          port.label.length > 0
+        ) {
+          const horizontal = Math.abs(direction.x) > Math.abs(direction.y);
+          const distance = portTheme.portRadius + portTheme.portLabelOffset;
+          const labelPosition = vec2(state.position);
+
+          this.context.save();
+          this.context.fillStyle = portTheme.portLabelColor;
+          this.context.font = portTheme.portLabelFont;
+
+          if (horizontal) {
+            if (direction.x < 0) {
+              labelPosition.x += distance;
+              this.context.textAlign = 'left';
+            } else {
+              labelPosition.x -= distance;
+              this.context.textAlign = 'right';
+            }
+            this.context.textBaseline = 'middle';
+          } else {
+            if (direction.y < 0) {
+              labelPosition.y += distance;
+              this.context.textBaseline = 'top';
+            } else {
+              labelPosition.y -= distance;
+              this.context.textBaseline = 'bottom';
+            }
+            this.context.textAlign = 'center';
+          }
+
+          this.context.fillText(port.label, labelPosition.x, labelPosition.y);
+          this.context.restore();
+        }
       }
-
-      this.context.fillText(port.label, labelPosition.x, labelPosition.y);
-      this.context.restore();
-    }
+    );
   }
 
   private drawEdgePreviewPort() {
@@ -2297,43 +2357,46 @@ export default class GraphBuilder<
     };
     const { callbacks } = this.options;
 
-    if (callbacks.drawEdgePreview) {
-      callbacks.drawEdgePreview(this.context, {
+    this.invokeDrawCallback(
+      this.context,
+      'drawEdgePreview',
+      callbacks.drawEdgePreview,
+      {
         from,
         to,
         fromDirection,
         toDirection,
-      });
-      return;
-    }
+      },
+      () => {
+        this.context.save();
+        this.context.strokeStyle = previewTheme.edgePreviewColor;
+        this.context.lineWidth = previewTheme.edgePreviewLineWidth;
+        curveFromTo(
+          this.context,
+          from,
+          to,
+          fromDirection,
+          toDirection,
+          this.options.gridSize
+        );
+        this.context.stroke();
+        this.context.restore();
 
-    this.context.save();
-    this.context.strokeStyle = previewTheme.edgePreviewColor;
-    this.context.lineWidth = previewTheme.edgePreviewLineWidth;
-    curveFromTo(
-      this.context,
-      from,
-      to,
-      fromDirection,
-      toDirection,
-      this.options.gridSize
+        this.context.save();
+        this.context.strokeStyle = previewTheme.edgePreviewOutlineColor;
+        this.context.lineWidth = previewTheme.edgePreviewOutlineLineWidth;
+        curveFromTo(
+          this.context,
+          from,
+          to,
+          fromDirection,
+          toDirection,
+          this.options.gridSize
+        );
+        this.context.stroke();
+        this.context.restore();
+      }
     );
-    this.context.stroke();
-    this.context.restore();
-
-    this.context.save();
-    this.context.strokeStyle = previewTheme.edgePreviewOutlineColor;
-    this.context.lineWidth = previewTheme.edgePreviewOutlineLineWidth;
-    curveFromTo(
-      this.context,
-      from,
-      to,
-      fromDirection,
-      toDirection,
-      this.options.gridSize
-    );
-    this.context.stroke();
-    this.context.restore();
   }
 
   private drawEdge(edge: Edge<TEdgeData>) {
@@ -2355,72 +2418,75 @@ export default class GraphBuilder<
     const edgeTheme = this.effectiveEdgeTheme(edge);
     const { callbacks } = this.options;
 
-    if (callbacks.drawEdge) {
-      callbacks.drawEdge(this.context, {
+    this.invokeDrawCallback(
+      this.context,
+      'drawEdge',
+      callbacks.drawEdge,
+      {
         edge,
         from: a,
         to: b,
         fromDirection: aEndpoint.direction,
         toDirection: bEndpoint.direction,
         hovered,
-      });
-      return;
-    }
+      },
+      () => {
+        this.context.save();
+        this.context.strokeStyle = hovered
+          ? edgeTheme.edgeHoveredColor
+          : edgeTheme.edgeColor;
+        this.context.lineWidth = edgeTheme.edgeLineWidth;
+        curveFromTo(
+          this.context,
+          a,
+          b,
+          aEndpoint.direction,
+          bEndpoint.direction,
+          this.options.gridSize
+        );
+        this.context.stroke();
+        this.context.restore();
 
-    this.context.save();
-    this.context.strokeStyle = hovered
-      ? edgeTheme.edgeHoveredColor
-      : edgeTheme.edgeColor;
-    this.context.lineWidth = edgeTheme.edgeLineWidth;
-    curveFromTo(
-      this.context,
-      a,
-      b,
-      aEndpoint.direction,
-      bEndpoint.direction,
-      this.options.gridSize
+        if (hovered) {
+          this.context.save();
+          this.context.strokeStyle = edgeTheme.edgeHoverOutlineColor;
+          this.context.lineWidth = edgeTheme.edgeHoverOutlineLineWidth;
+          curveFromTo(
+            this.context,
+            a,
+            b,
+            aEndpoint.direction,
+            bEndpoint.direction,
+            this.options.gridSize
+          );
+          this.context.stroke();
+          this.context.restore();
+        }
+
+        if (this.options.showEdgeArrows) {
+          const { cp1, cp2, join } = getCurveGeometry(
+            a,
+            b,
+            aEndpoint.direction,
+            bEndpoint.direction,
+            this.options.gridSize
+          );
+          const { position: arrowPos, tangent: arrowDir } = sampleBezierChain(
+            a,
+            cp1,
+            join,
+            cp2,
+            b,
+            edgeTheme.edgeArrowOffset
+          );
+          this.context.save();
+          this.context.fillStyle = edgeTheme.edgeArrowColor;
+          triangle(this.context, arrowPos, arrowDir, edgeTheme.edgeArrowSize);
+          this.context.fill();
+          this.context.restore();
+        }
+      }
     );
-    this.context.stroke();
-    this.context.restore();
-
-    if (hovered) {
-      this.context.save();
-      this.context.strokeStyle = edgeTheme.edgeHoverOutlineColor;
-      this.context.lineWidth = edgeTheme.edgeHoverOutlineLineWidth;
-      curveFromTo(
-        this.context,
-        a,
-        b,
-        aEndpoint.direction,
-        bEndpoint.direction,
-        this.options.gridSize
-      );
-      this.context.stroke();
-      this.context.restore();
-    }
-
-    if (this.options.showEdgeArrows) {
-      const { cp1, cp2, join } = getCurveGeometry(
-        a,
-        b,
-        aEndpoint.direction,
-        bEndpoint.direction,
-        this.options.gridSize
-      );
-      const { position: arrowPos, tangent: arrowDir } = sampleBezierChain(
-        a,
-        cp1,
-        join,
-        cp2,
-        b,
-        edgeTheme.edgeArrowOffset
-      );
-      this.context.save();
-      this.context.fillStyle = edgeTheme.edgeArrowColor;
-      triangle(this.context, arrowPos, arrowDir, edgeTheme.edgeArrowSize);
-      this.context.fill();
-      this.context.restore();
-    }
   }
 
   private drawEffects() {
@@ -2536,8 +2602,11 @@ export default class GraphBuilder<
     }
 
     const { callbacks } = this.options;
-    if (callbacks.drawEdgeDashEffect) {
-      callbacks.drawEdgeDashEffect(this.context, {
+    this.invokeDrawCallback(
+      this.context,
+      'drawEdgeDashEffect',
+      callbacks.drawEdgeDashEffect,
+      {
         edge,
         channel: state.channel,
         from: vec2(geometry.from),
@@ -2546,27 +2615,30 @@ export default class GraphBuilder<
         toDirection: vec2(geometry.toDirection),
         phase: state.config.phase,
         config: { ...state.config },
-      });
-      return;
-    }
-
-    this.context.save();
-    this.context.globalCompositeOperation = state.config.blendMode;
-    this.context.globalAlpha = Math.max(0, Math.min(1, state.config.opacity));
-    this.context.strokeStyle = state.config.color;
-    this.context.lineWidth = Math.max(0.1, state.config.lineWidth);
-    this.context.setLineDash(state.config.dashPattern);
-    this.context.lineDashOffset = -state.config.phase;
-    curveFromTo(
-      this.context,
-      geometry.from,
-      geometry.to,
-      geometry.fromDirection,
-      geometry.toDirection,
-      this.options.gridSize
+      },
+      () => {
+        this.context.save();
+        this.context.globalCompositeOperation = state.config.blendMode;
+        this.context.globalAlpha = Math.max(
+          0,
+          Math.min(1, state.config.opacity)
+        );
+        this.context.strokeStyle = state.config.color;
+        this.context.lineWidth = Math.max(0.1, state.config.lineWidth);
+        this.context.setLineDash(state.config.dashPattern);
+        this.context.lineDashOffset = -state.config.phase;
+        curveFromTo(
+          this.context,
+          geometry.from,
+          geometry.to,
+          geometry.fromDirection,
+          geometry.toDirection,
+          this.options.gridSize
+        );
+        this.context.stroke();
+        this.context.restore();
+      }
     );
-    this.context.stroke();
-    this.context.restore();
   }
 
   private drawEdgeDotEffect(edge: Edge<TEdgeData>, state: EdgeDotRuntimeState) {
@@ -2595,8 +2667,11 @@ export default class GraphBuilder<
         progress
       );
 
-      if (callbacks.drawEdgeDotEffect) {
-        callbacks.drawEdgeDotEffect(this.context, {
+      this.invokeDrawCallback(
+        this.context,
+        'drawEdgeDotEffect',
+        callbacks.drawEdgeDotEffect,
+        {
           edge,
           channel: state.channel,
           id: instance.id,
@@ -2604,24 +2679,27 @@ export default class GraphBuilder<
           direction: vec2(sample.tangent),
           progress,
           config: { ...state.config },
-        });
-        continue;
-      }
-
-      this.context.save();
-      this.context.globalCompositeOperation = state.config.blendMode;
-      this.context.globalAlpha = Math.max(0, Math.min(1, state.config.opacity));
-      this.context.fillStyle = state.config.color;
-      this.context.beginPath();
-      this.context.arc(
-        sample.position.x,
-        sample.position.y,
-        Math.max(0.1, state.config.radius),
-        0,
-        Math.PI * 2
+        },
+        () => {
+          this.context.save();
+          this.context.globalCompositeOperation = state.config.blendMode;
+          this.context.globalAlpha = Math.max(
+            0,
+            Math.min(1, state.config.opacity)
+          );
+          this.context.fillStyle = state.config.color;
+          this.context.beginPath();
+          this.context.arc(
+            sample.position.x,
+            sample.position.y,
+            Math.max(0.1, state.config.radius),
+            0,
+            Math.PI * 2
+          );
+          this.context.fill();
+          this.context.restore();
+        }
       );
-      this.context.fill();
-      this.context.restore();
     }
   }
 
@@ -2641,8 +2719,11 @@ export default class GraphBuilder<
       const radius = this.lerp(config.fromRadius, config.toRadius, progress);
       const opacity = Math.max(0, 1 - progress) * config.maxOpacity;
 
-      if (callbacks.drawPortPulseEffect) {
-        callbacks.drawPortPulseEffect(this.context, {
+      this.invokeDrawCallback(
+        this.context,
+        'drawPortPulseEffect',
+        callbacks.drawPortPulseEffect,
+        {
           node,
           port,
           channel: state.channel,
@@ -2652,25 +2733,69 @@ export default class GraphBuilder<
           radius,
           opacity,
           config: { ...config },
-        });
-        continue;
-      }
-
-      this.context.save();
-      this.context.globalCompositeOperation = config.blendMode;
-      this.context.globalAlpha = Math.max(0, Math.min(1, opacity));
-      this.context.strokeStyle = config.color;
-      this.context.lineWidth = Math.max(0.1, config.lineWidth);
-      this.context.beginPath();
-      this.context.arc(
-        portState.position.x,
-        portState.position.y,
-        radius,
-        0,
-        Math.PI * 2
+        },
+        () => {
+          this.context.save();
+          this.context.globalCompositeOperation = config.blendMode;
+          this.context.globalAlpha = Math.max(0, Math.min(1, opacity));
+          this.context.strokeStyle = config.color;
+          this.context.lineWidth = Math.max(0.1, config.lineWidth);
+          this.context.beginPath();
+          this.context.arc(
+            portState.position.x,
+            portState.position.y,
+            radius,
+            0,
+            Math.PI * 2
+          );
+          this.context.stroke();
+          this.context.restore();
+        }
       );
-      this.context.stroke();
-      this.context.restore();
+    }
+  }
+
+  private callbackRenderMode(
+    callbackName: GraphBuilderRenderCallbackName
+  ): GraphBuilderCallbackRenderMode {
+    return this.options.callbacks.renderModes?.[callbackName] ?? 'replace';
+  }
+
+  private invokeDrawCallback<TDrawContext>(
+    context: CanvasRenderingContext2D,
+    callbackName: GraphBuilderRenderCallbackName,
+    callback:
+      | ((
+          context: CanvasRenderingContext2D,
+          drawContext: TDrawContext,
+          drawDefault: () => void
+        ) => void | boolean)
+      | undefined,
+    drawContext: TDrawContext,
+    drawDefault: () => void
+  ) {
+    const mode = this.callbackRenderMode(callbackName);
+    let defaultDrawn = false;
+    const runDefault = () => {
+      if (defaultDrawn) {
+        return;
+      }
+      defaultDrawn = true;
+      drawDefault();
+    };
+
+    if (mode === 'overlay') {
+      runDefault();
+    }
+
+    if (!callback) {
+      runDefault();
+      return;
+    }
+
+    const result = callback(context, drawContext, runDefault);
+    if (mode === 'replace' && result === false && !defaultDrawn) {
+      runDefault();
     }
   }
 

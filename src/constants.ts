@@ -101,7 +101,7 @@ export const DEFAULT_THEME: GraphBuilderTheme = {
   showPortLabel: true,
   portLabelOffset: 8,
   portLabelColor: '#fffb',
-  portLabelFont: '12px sans-serif',
+  portLabelFont: '10px sans-serif',
 
   // Edge
   edgeColor: '#fff2',

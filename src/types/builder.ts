@@ -282,115 +282,120 @@ export type PortPulseEffectDrawContext = {
   config: PortPulseEffectConfig;
 };
 
+export type GraphBuilderCallbackRenderMode = 'replace' | 'overlay';
+
+export type GraphBuilderRenderCallbackName =
+  | 'drawGridDot'
+  | 'drawNodeFrame'
+  | 'drawNodeContent'
+  | 'drawDeleteButton'
+  | 'drawResizeHandle'
+  | 'drawPort'
+  | 'drawEdge'
+  | 'drawEdgePreview'
+  | 'drawEdgeDashEffect'
+  | 'drawEdgeDotEffect'
+  | 'drawPortPulseEffect';
+
+export type GraphBuilderCallbackRenderModes = Partial<
+  Record<GraphBuilderRenderCallbackName, GraphBuilderCallbackRenderMode>
+>;
+
+export type GraphBuilderRenderCallback<TDrawContext> = (
+  context: CanvasRenderingContext2D,
+  drawContext: TDrawContext,
+  drawDefault: () => void
+) => void | boolean;
+
 /**
  * Optional rendering callbacks that can be supplied via `GraphBuilderOptions`.
- * Each callback completely replaces the built-in drawing for that element.
+ * Callbacks can either replace built-in drawing or be composited as overlays.
  * The canvas `context` is passed as the first argument followed by a
- * draw-context object containing all relevant state for that element.
+ * draw-context object containing all relevant state for that element, and a
+ * `drawDefault` callback that runs the built-in renderer.
  *
  * The context transform has already been applied (camera pan + zoom) when
  * these callbacks are invoked, so all coordinates are in world space.
+ *
+ * In `replace` mode (default), returning `false` from a callback falls back to
+ * built-in rendering.
  */
 export type GraphBuilderCallbacks = {
+  /**
+   * Controls how each draw callback composes with the built-in renderer.
+   *
+   * - `replace` (default): callback replaces built-in rendering unless it
+   *   calls `drawDefault()` or returns `false`.
+   * - `overlay`: built-in rendering runs first, then callback runs.
+   */
+  renderModes?: GraphBuilderCallbackRenderModes;
+
   /**
    * Called once per grid dot.
    * Replaces the default cross/plus marker drawn at each grid intersection.
    */
-  drawGridDot?: (
-    context: CanvasRenderingContext2D,
-    drawContext: GridDrawContext
-  ) => void;
+  drawGridDot?: GraphBuilderRenderCallback<GridDrawContext>;
 
   /**
    * Called once per node.
    * Replaces the default rounded-rectangle background and border.
    */
-  drawNodeFrame?: (
-    context: CanvasRenderingContext2D,
-    drawContext: NodeFrameDrawContext
-  ) => void;
+  drawNodeFrame?: GraphBuilderRenderCallback<NodeFrameDrawContext>;
 
   /**
    * Called once per node after the frame (and ports) have been drawn.
    * Replaces the default label rendering.
    * Use this to render custom content inside the node bounds.
    */
-  drawNodeContent?: (
-    context: CanvasRenderingContext2D,
-    drawContext: NodeContentDrawContext
-  ) => void;
+  drawNodeContent?: GraphBuilderRenderCallback<NodeContentDrawContext>;
 
   /**
    * Called for each deletable node to render its delete button.
    * Replaces the default cross icon in the top-right corner.
    */
-  drawDeleteButton?: (
-    context: CanvasRenderingContext2D,
-    drawContext: DeleteButtonDrawContext
-  ) => void;
+  drawDeleteButton?: GraphBuilderRenderCallback<DeleteButtonDrawContext>;
 
   /**
    * Called for each resizable node to render its resize handle.
    * Replaces the default diagonal-lines icon in the bottom-right corner.
    */
-  drawResizeHandle?: (
-    context: CanvasRenderingContext2D,
-    drawContext: ResizeHandleDrawContext
-  ) => void;
+  drawResizeHandle?: GraphBuilderRenderCallback<ResizeHandleDrawContext>;
 
   /**
    * Called once per port (and once for the floating preview port while
    * dragging a new edge).
    * Replaces the default circular port marker.
    */
-  drawPort?: (
-    context: CanvasRenderingContext2D,
-    drawContext: PortDrawContext
-  ) => void;
+  drawPort?: GraphBuilderRenderCallback<PortDrawContext>;
 
   /**
    * Called once per edge in the graph.
    * Replaces the default bezier curve rendering.
    */
-  drawEdge?: (
-    context: CanvasRenderingContext2D,
-    drawContext: EdgeDrawContext
-  ) => void;
+  drawEdge?: GraphBuilderRenderCallback<EdgeDrawContext>;
 
   /**
    * Called while the user is dragging to create a new edge, to render the
    * in-progress preview curve.
    * Replaces the default dashed/translucent preview curve.
    */
-  drawEdgePreview?: (
-    context: CanvasRenderingContext2D,
-    drawContext: EdgePreviewDrawContext
-  ) => void;
+  drawEdgePreview?: GraphBuilderRenderCallback<EdgePreviewDrawContext>;
 
   /**
    * Called for each active edge dash effect.
    * Replaces the default animated dashed curve rendering.
    */
-  drawEdgeDashEffect?: (
-    context: CanvasRenderingContext2D,
-    drawContext: EdgeDashEffectDrawContext
-  ) => void;
+  drawEdgeDashEffect?: GraphBuilderRenderCallback<EdgeDashEffectDrawContext>;
 
   /**
    * Called for each active edge moving dot instance.
    * Replaces the default moving dot rendering.
    */
-  drawEdgeDotEffect?: (
-    context: CanvasRenderingContext2D,
-    drawContext: EdgeDotEffectDrawContext
-  ) => void;
+  drawEdgeDotEffect?: GraphBuilderRenderCallback<EdgeDotEffectDrawContext>;
 
   /**
    * Called for each active port pulse instance.
    * Replaces the default expanding pulse ring rendering.
    */
-  drawPortPulseEffect?: (
-    context: CanvasRenderingContext2D,
-    drawContext: PortPulseEffectDrawContext
-  ) => void;
+  drawPortPulseEffect?: GraphBuilderRenderCallback<PortPulseEffectDrawContext>;
 };

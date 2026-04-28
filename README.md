@@ -1000,11 +1000,26 @@ builder.createEdge(
 
 ### Custom rendering callbacks
 
-Every visual element can be replaced with a custom drawing routine. Provide callbacks via the `callbacks` option. The canvas `context` has the camera transform pre-applied, so coordinates are in world space.
+Every visual element can be customized with a drawing callback. Provide callbacks via the `callbacks` option. The canvas `context` has the camera transform pre-applied, so coordinates are in world space.
+
+Each callback receives:
+
+1. `context`: the canvas rendering context
+2. `drawContext`: element-specific state (node, edge, hovered, positions, etc.)
+3. `drawDefault()`: runs the built-in renderer for that element
+
+Callbacks support two composition modes via `callbacks.renderModes`:
+
+- `replace` (default): callback replaces built-in rendering unless it calls `drawDefault()` or returns `false`
+- `overlay`: built-in rendering runs first, then callback runs
 
 ```ts
 const builder = new GraphBuilder(canvas, {
   callbacks: {
+    renderModes: {
+      drawEdge: 'overlay', // keep default edge curve, then add custom overlay
+    },
+
     // Custom node background
     drawNodeFrame(context, { node, position, size, hovered, selected }) {
       context.fillStyle = selected ? '#4a90d9' : hovered ? '#3a7abf' : '#2c5f8a';
@@ -1013,8 +1028,13 @@ const builder = new GraphBuilder(canvas, {
       context.fill();
     },
 
-    // Custom node label / content
+    // Custom node label / content for selected node types only.
+    // Return false to fall back to default node label rendering.
     drawNodeContent(context, { node, position, size }) {
+      if (node.data?.kind !== 'special') {
+        return false;
+      }
+
       context.fillStyle = '#fff';
       context.font = '13px sans-serif';
       context.textAlign = 'center';
@@ -1036,20 +1056,22 @@ const builder = new GraphBuilder(canvas, {
       context.fill();
     },
 
-    // Custom edge curve
+    // Overlay a highlight on top of the default edge rendering.
+    // In overlay mode the default renderer already ran first.
     drawEdge(context, { from, to, fromDirection, toDirection, hovered }) {
       const cp1 = { x: from.x + fromDirection.x * 80, y: from.y + fromDirection.y * 80 };
       const cp2 = { x: to.x + toDirection.x * 80,   y: to.y + toDirection.y * 80   };
-      context.strokeStyle = hovered ? '#fff' : '#888';
-      context.lineWidth = 2;
+      context.strokeStyle = hovered ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.2)';
+      context.lineWidth = 6;
       context.beginPath();
       context.moveTo(from.x, from.y);
       context.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, to.x, to.y);
       context.stroke();
     },
 
-    // Custom grid dot
-    drawGridDot(context, { position, gridSize }) {
+    // Replace default grid dot completely.
+    // Call drawDefault() if you want to include the built-in plus marker.
+    drawGridDot(context, { position, gridSize }, drawDefault) {
       context.fillStyle = 'rgba(255,255,255,0.06)';
       context.fillRect(position.x - 1, position.y - 1, 2, 2);
     },

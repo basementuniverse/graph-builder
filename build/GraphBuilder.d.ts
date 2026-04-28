@@ -108,6 +108,7 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private resetGridViewPort;
     private createGridChunk;
     private drawGridChunk;
+    private drawDefaultGridDot;
     private drawGridChunkDynamic;
     private drawGridChunkCached;
     private renderGridChunkToCanvas;
@@ -122,6 +123,8 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private drawEdgeDashEffect;
     private drawEdgeDotEffect;
     private drawPortPulseEffect;
+    private callbackRenderMode;
+    private invokeDrawCallback;
     private getEdgeDashEffectConfig;
     private setEdgeDashEffectConfig;
     private startEdgeDashEffect;

@@ -72,7 +72,7 @@ exports.DEFAULT_THEME = {
     showPortLabel: true,
     portLabelOffset: 8,
     portLabelColor: '#fffb',
-    portLabelFont: '12px sans-serif',
+    portLabelFont: '10px sans-serif',
     edgeColor: '#fff2',
     edgeHoveredColor: '#fff4',
     edgeLineWidth: 3,
