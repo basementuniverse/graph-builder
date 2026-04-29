@@ -73,6 +73,7 @@ import type {
   PortState,
   PortTheme,
   RequiredGraphBuilderOptions,
+  TraversalNode,
   VisitorControl,
 } from './types';
 import {
@@ -93,6 +94,7 @@ import {
   topologicalSort,
   traverseBFS,
   traverseDFS,
+  traverseTopological,
   triangle,
 } from './utils';
 
@@ -1022,7 +1024,7 @@ export default class GraphBuilder<
   public traverseBFS<TResult = void>(
     startNodeId: string,
     visitor: (
-      node: Node<TNodeData, TPortData>,
+      node: TraversalNode<TNodeData, TEdgeData, TPortData>,
       depth: number
     ) => TResult | VisitorControl,
     direction: TraversalDirection = TraversalDirection.Both
@@ -1033,12 +1035,21 @@ export default class GraphBuilder<
   public traverseDFS<TResult = void>(
     startNodeId: string,
     visitor: (
-      node: Node<TNodeData, TPortData>,
+      node: TraversalNode<TNodeData, TEdgeData, TPortData>,
       depth: number
     ) => TResult | VisitorControl,
     direction: TraversalDirection = TraversalDirection.Both
   ) {
     return traverseDFS(this.graph, startNodeId, visitor, direction);
+  }
+
+  public traverseTopological<TResult = void>(
+    visitor: (
+      node: TraversalNode<TNodeData, TEdgeData, TPortData>,
+      depth: number
+    ) => TResult | VisitorControl
+  ): TResult[] | null {
+    return traverseTopological(this.graph, visitor);
   }
 
   public topologicalSort() {

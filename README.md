@@ -484,11 +484,31 @@ const outgoing = builder.getNeighbors('node-1', TraversalDirection.Out);
 
 #### `traverseBFS` / `traverseDFS`
 
-Walk the graph from a starting node. The visitor callback receives each `Node` and its depth. Return a `VisitorControl` object to steer traversal:
+Walk the graph from a starting node. The visitor callback receives a traversal-hydrated node and its depth.
+
+The hydrated node includes:
+
+- `adjacentNodes`: unique nodes connected by an incoming or outgoing edge
+- `adjacentEdges`: connected edges where each edge has `otherNode`
+- `ports[]`: each port includes `connectedEdge` (first match or `null`) and `connectedEdges` (all matches), and each connected edge has `otherNode`
+
+Return a `VisitorControl` object to steer traversal:
 
 ```ts
 builder.traverseBFS('node-1', (node, depth) => {
   console.log(depth, node.label);
+
+  // Per-port connection access
+  const outPort = node.ports.find(port => port.id === 'out');
+  const next = outPort?.connectedEdge?.otherNode;
+  if (next) {
+    console.log('Primary downstream node:', next.id);
+  }
+
+  // All adjacent nodes/edges for the current node
+  for (const adjacent of node.adjacentNodes) {
+    console.log('Adjacent node:', adjacent.id);
+  }
 
   if (node.id === 'stop-here') {
     return { stop: true }; // abort the entire traversal
@@ -503,6 +523,28 @@ builder.traverseBFS('node-1', (node, depth) => {
 `traverseDFS` has the same signature.
 
 Both methods accept an optional `TraversalDirection` as the third argument.
+
+#### `traverseTopological`
+
+Walk the graph in dependency-safe topological order.
+
+- Returns `null` immediately if the graph contains a cycle
+- Traverses all disconnected DAG components
+- The callback receives the same traversal-hydrated node shape used by `traverseBFS` / `traverseDFS`
+
+```ts
+const result = builder.traverseTopological((node, depth) => {
+  console.log('visit', depth, node.id);
+
+  if (node.id === 'stop-here') {
+    return { stop: true };
+  }
+});
+
+if (result === null) {
+  console.error('Cannot traverse topologically because the graph contains a cycle');
+}
+```
 
 #### `topologicalSort`
 

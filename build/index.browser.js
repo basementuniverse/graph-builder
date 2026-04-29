@@ -3628,8 +3628,8 @@ InputManager.DEFAULT_OPTIONS = {
     }
     return { outgoing, incoming };
   }
-  function getNeighbors(graph, nodeId, direction = "both" /* Both */) {
-    const { outgoing, incoming } = buildAdjacency(graph);
+  function getNeighborsFromAdjacency(adjacency, nodeId, direction) {
+    const { outgoing, incoming } = adjacency;
     if (direction === "out" /* Out */) {
       return [...outgoing.get(nodeId) ?? /* @__PURE__ */ new Set()];
     }
@@ -3643,11 +3643,128 @@ InputManager.DEFAULT_OPTIONS = {
       ])
     ];
   }
+  function cloneEdge(edge) {
+    return {
+      ...edge,
+      a: { ...edge.a },
+      b: { ...edge.b }
+    };
+  }
+  function cloneNode(node) {
+    return {
+      ...node,
+      position: { ...node.position },
+      size: { ...node.size },
+      ports: node.ports.map((port) => ({ ...port }))
+    };
+  }
+  function buildTraversalConnections(graph) {
+    const byNodeId = /* @__PURE__ */ new Map();
+    const byNodePortKey = /* @__PURE__ */ new Map();
+    const ensureByNodeId = (nodeId) => {
+      let connections = byNodeId.get(nodeId);
+      if (!connections) {
+        connections = [];
+        byNodeId.set(nodeId, connections);
+      }
+      return connections;
+    };
+    const ensureByNodePortKey = (nodeId, portId) => {
+      const key = `${nodeId}:${portId}`;
+      let connections = byNodePortKey.get(key);
+      if (!connections) {
+        connections = [];
+        byNodePortKey.set(key, connections);
+      }
+      return connections;
+    };
+    for (const node of graph.nodes) {
+      ensureByNodeId(node.id);
+      for (const port of node.ports) {
+        ensureByNodePortKey(node.id, port.id);
+      }
+    }
+    for (const edge of graph.edges) {
+      const edgeFromA = {
+        edge,
+        portId: edge.a.portId,
+        otherNodeId: edge.b.nodeId
+      };
+      ensureByNodeId(edge.a.nodeId).push(edgeFromA);
+      ensureByNodePortKey(edge.a.nodeId, edge.a.portId).push(edgeFromA);
+      const edgeFromB = {
+        edge,
+        portId: edge.b.portId,
+        otherNodeId: edge.a.nodeId
+      };
+      ensureByNodeId(edge.b.nodeId).push(edgeFromB);
+      ensureByNodePortKey(edge.b.nodeId, edge.b.portId).push(edgeFromB);
+    }
+    return {
+      byNodeId,
+      byNodePortKey
+    };
+  }
+  function hydrateTraversalNode(nodeId, nodesById, connections) {
+    const node = nodesById.get(nodeId);
+    if (!node) {
+      return null;
+    }
+    const nodeConnections = connections.byNodeId.get(nodeId) ?? [];
+    const adjacentNodeIds = /* @__PURE__ */ new Set();
+    const adjacentEdges = nodeConnections.flatMap((connection) => {
+      const otherNode = nodesById.get(connection.otherNodeId);
+      if (!otherNode) {
+        return [];
+      }
+      adjacentNodeIds.add(otherNode.id);
+      return [
+        {
+          ...cloneEdge(connection.edge),
+          otherNode: cloneNode(otherNode)
+        }
+      ];
+    });
+    const adjacentNodes = [...adjacentNodeIds].map((id) => nodesById.get(id)).filter(
+      (adjacent) => adjacent !== void 0
+    ).map((adjacent) => cloneNode(adjacent));
+    const ports = node.ports.map((port) => {
+      const portConnections = connections.byNodePortKey.get(`${node.id}:${port.id}`) ?? [];
+      const connectedEdges = portConnections.flatMap((connection) => {
+        const otherNode = nodesById.get(connection.otherNodeId);
+        if (!otherNode) {
+          return [];
+        }
+        return [
+          {
+            ...cloneEdge(connection.edge),
+            otherNode: cloneNode(otherNode)
+          }
+        ];
+      });
+      return {
+        ...port,
+        connectedEdge: connectedEdges[0] ?? null,
+        connectedEdges
+      };
+    });
+    return {
+      ...cloneNode(node),
+      ports,
+      adjacentNodes,
+      adjacentEdges
+    };
+  }
+  function getNeighbors(graph, nodeId, direction = "both" /* Both */) {
+    return getNeighborsFromAdjacency(buildAdjacency(graph), nodeId, direction);
+  }
   function traverseBFS(graph, startNodeId, visitor, direction = "both" /* Both */) {
     const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
     if (!nodesById.has(startNodeId)) {
       return [];
     }
+    const adjacency = buildAdjacency(graph);
+    const traversalConnections = buildTraversalConnections(graph);
     const results = [];
     const visited = /* @__PURE__ */ new Set();
     const queue = [
@@ -3659,7 +3776,14 @@ InputManager.DEFAULT_OPTIONS = {
         continue;
       }
       visited.add(current.nodeId);
-      const node = nodesById.get(current.nodeId);
+      const node = hydrateTraversalNode(
+        current.nodeId,
+        nodesById,
+        traversalConnections
+      );
+      if (!node) {
+        continue;
+      }
       const response = visitor(node, current.depth);
       if (response !== void 0 && response !== null && typeof response === "object") {
         if ("stop" in response && response.stop) {
@@ -3671,7 +3795,11 @@ InputManager.DEFAULT_OPTIONS = {
       } else if (response !== void 0) {
         results.push(response);
       }
-      for (const neighbor of getNeighbors(graph, current.nodeId, direction)) {
+      for (const neighbor of getNeighborsFromAdjacency(
+        adjacency,
+        current.nodeId,
+        direction
+      )) {
         if (!visited.has(neighbor)) {
           queue.push({ nodeId: neighbor, depth: current.depth + 1 });
         }
@@ -3684,6 +3812,8 @@ InputManager.DEFAULT_OPTIONS = {
     if (!nodesById.has(startNodeId)) {
       return [];
     }
+    const adjacency = buildAdjacency(graph);
+    const traversalConnections = buildTraversalConnections(graph);
     const results = [];
     const visited = /* @__PURE__ */ new Set();
     const walk = (nodeId, depth) => {
@@ -3691,7 +3821,7 @@ InputManager.DEFAULT_OPTIONS = {
         return false;
       }
       visited.add(nodeId);
-      const node = nodesById.get(nodeId);
+      const node = hydrateTraversalNode(nodeId, nodesById, traversalConnections);
       if (!node) {
         return false;
       }
@@ -3706,7 +3836,11 @@ InputManager.DEFAULT_OPTIONS = {
       } else if (response !== void 0) {
         results.push(response);
       }
-      for (const neighbor of getNeighbors(graph, nodeId, direction)) {
+      for (const neighbor of getNeighborsFromAdjacency(
+        adjacency,
+        nodeId,
+        direction
+      )) {
         if (walk(neighbor, depth + 1)) {
           return true;
         }
@@ -3714,6 +3848,43 @@ InputManager.DEFAULT_OPTIONS = {
       return false;
     };
     walk(startNodeId, 0);
+    return results;
+  }
+  function traverseTopological(graph, visitor) {
+    const order = topologicalSort(graph);
+    if (!order) {
+      return null;
+    }
+    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+    const adjacency = buildAdjacency(graph);
+    const traversalConnections = buildTraversalConnections(graph);
+    const depthByNodeId = /* @__PURE__ */ new Map();
+    for (const nodeId of order) {
+      const incoming = adjacency.incoming.get(nodeId) ?? /* @__PURE__ */ new Set();
+      let depth = 0;
+      for (const parentId of incoming) {
+        depth = Math.max(depth, (depthByNodeId.get(parentId) ?? 0) + 1);
+      }
+      depthByNodeId.set(nodeId, depth);
+    }
+    const results = [];
+    for (const nodeId of order) {
+      const node = hydrateTraversalNode(nodeId, nodesById, traversalConnections);
+      if (!node) {
+        continue;
+      }
+      const response = visitor(node, depthByNodeId.get(nodeId) ?? 0);
+      if (response !== void 0 && response !== null && typeof response === "object") {
+        if ("stop" in response && response.stop) {
+          return results;
+        }
+        if ("skip" in response && response.skip) {
+          continue;
+        }
+      } else if (response !== void 0) {
+        results.push(response);
+      }
+    }
     return results;
   }
   function topologicalSort(graph) {
@@ -4501,6 +4672,9 @@ InputManager.DEFAULT_OPTIONS = {
     }
     traverseDFS(startNodeId, visitor, direction = "both" /* Both */) {
       return traverseDFS(this.graph, startNodeId, visitor, direction);
+    }
+    traverseTopological(visitor) {
+      return traverseTopological(this.graph, visitor);
     }
     topologicalSort() {
       return topologicalSort(this.graph);

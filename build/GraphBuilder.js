@@ -682,6 +682,9 @@ class GraphBuilder {
     traverseDFS(startNodeId, visitor, direction = enums_1.TraversalDirection.Both) {
         return (0, utils_1.traverseDFS)(this.graph, startNodeId, visitor, direction);
     }
+    traverseTopological(visitor) {
+        return (0, utils_1.traverseTopological)(this.graph, visitor);
+    }
     topologicalSort() {
         return (0, utils_1.topologicalSort)(this.graph);
     }
