@@ -35,8 +35,6 @@ export type GraphBuilderOptions<
   gridSize?: number;
   snapToGrid?: boolean;
   showGrid?: boolean;
-  showPortArrows?: boolean;
-  showEdgeArrows?: boolean;
   camera?: Partial<CameraOptions>;
   autoStart?: boolean;
   theme?: Partial<GraphBuilderTheme>;
@@ -64,8 +62,6 @@ export type RequiredGraphBuilderOptions<TNodeData, TEdgeData, TPortData> = {
   gridSize: number;
   snapToGrid: boolean;
   showGrid: boolean;
-  showPortArrows: boolean;
-  showEdgeArrows: boolean;
   autoStart: boolean;
   allowSelfConnection: boolean;
   canConnectPorts?: GraphBuilderOptions<

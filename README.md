@@ -86,6 +86,8 @@ const builder = new GraphBuilder(canvas, {
   // Partial theme overrides (see Theming section)
   theme: {
     backgroundColor: '#1e1e1e',
+    showPortArrows: false,
+    showEdgeArrows: false,
   },
 
   // Runtime-only animation effect defaults (see Animation effects)
@@ -951,6 +953,7 @@ const builder = new GraphBuilder(canvas, {
     portPulseFromRadius: 10,
     portPulseToRadius: 30,
     portPulseMaxOpacity: 0.8,
+    showPortArrows: false,
 
     // Port label
     showPortLabel: true,
@@ -964,6 +967,7 @@ const builder = new GraphBuilder(canvas, {
     edgeLineWidth: 3,
     edgeHoverOutlineColor: 'rgba(255,255,255,0.1)',
     edgeHoverOutlineLineWidth: 10,
+    showEdgeArrows: false,
     edgeDashColor: '#7dd3fc',
     edgeDashLineWidth: 3,
     edgeDotColor: '#fde047',

@@ -1,7 +1,7 @@
 import { vec2 } from '@basementuniverse/vec';
 import { ToolMode, TraversalDirection } from './enums';
 import { layoutForceDirected, layoutLayered } from './layout';
-import type { Edge, EdgeTheme, Graph, GraphBuilderCapabilities, GraphBuilderEffectsController, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, Port, PortRef, TraversalNode, VisitorControl } from './types';
+import type { Edge, EdgeTheme, Graph, GraphBuilderCapabilities, GraphBuilderEffectsController, GraphBuilderEventHandler, GraphBuilderEventMap, GraphBuilderOptions, GraphBuilderTheme, GraphDocument, GraphDomain, LoadFromDomainOptions, Node, NodeTemplate, Port, PortRef, TraversalNode, VisitorControl } from './types';
 export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPortData = unknown> {
     static screen: vec2;
     private static inputInitialised;
@@ -51,6 +51,8 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     setCreateNodeTemplate(template: NodeTemplate<TNodeData, TPortData> | null): void;
     setSnapToGrid(enabled: boolean): void;
     setGridSize(size: number): void;
+    setShowGrid(enabled: boolean): void;
+    setTheme(theme: Partial<GraphBuilderTheme>): void;
     getCameraPosition(): vec2;
     setCameraPosition(position: vec2): void;
     panCamera(offset: vec2): void;

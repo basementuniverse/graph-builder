@@ -21,7 +21,7 @@ const GRID_DOT_SIZE = 8;
 const GRID_CHUNK_PADDING = GRID_DOT_SIZE;
 class GraphBuilder {
     constructor(canvas, options = {}) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
         this.frameHandle = 0;
         this.running = false;
         this.gridViewPort = null;
@@ -104,39 +104,37 @@ class GraphBuilder {
             gridSize: Math.max(1, (_a = options.gridSize) !== null && _a !== void 0 ? _a : constants_1.GRID_SIZE),
             snapToGrid: (_b = options.snapToGrid) !== null && _b !== void 0 ? _b : false,
             showGrid: (_c = options.showGrid) !== null && _c !== void 0 ? _c : true,
-            showPortArrows: (_d = options.showPortArrows) !== null && _d !== void 0 ? _d : false,
-            showEdgeArrows: (_e = options.showEdgeArrows) !== null && _e !== void 0 ? _e : false,
-            autoStart: (_f = options.autoStart) !== null && _f !== void 0 ? _f : true,
-            allowSelfConnection: (_g = options.allowSelfConnection) !== null && _g !== void 0 ? _g : false,
+            autoStart: (_d = options.autoStart) !== null && _d !== void 0 ? _d : true,
+            allowSelfConnection: (_e = options.allowSelfConnection) !== null && _e !== void 0 ? _e : false,
             canConnectPorts: options.canConnectPorts,
             resolveEdgeTheme: options.resolveEdgeTheme,
-            camera: (_h = options.camera) !== null && _h !== void 0 ? _h : {},
+            camera: (_f = options.camera) !== null && _f !== void 0 ? _f : {},
             theme: { ...constants_1.DEFAULT_THEME, ...options.theme },
             effects: {
                 ...constants_1.DEFAULT_EFFECTS,
                 ...options.effects,
                 edgeDash: {
                     ...constants_1.DEFAULT_EFFECTS.edgeDash,
-                    ...(_j = options.effects) === null || _j === void 0 ? void 0 : _j.edgeDash,
+                    ...(_g = options.effects) === null || _g === void 0 ? void 0 : _g.edgeDash,
                 },
                 edgeDot: {
                     ...constants_1.DEFAULT_EFFECTS.edgeDot,
-                    ...(_k = options.effects) === null || _k === void 0 ? void 0 : _k.edgeDot,
+                    ...(_h = options.effects) === null || _h === void 0 ? void 0 : _h.edgeDot,
                     animation: {
                         ...constants_1.DEFAULT_EFFECTS.edgeDot.animation,
-                        ...(_m = (_l = options.effects) === null || _l === void 0 ? void 0 : _l.edgeDot) === null || _m === void 0 ? void 0 : _m.animation,
+                        ...(_k = (_j = options.effects) === null || _j === void 0 ? void 0 : _j.edgeDot) === null || _k === void 0 ? void 0 : _k.animation,
                     },
                 },
                 portPulse: {
                     ...constants_1.DEFAULT_EFFECTS.portPulse,
-                    ...(_o = options.effects) === null || _o === void 0 ? void 0 : _o.portPulse,
+                    ...(_l = options.effects) === null || _l === void 0 ? void 0 : _l.portPulse,
                     animation: {
                         ...constants_1.DEFAULT_EFFECTS.portPulse.animation,
-                        ...(_q = (_p = options.effects) === null || _p === void 0 ? void 0 : _p.portPulse) === null || _q === void 0 ? void 0 : _q.animation,
+                        ...(_o = (_m = options.effects) === null || _m === void 0 ? void 0 : _m.portPulse) === null || _o === void 0 ? void 0 : _o.animation,
                     },
                 },
             },
-            callbacks: (_r = options.callbacks) !== null && _r !== void 0 ? _r : {},
+            callbacks: (_p = options.callbacks) !== null && _p !== void 0 ? _p : {},
             capabilities: { ...constants_1.DEFAULT_CAPABILITIES, ...options.capabilities },
         };
         this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
@@ -238,6 +236,14 @@ class GraphBuilder {
         }
         this.options.gridSize = next;
         this.resetGridViewPort();
+    }
+    setShowGrid(enabled) {
+        this.options.showGrid = enabled;
+    }
+    setTheme(theme) {
+        this.options.theme = { ...this.options.theme, ...theme };
+        this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
+        this.gridRenderRevision += 1;
     }
     getCameraPosition() {
         return (0, vec_1.vec2)(this.camera.position);
@@ -1548,7 +1554,7 @@ class GraphBuilder {
                 this.context.stroke();
                 this.context.restore();
             }
-            if (this.options.showPortArrows && port !== null && !isPreview) {
+            if (portTheme.showPortArrows && port !== null && !isPreview) {
                 const arrowDir = port.type === enums_1.PortType.Output ? direction : vec_1.vec2.mul(direction, -1);
                 const base = vec_1.vec2.add(state.position, vec_1.vec2.mul(arrowDir, portTheme.portArrowOffset));
                 this.context.save();
@@ -1677,7 +1683,7 @@ class GraphBuilder {
                 this.context.stroke();
                 this.context.restore();
             }
-            if (this.options.showEdgeArrows) {
+            if (edgeTheme.showEdgeArrows) {
                 const { cp1, cp2, join } = (0, utils_1.getCurveGeometry)(a, b, aEndpoint.direction, bEndpoint.direction, this.options.gridSize);
                 const { position: arrowPos, tangent: arrowDir } = (0, utils_1.sampleBezierChain)(a, cp1, join, cp2, b, edgeTheme.edgeArrowOffset);
                 this.context.save();

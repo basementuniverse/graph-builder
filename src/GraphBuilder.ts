@@ -57,6 +57,7 @@ import type {
   GraphBuilderEventMap,
   GraphBuilderOptions,
   GraphBuilderRenderCallbackName,
+  GraphBuilderTheme,
   GraphDocument,
   GraphDomain,
   GraphEffectChannel,
@@ -249,8 +250,6 @@ export default class GraphBuilder<
       gridSize: Math.max(1, options.gridSize ?? GRID_SIZE),
       snapToGrid: options.snapToGrid ?? false,
       showGrid: options.showGrid ?? true,
-      showPortArrows: options.showPortArrows ?? false,
-      showEdgeArrows: options.showEdgeArrows ?? false,
       autoStart: options.autoStart ?? true,
       allowSelfConnection: options.allowSelfConnection ?? false,
       canConnectPorts: options.canConnectPorts,
@@ -422,6 +421,16 @@ export default class GraphBuilder<
 
     this.options.gridSize = next;
     this.resetGridViewPort();
+  }
+
+  public setShowGrid(enabled: boolean) {
+    this.options.showGrid = enabled;
+  }
+
+  public setTheme(theme: Partial<GraphBuilderTheme>) {
+    this.options.theme = { ...this.options.theme, ...theme };
+    this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
+    this.gridRenderRevision += 1;
   }
 
   public getCameraPosition() {
@@ -2269,7 +2278,7 @@ export default class GraphBuilder<
           this.context.restore();
         }
 
-        if (this.options.showPortArrows && port !== null && !isPreview) {
+        if (portTheme.showPortArrows && port !== null && !isPreview) {
           const arrowDir =
             port.type === PortType.Output ? direction : vec2.mul(direction, -1);
           const base = vec2.add(
@@ -2474,7 +2483,7 @@ export default class GraphBuilder<
           this.context.restore();
         }
 
-        if (this.options.showEdgeArrows) {
+        if (edgeTheme.showEdgeArrows) {
           const { cp1, cp2, join } = getCurveGeometry(
             a,
             b,

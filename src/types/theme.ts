@@ -46,6 +46,7 @@ export type PortTheme = {
   portLabelFont: string;
 
   // Direction arrow
+  showPortArrows: boolean;
   portArrowSize: number;
   portArrowColor: string;
   portArrowOffset: number;
@@ -67,6 +68,7 @@ export type EdgeTheme = {
   edgeHoverOutlineLineWidth: number;
 
   // Direction arrow
+  showEdgeArrows: boolean;
   edgeArrowSize: number;
   edgeArrowColor: string;
   edgeArrowOffset: number;

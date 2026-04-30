@@ -3195,6 +3195,7 @@ InputManager.DEFAULT_OPTIONS = {
     portInvalidRingColor: "#ff445588",
     portHoverRingLineWidth: 6,
     portHoverRingRadius: 12,
+    showPortArrows: false,
     portArrowSize: 6,
     portArrowColor: "#fff5",
     portArrowOffset: 0.44,
@@ -3214,6 +3215,7 @@ InputManager.DEFAULT_OPTIONS = {
     edgeLineWidth: 3,
     edgeHoverOutlineColor: "#fff2",
     edgeHoverOutlineLineWidth: 10,
+    showEdgeArrows: false,
     edgeArrowSize: 8,
     edgeArrowColor: "#fff5",
     edgeArrowOffset: 0.5,
@@ -4075,8 +4077,6 @@ InputManager.DEFAULT_OPTIONS = {
         gridSize: Math.max(1, options.gridSize ?? GRID_SIZE),
         snapToGrid: options.snapToGrid ?? false,
         showGrid: options.showGrid ?? true,
-        showPortArrows: options.showPortArrows ?? false,
-        showEdgeArrows: options.showEdgeArrows ?? false,
         autoStart: options.autoStart ?? true,
         allowSelfConnection: options.allowSelfConnection ?? false,
         canConnectPorts: options.canConnectPorts,
@@ -4215,6 +4215,14 @@ InputManager.DEFAULT_OPTIONS = {
       }
       this.options.gridSize = next;
       this.resetGridViewPort();
+    }
+    setShowGrid(enabled) {
+      this.options.showGrid = enabled;
+    }
+    setTheme(theme) {
+      this.options.theme = { ...this.options.theme, ...theme };
+      this.canvas.style.backgroundColor = this.options.theme.backgroundColor;
+      this.gridRenderRevision += 1;
     }
     getCameraPosition() {
       return (0, import_vec9.vec2)(this.camera.position);
@@ -5607,7 +5615,7 @@ InputManager.DEFAULT_OPTIONS = {
             this.context.stroke();
             this.context.restore();
           }
-          if (this.options.showPortArrows && port !== null && !isPreview) {
+          if (portTheme.showPortArrows && port !== null && !isPreview) {
             const arrowDir = port.type === "output" /* Output */ ? direction : import_vec9.vec2.mul(direction, -1);
             const base = import_vec9.vec2.add(
               state.position,
@@ -5775,7 +5783,7 @@ InputManager.DEFAULT_OPTIONS = {
             this.context.stroke();
             this.context.restore();
           }
-          if (this.options.showEdgeArrows) {
+          if (edgeTheme.showEdgeArrows) {
             const { cp1, cp2, join } = getCurveGeometry(
               a,
               b,
