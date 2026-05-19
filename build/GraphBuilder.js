@@ -50,6 +50,32 @@ class GraphBuilder {
         this.resizingNodeId = null;
         this.creatingEdge = null;
         this.panOffset = null;
+        this.canvasFocused = false;
+        this.handleResize = () => {
+            this.resize();
+        };
+        this.handleCanvasFocus = () => {
+            this.canvasFocused = true;
+            this.syncCanvasFocusState();
+        };
+        this.handleCanvasBlur = () => {
+            this.canvasFocused = false;
+            this.syncCanvasFocusState();
+            this.clearInteractionState();
+            this.cancelActiveInteractions();
+        };
+        this.handleCanvasPointerDown = () => {
+            this.focusCanvas();
+        };
+        this.handleWindowPointerUp = () => {
+            this.cancelActiveInteractions();
+        };
+        this.handleWindowBlur = () => {
+            this.canvasFocused = false;
+            this.syncCanvasFocusState();
+            this.clearInteractionState();
+            this.cancelActiveInteractions();
+        };
         this.effects = {
             edgeDash: {
                 get: (target, channel = 'default') => this.getEdgeDashEffectConfig(target, channel),
@@ -95,6 +121,17 @@ class GraphBuilder {
             throw new Error('Element is not a canvas');
         }
         this.canvas = canvas;
+        if (!this.canvas.hasAttribute('tabindex')) {
+            this.canvas.tabIndex = 0;
+        }
+        this.canvasFocused = document.activeElement === this.canvas;
+        this.syncCanvasFocusState();
+        this.canvas.addEventListener('focus', this.handleCanvasFocus, false);
+        this.canvas.addEventListener('blur', this.handleCanvasBlur, false);
+        this.canvas.addEventListener('pointerdown', this.handleCanvasPointerDown, false);
+        window.addEventListener('pointerup', this.handleWindowPointerUp, false);
+        window.addEventListener('pointercancel', this.handleWindowPointerUp, false);
+        window.addEventListener('blur', this.handleWindowBlur, false);
         const context = this.canvas.getContext('2d');
         if (context === null) {
             throw new Error('Could not get 2D context from canvas');
@@ -154,7 +191,7 @@ class GraphBuilder {
             });
             GraphBuilder.inputInitialised = true;
         }
-        window.addEventListener('resize', this.resize.bind(this), false);
+        window.addEventListener('resize', this.handleResize, false);
         this.resize();
         if (this.options.autoStart) {
             this.start();
@@ -185,8 +222,17 @@ class GraphBuilder {
     }
     dispose() {
         this.stop();
+        this.canvas.removeEventListener('focus', this.handleCanvasFocus, false);
+        this.canvas.removeEventListener('blur', this.handleCanvasBlur, false);
+        this.canvas.removeEventListener('pointerdown', this.handleCanvasPointerDown, false);
+        window.removeEventListener('pointerup', this.handleWindowPointerUp, false);
+        window.removeEventListener('pointercancel', this.handleWindowPointerUp, false);
+        window.removeEventListener('blur', this.handleWindowBlur, false);
+        window.removeEventListener('resize', this.handleResize, false);
         this.clearAllEffects();
         this.resetGridViewPort();
+        this.clearInteractionState();
+        this.cancelActiveInteractions();
         this.graph.nodes = [];
         this.graph.edges = [];
         this.nodeState.clear();
@@ -788,19 +834,31 @@ class GraphBuilder {
     }
     update(dt) {
         GraphBuilder.screen = (0, vec_1.vec2)(this.canvas.width, this.canvas.height);
-        if (input_manager_1.default.keyDown('Space') && this.tool !== enums_1.ToolMode.Pan) {
+        const interactionsEnabled = this.isInteractionEnabled();
+        if (interactionsEnabled &&
+            input_manager_1.default.keyDown('Space') &&
+            this.tool !== enums_1.ToolMode.Pan) {
             this.setTool(enums_1.ToolMode.Pan, true);
         }
-        if (input_manager_1.default.keyReleased('Space') && this.tool === enums_1.ToolMode.Pan) {
+        if (interactionsEnabled &&
+            input_manager_1.default.keyReleased('Space') &&
+            this.tool === enums_1.ToolMode.Pan) {
             this.resetTool();
         }
-        this.updateCamera(dt);
+        this.updateCamera(dt, interactionsEnabled);
         this.camera.update(GraphBuilder.screen);
         const mouse = this.camera.screenToWorld(input_manager_1.default.mousePosition);
-        this.updatePortStates(mouse);
-        this.updateNodeStates(mouse);
-        this.updateEdgeStates(mouse);
-        this.handleInteractions(mouse);
+        if (interactionsEnabled) {
+            this.updatePortStates(mouse);
+            this.updateNodeStates(mouse);
+            this.updateEdgeStates(mouse);
+            this.handleInteractions(mouse);
+            this.handleKeyboardShortcuts();
+        }
+        else {
+            this.clearInteractionState();
+            this.cancelActiveInteractions();
+        }
         this.easeNodes();
         this.updateEffects(dt);
         input_manager_1.default.update();
@@ -818,7 +876,11 @@ class GraphBuilder {
             this.frameHandle = window.requestAnimationFrame(this.loop.bind(this));
         }
     }
-    updateCamera(dt) {
+    updateCamera(dt, interactionsEnabled) {
+        if (!interactionsEnabled) {
+            this.panOffset = null;
+            return;
+        }
         if (this.tool === enums_1.ToolMode.Pan && input_manager_1.default.mouseDown()) {
             const cameraPosition = this.camera.screenToWorld(input_manager_1.default.mousePosition);
             if (!this.panOffset) {
@@ -1043,7 +1105,7 @@ class GraphBuilder {
         }
         if (hoveredNode &&
             (hoveredNodeState === null || hoveredNodeState === void 0 ? void 0 : hoveredNodeState.deleteHovered) &&
-            input_manager_1.default.mouseDown()) {
+            input_manager_1.default.mousePressed()) {
             this.removeNode(hoveredNode.id);
             return;
         }
@@ -1079,7 +1141,7 @@ class GraphBuilder {
             hoveredNodeState &&
             !hoveredPort &&
             !this.draggingNodeId &&
-            input_manager_1.default.mouseDown()) {
+            input_manager_1.default.mousePressed()) {
             this.selectNode(hoveredNode.id);
             this.draggingNodeId = hoveredNode.id;
             hoveredNodeState.dragging = true;
@@ -1091,7 +1153,7 @@ class GraphBuilder {
             hoveredNodeState &&
             hoveredNodeState.resizeHovered &&
             !this.resizingNodeId &&
-            input_manager_1.default.mouseDown()) {
+            input_manager_1.default.mousePressed()) {
             this.resizingNodeId = hoveredNode.id;
             hoveredNodeState.resizing = true;
             hoveredNodeState.resizeOffset = vec_1.vec2.sub(mouse, vec_1.vec2.add(hoveredNode.position, hoveredNode.size));
@@ -1154,6 +1216,72 @@ class GraphBuilder {
             }
             this.resizingNodeId = null;
             this.stopCreatingEdge();
+        }
+    }
+    handleKeyboardShortcuts() {
+        if (input_manager_1.default.keyPressed('Delete') && this.selectedNodeId) {
+            this.removeNode(this.selectedNodeId);
+        }
+    }
+    isInteractionEnabled() {
+        return this.canvasFocused && document.activeElement === this.canvas;
+    }
+    focusCanvas() {
+        if (document.activeElement === this.canvas) {
+            return;
+        }
+        try {
+            this.canvas.focus({ preventScroll: true });
+        }
+        catch {
+            this.canvas.focus();
+        }
+    }
+    syncCanvasFocusState() {
+        this.canvas.dataset.graphBuilderFocused = this.canvasFocused
+            ? 'true'
+            : 'false';
+    }
+    clearInteractionState() {
+        this.hoveredNodeId = null;
+        this.hoveredEdgeId = null;
+        this.hoveredPort = null;
+        for (const state of this.nodeState.values()) {
+            state.hovered = false;
+            state.resizeHovered = false;
+            state.deleteHovered = false;
+        }
+        for (const state of this.edgeState.values()) {
+            state.hovered = false;
+        }
+        for (const state of this.portState.values()) {
+            state.hovered = false;
+            state.connectable = true;
+            state.invalidReason = null;
+        }
+    }
+    cancelActiveInteractions() {
+        if (this.draggingNodeId) {
+            const node = this.graph.nodes.find(n => n.id === this.draggingNodeId);
+            if (node) {
+                this.ensureNodeState(node).dragging = false;
+            }
+        }
+        this.draggingNodeId = null;
+        if (this.resizingNodeId) {
+            const node = this.graph.nodes.find(n => n.id === this.resizingNodeId);
+            if (node) {
+                this.ensureNodeState(node).resizing = false;
+            }
+        }
+        this.resizingNodeId = null;
+        this.panOffset = null;
+        if (this.creatingEdge) {
+            this.creatingEdge = null;
+            this.resetTool();
+            if (this.tool === enums_1.ToolMode.CreateEdge) {
+                this.setTool(enums_1.ToolMode.Select);
+            }
         }
     }
     startCreatingEdge(endpoint) {

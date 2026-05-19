@@ -35,6 +35,13 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private resizingNodeId;
     private creatingEdge;
     private panOffset;
+    private canvasFocused;
+    private readonly handleResize;
+    private readonly handleCanvasFocus;
+    private readonly handleCanvasBlur;
+    private readonly handleCanvasPointerDown;
+    private readonly handleWindowPointerUp;
+    private readonly handleWindowBlur;
     readonly effects: GraphBuilderEffectsController;
     constructor(canvas: HTMLElement | null, options?: GraphBuilderOptions<TNodeData, TEdgeData, TPortData>);
     on<E extends keyof GraphBuilderEventMap<TNodeData, TEdgeData, TPortData>>(event: E, handler: GraphBuilderEventHandler<TNodeData, TEdgeData, TPortData, E>): () => void;
@@ -101,6 +108,12 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private updateEdgeStates;
     private edgeHitTest;
     private handleInteractions;
+    private handleKeyboardShortcuts;
+    private isInteractionEnabled;
+    private focusCanvas;
+    private syncCanvasFocusState;
+    private clearInteractionState;
+    private cancelActiveInteractions;
     private startCreatingEdge;
     private stopCreatingEdge;
     private validateConnection;

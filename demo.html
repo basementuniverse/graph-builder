@@ -24,6 +24,13 @@
         width: 100vw;
         height: 100vh;
         background: #0a0a0a;
+        outline: none;
+        box-sizing: border-box;
+      }
+
+      canvas:focus-visible,
+      canvas[data-graph-builder-focused='true'] {
+        border: 1px solid rgba(125, 211, 252, 0.5);
       }
 
       .toolbar {

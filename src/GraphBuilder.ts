@@ -175,6 +175,38 @@ export default class GraphBuilder<
   private resizingNodeId: string | null = null;
   private creatingEdge: EdgeTool | null = null;
   private panOffset: vec2 | null = null;
+  private canvasFocused = false;
+
+  private readonly handleResize = () => {
+    this.resize();
+  };
+
+  private readonly handleCanvasFocus = () => {
+    this.canvasFocused = true;
+    this.syncCanvasFocusState();
+  };
+
+  private readonly handleCanvasBlur = () => {
+    this.canvasFocused = false;
+    this.syncCanvasFocusState();
+    this.clearInteractionState();
+    this.cancelActiveInteractions();
+  };
+
+  private readonly handleCanvasPointerDown = () => {
+    this.focusCanvas();
+  };
+
+  private readonly handleWindowPointerUp = () => {
+    this.cancelActiveInteractions();
+  };
+
+  private readonly handleWindowBlur = () => {
+    this.canvasFocused = false;
+    this.syncCanvasFocusState();
+    this.clearInteractionState();
+    this.cancelActiveInteractions();
+  };
 
   public readonly effects: GraphBuilderEffectsController = {
     edgeDash: {
@@ -239,6 +271,22 @@ export default class GraphBuilder<
       throw new Error('Element is not a canvas');
     }
     this.canvas = canvas as HTMLCanvasElement;
+
+    if (!this.canvas.hasAttribute('tabindex')) {
+      this.canvas.tabIndex = 0;
+    }
+    this.canvasFocused = document.activeElement === this.canvas;
+    this.syncCanvasFocusState();
+    this.canvas.addEventListener('focus', this.handleCanvasFocus, false);
+    this.canvas.addEventListener('blur', this.handleCanvasBlur, false);
+    this.canvas.addEventListener(
+      'pointerdown',
+      this.handleCanvasPointerDown,
+      false
+    );
+    window.addEventListener('pointerup', this.handleWindowPointerUp, false);
+    window.addEventListener('pointercancel', this.handleWindowPointerUp, false);
+    window.addEventListener('blur', this.handleWindowBlur, false);
 
     const context = this.canvas.getContext('2d');
     if (context === null) {
@@ -305,7 +353,7 @@ export default class GraphBuilder<
       GraphBuilder.inputInitialised = true;
     }
 
-    window.addEventListener('resize', this.resize.bind(this), false);
+    window.addEventListener('resize', this.handleResize, false);
     this.resize();
 
     if (this.options.autoStart) {
@@ -358,8 +406,25 @@ export default class GraphBuilder<
 
   public dispose() {
     this.stop();
+    this.canvas.removeEventListener('focus', this.handleCanvasFocus, false);
+    this.canvas.removeEventListener('blur', this.handleCanvasBlur, false);
+    this.canvas.removeEventListener(
+      'pointerdown',
+      this.handleCanvasPointerDown,
+      false
+    );
+    window.removeEventListener('pointerup', this.handleWindowPointerUp, false);
+    window.removeEventListener(
+      'pointercancel',
+      this.handleWindowPointerUp,
+      false
+    );
+    window.removeEventListener('blur', this.handleWindowBlur, false);
+    window.removeEventListener('resize', this.handleResize, false);
     this.clearAllEffects();
     this.resetGridViewPort();
+    this.clearInteractionState();
+    this.cancelActiveInteractions();
     this.graph.nodes = [];
     this.graph.edges = [];
     this.nodeState.clear();
@@ -1191,22 +1256,38 @@ export default class GraphBuilder<
   public update(dt: number) {
     GraphBuilder.screen = vec2(this.canvas.width, this.canvas.height);
 
-    if (InputManager.keyDown('Space') && this.tool !== ToolMode.Pan) {
+    const interactionsEnabled = this.isInteractionEnabled();
+
+    if (
+      interactionsEnabled &&
+      InputManager.keyDown('Space') &&
+      this.tool !== ToolMode.Pan
+    ) {
       this.setTool(ToolMode.Pan, true);
     }
-    if (InputManager.keyReleased('Space') && this.tool === ToolMode.Pan) {
+    if (
+      interactionsEnabled &&
+      InputManager.keyReleased('Space') &&
+      this.tool === ToolMode.Pan
+    ) {
       this.resetTool();
     }
 
-    this.updateCamera(dt);
+    this.updateCamera(dt, interactionsEnabled);
     this.camera.update(GraphBuilder.screen);
 
     const mouse = this.camera.screenToWorld(InputManager.mousePosition);
 
-    this.updatePortStates(mouse);
-    this.updateNodeStates(mouse);
-    this.updateEdgeStates(mouse);
-    this.handleInteractions(mouse);
+    if (interactionsEnabled) {
+      this.updatePortStates(mouse);
+      this.updateNodeStates(mouse);
+      this.updateEdgeStates(mouse);
+      this.handleInteractions(mouse);
+      this.handleKeyboardShortcuts();
+    } else {
+      this.clearInteractionState();
+      this.cancelActiveInteractions();
+    }
     this.easeNodes();
     this.updateEffects(dt);
 
@@ -1229,7 +1310,12 @@ export default class GraphBuilder<
     }
   }
 
-  private updateCamera(dt: number) {
+  private updateCamera(dt: number, interactionsEnabled: boolean) {
+    if (!interactionsEnabled) {
+      this.panOffset = null;
+      return;
+    }
+
     if (this.tool === ToolMode.Pan && InputManager.mouseDown()) {
       const cameraPosition = this.camera.screenToWorld(
         InputManager.mousePosition
@@ -1542,7 +1628,7 @@ export default class GraphBuilder<
     if (
       hoveredNode &&
       hoveredNodeState?.deleteHovered &&
-      InputManager.mouseDown()
+      InputManager.mousePressed()
     ) {
       this.removeNode(hoveredNode.id);
       return;
@@ -1587,7 +1673,7 @@ export default class GraphBuilder<
       hoveredNodeState &&
       !hoveredPort &&
       !this.draggingNodeId &&
-      InputManager.mouseDown()
+      InputManager.mousePressed()
     ) {
       this.selectNode(hoveredNode.id);
       this.draggingNodeId = hoveredNode.id;
@@ -1602,7 +1688,7 @@ export default class GraphBuilder<
       hoveredNodeState &&
       hoveredNodeState.resizeHovered &&
       !this.resizingNodeId &&
-      InputManager.mouseDown()
+      InputManager.mousePressed()
     ) {
       this.resizingNodeId = hoveredNode.id;
       hoveredNodeState.resizing = true;
@@ -1685,6 +1771,84 @@ export default class GraphBuilder<
       this.resizingNodeId = null;
 
       this.stopCreatingEdge();
+    }
+  }
+
+  private handleKeyboardShortcuts() {
+    if (InputManager.keyPressed('Delete') && this.selectedNodeId) {
+      this.removeNode(this.selectedNodeId);
+    }
+  }
+
+  private isInteractionEnabled() {
+    return this.canvasFocused && document.activeElement === this.canvas;
+  }
+
+  private focusCanvas() {
+    if (document.activeElement === this.canvas) {
+      return;
+    }
+
+    try {
+      this.canvas.focus({ preventScroll: true });
+    } catch {
+      this.canvas.focus();
+    }
+  }
+
+  private syncCanvasFocusState() {
+    this.canvas.dataset.graphBuilderFocused = this.canvasFocused
+      ? 'true'
+      : 'false';
+  }
+
+  private clearInteractionState() {
+    this.hoveredNodeId = null;
+    this.hoveredEdgeId = null;
+    this.hoveredPort = null;
+
+    for (const state of this.nodeState.values()) {
+      state.hovered = false;
+      state.resizeHovered = false;
+      state.deleteHovered = false;
+    }
+
+    for (const state of this.edgeState.values()) {
+      state.hovered = false;
+    }
+
+    for (const state of this.portState.values()) {
+      state.hovered = false;
+      state.connectable = true;
+      state.invalidReason = null;
+    }
+  }
+
+  private cancelActiveInteractions() {
+    if (this.draggingNodeId) {
+      const node = this.graph.nodes.find(n => n.id === this.draggingNodeId);
+      if (node) {
+        this.ensureNodeState(node).dragging = false;
+      }
+    }
+    this.draggingNodeId = null;
+
+    if (this.resizingNodeId) {
+      const node = this.graph.nodes.find(n => n.id === this.resizingNodeId);
+      if (node) {
+        this.ensureNodeState(node).resizing = false;
+      }
+    }
+    this.resizingNodeId = null;
+
+    this.panOffset = null;
+
+    if (this.creatingEdge) {
+      this.creatingEdge = null;
+      this.resetTool();
+      if (this.tool === ToolMode.CreateEdge) {
+        this.setTool(ToolMode.Select);
+      }
     }
   }
 
