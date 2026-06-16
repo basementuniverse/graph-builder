@@ -4041,6 +4041,28 @@ InputManager.DEFAULT_OPTIONS = {
         this.focusCanvas();
       };
       this.handleWindowPointerUp = () => {
+        if (this.creatingEdge) {
+          const mouse = this.camera.screenToWorld(import_input_manager.default.mousePosition);
+          this.updatePortStates(mouse);
+          this.stopCreatingEdge();
+        }
+        if (this.draggingNodeId) {
+          const node = this.graph.nodes.find((n) => n.id === this.draggingNodeId);
+          if (node) {
+            this.ensureNodeState(node).dragging = false;
+          }
+        }
+        this.draggingNodeId = null;
+        if (this.resizingNodeId) {
+          const node = this.graph.nodes.find((n) => n.id === this.resizingNodeId);
+          if (node) {
+            this.ensureNodeState(node).resizing = false;
+          }
+        }
+        this.resizingNodeId = null;
+        this.panOffset = null;
+      };
+      this.handleWindowPointerCancel = () => {
         this.cancelActiveInteractions();
       };
       this.handleWindowBlur = () => {
@@ -4107,7 +4129,11 @@ InputManager.DEFAULT_OPTIONS = {
         false
       );
       window.addEventListener("pointerup", this.handleWindowPointerUp, false);
-      window.addEventListener("pointercancel", this.handleWindowPointerUp, false);
+      window.addEventListener(
+        "pointercancel",
+        this.handleWindowPointerCancel,
+        false
+      );
       window.addEventListener("blur", this.handleWindowBlur, false);
       const context = this.canvas.getContext("2d");
       if (context === null) {
@@ -4215,7 +4241,7 @@ InputManager.DEFAULT_OPTIONS = {
       window.removeEventListener("pointerup", this.handleWindowPointerUp, false);
       window.removeEventListener(
         "pointercancel",
-        this.handleWindowPointerUp,
+        this.handleWindowPointerCancel,
         false
       );
       window.removeEventListener("blur", this.handleWindowBlur, false);

@@ -198,6 +198,31 @@ export default class GraphBuilder<
   };
 
   private readonly handleWindowPointerUp = () => {
+    if (this.creatingEdge) {
+      const mouse = this.camera.screenToWorld(InputManager.mousePosition);
+      this.updatePortStates(mouse);
+      this.stopCreatingEdge();
+    }
+
+    if (this.draggingNodeId) {
+      const node = this.graph.nodes.find(n => n.id === this.draggingNodeId);
+      if (node) {
+        this.ensureNodeState(node).dragging = false;
+      }
+    }
+    this.draggingNodeId = null;
+
+    if (this.resizingNodeId) {
+      const node = this.graph.nodes.find(n => n.id === this.resizingNodeId);
+      if (node) {
+        this.ensureNodeState(node).resizing = false;
+      }
+    }
+    this.resizingNodeId = null;
+    this.panOffset = null;
+  };
+
+  private readonly handleWindowPointerCancel = () => {
     this.cancelActiveInteractions();
   };
 
@@ -285,7 +310,11 @@ export default class GraphBuilder<
       false
     );
     window.addEventListener('pointerup', this.handleWindowPointerUp, false);
-    window.addEventListener('pointercancel', this.handleWindowPointerUp, false);
+    window.addEventListener(
+      'pointercancel',
+      this.handleWindowPointerCancel,
+      false
+    );
     window.addEventListener('blur', this.handleWindowBlur, false);
 
     const context = this.canvas.getContext('2d');
@@ -416,7 +445,7 @@ export default class GraphBuilder<
     window.removeEventListener('pointerup', this.handleWindowPointerUp, false);
     window.removeEventListener(
       'pointercancel',
-      this.handleWindowPointerUp,
+      this.handleWindowPointerCancel,
       false
     );
     window.removeEventListener('blur', this.handleWindowBlur, false);

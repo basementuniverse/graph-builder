@@ -68,6 +68,28 @@ class GraphBuilder {
             this.focusCanvas();
         };
         this.handleWindowPointerUp = () => {
+            if (this.creatingEdge) {
+                const mouse = this.camera.screenToWorld(input_manager_1.default.mousePosition);
+                this.updatePortStates(mouse);
+                this.stopCreatingEdge();
+            }
+            if (this.draggingNodeId) {
+                const node = this.graph.nodes.find(n => n.id === this.draggingNodeId);
+                if (node) {
+                    this.ensureNodeState(node).dragging = false;
+                }
+            }
+            this.draggingNodeId = null;
+            if (this.resizingNodeId) {
+                const node = this.graph.nodes.find(n => n.id === this.resizingNodeId);
+                if (node) {
+                    this.ensureNodeState(node).resizing = false;
+                }
+            }
+            this.resizingNodeId = null;
+            this.panOffset = null;
+        };
+        this.handleWindowPointerCancel = () => {
             this.cancelActiveInteractions();
         };
         this.handleWindowBlur = () => {
@@ -130,7 +152,7 @@ class GraphBuilder {
         this.canvas.addEventListener('blur', this.handleCanvasBlur, false);
         this.canvas.addEventListener('pointerdown', this.handleCanvasPointerDown, false);
         window.addEventListener('pointerup', this.handleWindowPointerUp, false);
-        window.addEventListener('pointercancel', this.handleWindowPointerUp, false);
+        window.addEventListener('pointercancel', this.handleWindowPointerCancel, false);
         window.addEventListener('blur', this.handleWindowBlur, false);
         const context = this.canvas.getContext('2d');
         if (context === null) {
@@ -226,7 +248,7 @@ class GraphBuilder {
         this.canvas.removeEventListener('blur', this.handleCanvasBlur, false);
         this.canvas.removeEventListener('pointerdown', this.handleCanvasPointerDown, false);
         window.removeEventListener('pointerup', this.handleWindowPointerUp, false);
-        window.removeEventListener('pointercancel', this.handleWindowPointerUp, false);
+        window.removeEventListener('pointercancel', this.handleWindowPointerCancel, false);
         window.removeEventListener('blur', this.handleWindowBlur, false);
         window.removeEventListener('resize', this.handleResize, false);
         this.clearAllEffects();

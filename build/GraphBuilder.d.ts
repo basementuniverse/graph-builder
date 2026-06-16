@@ -41,6 +41,7 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private readonly handleCanvasBlur;
     private readonly handleCanvasPointerDown;
     private readonly handleWindowPointerUp;
+    private readonly handleWindowPointerCancel;
     private readonly handleWindowBlur;
     readonly effects: GraphBuilderEffectsController;
     constructor(canvas: HTMLElement | null, options?: GraphBuilderOptions<TNodeData, TEdgeData, TPortData>);
