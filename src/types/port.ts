@@ -3,11 +3,19 @@ import { PortSide, PortType } from '../enums';
 import type { PortPulseRuntimeState } from './effects';
 import type { EdgeTheme, PortTheme } from './theme';
 
+export type PortLayout =
+  | { type: 'auto' }
+  // pixel offset along the side, from its start corner
+  | { type: 'absolute'; offset: number }
+  // 0..1 fraction along the side, from its start corner
+  | { type: 'relative'; fraction: number };
+
 export type Port<TPortData = unknown> = {
   id: string;
   label?: string;
   type: PortType;
   side: PortSide;
+  layout?: PortLayout;
   theme?: Partial<PortTheme>;
   edgeTheme?: Partial<EdgeTheme>;
   data?: TPortData;

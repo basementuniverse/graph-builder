@@ -176,6 +176,7 @@ export default class GraphBuilder<TNodeData = unknown, TEdgeData = unknown, TPor
     private resolvePortEndpoint;
     private resolveNodeAndPort;
     private resolvePortPosition;
+    private resolvePortT;
     private directionFromSide;
     private ensureNodeState;
     private ensureEdgeState;

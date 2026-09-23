@@ -2559,20 +2559,37 @@ class GraphBuilder {
         return { node, port };
     }
     resolvePortPosition(node, port) {
-        const nodePortsSameSide = node.ports.filter(p => p.side === port.side);
-        const index = nodePortsSameSide.findIndex(p => p.id === port.id);
         const state = this.ensureNodeState(node);
+        const sideLength = port.side === enums_1.PortSide.Top || port.side === enums_1.PortSide.Bottom
+            ? state.actualSize.x
+            : state.actualSize.y;
+        const t = this.resolvePortT(node, port, sideLength);
         switch (port.side) {
             case enums_1.PortSide.Top:
-                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.x, 0));
+                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(t * sideLength, 0));
             case enums_1.PortSide.Right:
-                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(state.actualSize.x, ((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.y));
+                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(state.actualSize.x, t * sideLength));
             case enums_1.PortSide.Bottom:
-                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.x, state.actualSize.y));
+                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(t * sideLength, state.actualSize.y));
             case enums_1.PortSide.Left:
             default:
-                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(0, ((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.y));
+                return vec_1.vec2.add(state.actualPosition, (0, vec_1.vec2)(0, t * sideLength));
         }
+    }
+    resolvePortT(node, port, sideLength) {
+        var _a;
+        const layout = (_a = port.layout) !== null && _a !== void 0 ? _a : { type: 'auto' };
+        if (layout.type === 'absolute') {
+            return sideLength > 0
+                ? Math.max(0, Math.min(1, layout.offset / sideLength))
+                : 0;
+        }
+        if (layout.type === 'relative') {
+            return Math.max(0, Math.min(1, layout.fraction));
+        }
+        const autoPortsSameSide = node.ports.filter(p => { var _a; return p.side === port.side && ((_a = p.layout) !== null && _a !== void 0 ? _a : { type: 'auto' }).type === 'auto'; });
+        const index = autoPortsSameSide.findIndex(p => p.id === port.id);
+        return (index + 1) / (autoPortsSameSide.length + 1);
     }
     directionFromSide(side) {
         return {

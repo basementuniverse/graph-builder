@@ -19,6 +19,7 @@ npm install @basementuniverse/graph-builder
   - [Creating nodes programmatically](#creating-nodes-programmatically)
   - [Removing nodes](#removing-nodes)
   - [Updating node and port data](#updating-node-and-port-data)
+  - [Port positioning](#port-positioning)
 - [Edges](#edges)
   - [Creating edges programmatically](#creating-edges-programmatically)
   - [Removing edges](#removing-edges)
@@ -227,6 +228,7 @@ type Port<TPortData = unknown> = {
   label?: string;                   // rendered by default near the port
   type: PortType;                  // PortType.Input | PortType.Output
   side: PortSide;                  // PortSide.Top | .Right | .Bottom | .Left
+  layout?: PortLayout;             // control position along the side (see below)
   theme?: Partial<PortTheme>;      // per-port visual overrides (see Per-element theming)
   edgeTheme?: Partial<EdgeTheme>;  // theme applied to edges originating from this port
   data?: TPortData;
@@ -234,6 +236,30 @@ type Port<TPortData = unknown> = {
 ```
 
 Port labels are positioned automatically from port direction: top ports render labels below, bottom ports above, left ports to the right, and right ports to the left.
+
+#### Port positioning
+
+By default, ports on the same side of a node are spaced evenly along it (one port is centered, two ports sit at ~33%/~66%, and so on). Set `layout` on a port to opt out of this and control its position explicitly:
+
+```ts
+type PortLayout =
+  | { type: 'auto' }                        // default: evenly spaced with other 'auto' ports on the same side
+  | { type: 'absolute'; offset: number }     // pixels from the side's start corner (top-left)
+  | { type: 'relative'; fraction: number };  // 0..1 fraction of the side's length
+```
+
+```ts
+ports: [
+  // pinned 20px from the left edge of the top side
+  { id: 'trigger', type: PortType.Input, side: PortSide.Top, layout: { type: 'absolute', offset: 20 } },
+  // pinned at 80% along the bottom side
+  { id: 'status', type: PortType.Output, side: PortSide.Bottom, layout: { type: 'relative', fraction: 0.8 } },
+  // no layout (or { type: 'auto' }) — evenly distributed with other auto ports on the same side
+  { id: 'data', type: PortType.Input, side: PortSide.Left },
+],
+```
+
+Ports with `absolute` or `relative` layout are excluded from the even-spacing calculation — `auto` ports on the same side are distributed evenly across the *whole* side, independent of where any explicitly-positioned ports land.
 
 #### Creating nodes interactively
 

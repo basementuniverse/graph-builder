@@ -211,11 +211,25 @@
           size: { x: 200, y: 140 },
           label: 'Complex',
           ports: [
-            { id: 'in-top', label: 'Trigger', type: 'input', side: 'top' },
+            {
+              id: 'in-top',
+              label: 'Trigger',
+              type: 'input',
+              side: 'top',
+              // pinned near the right edge of the top side instead of centered
+              layout: { type: 'relative', fraction: 0.8 },
+            },
             { id: 'in-left-1', label: 'Data A', type: 'input', side: 'left' },
             { id: 'in-left-2', label: 'Data B', type: 'input', side: 'left' },
             { id: 'out-right', label: 'Result', type: 'output', side: 'right' },
-            { id: 'out-bottom', label: 'Status', type: 'output', side: 'bottom' },
+            {
+              id: 'out-bottom',
+              label: 'Status',
+              type: 'output',
+              side: 'bottom',
+              // pinned near the left edge of the bottom side
+              layout: { type: 'relative', fraction: 0.2 },
+            },
           ],
           resizable: true,
           deletable: true,

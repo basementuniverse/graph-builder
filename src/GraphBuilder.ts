@@ -3690,45 +3690,55 @@ export default class GraphBuilder<
     node: Node<TNodeData, TPortData>,
     port: Port<TPortData>
   ): vec2 {
-    const nodePortsSameSide = node.ports.filter(p => p.side === port.side);
-    const index = nodePortsSameSide.findIndex(p => p.id === port.id);
     const state = this.ensureNodeState(node);
+    const sideLength =
+      port.side === PortSide.Top || port.side === PortSide.Bottom
+        ? state.actualSize.x
+        : state.actualSize.y;
+    const t = this.resolvePortT(node, port, sideLength);
 
     switch (port.side) {
       case PortSide.Top:
-        return vec2.add(
-          state.actualPosition,
-          vec2(
-            ((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.x,
-            0
-          )
-        );
+        return vec2.add(state.actualPosition, vec2(t * sideLength, 0));
       case PortSide.Right:
         return vec2.add(
           state.actualPosition,
-          vec2(
-            state.actualSize.x,
-            ((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.y
-          )
+          vec2(state.actualSize.x, t * sideLength)
         );
       case PortSide.Bottom:
         return vec2.add(
           state.actualPosition,
-          vec2(
-            ((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.x,
-            state.actualSize.y
-          )
+          vec2(t * sideLength, state.actualSize.y)
         );
       case PortSide.Left:
       default:
-        return vec2.add(
-          state.actualPosition,
-          vec2(
-            0,
-            ((index + 1) / (nodePortsSameSide.length + 1)) * state.actualSize.y
-          )
-        );
+        return vec2.add(state.actualPosition, vec2(0, t * sideLength));
     }
+  }
+
+  // fraction (0..1) of the port's position along its side
+  private resolvePortT(
+    node: Node<TNodeData, TPortData>,
+    port: Port<TPortData>,
+    sideLength: number
+  ): number {
+    const layout = port.layout ?? { type: 'auto' };
+
+    if (layout.type === 'absolute') {
+      return sideLength > 0
+        ? Math.max(0, Math.min(1, layout.offset / sideLength))
+        : 0;
+    }
+    if (layout.type === 'relative') {
+      return Math.max(0, Math.min(1, layout.fraction));
+    }
+
+    const autoPortsSameSide = node.ports.filter(
+      p =>
+        p.side === port.side && (p.layout ?? { type: 'auto' }).type === 'auto'
+    );
+    const index = autoPortsSameSide.findIndex(p => p.id === port.id);
+    return (index + 1) / (autoPortsSameSide.length + 1);
   }
 
   private directionFromSide(side: PortSide): vec2 {
